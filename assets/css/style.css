@@ -1,0 +1,451 @@
+/* ============================================================
+   6UMMY — stylesheet
+   Palette rule: ink + paper always. #FFEA00 appears ONLY when
+   live, and only ever as a fill with ink on top (yellow text on
+   the light ground is ~1.06:1 contrast — effectively invisible).
+   ============================================================ */
+
+:root {
+  --ink:     #232323;
+  --paper:   #EFF3F4;
+  --live:    #FFEA00;
+
+  --ink-64:  rgba(35, 35, 35, .64);
+  --ink-40:  rgba(35, 35, 35, .40);
+  --rule:    rgba(35, 35, 35, .18);
+  --rule-hi: rgba(35, 35, 35, .38);
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+  --sans: "Helvetica Neue", Helvetica, Inter, "Segoe UI", Arial, sans-serif;
+
+  --w: 62rem;
+  --pad: clamp(1.25rem, 5vw, 3.5rem);
+  --bar: 2.25rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink:     #EFF3F4;
+    --paper:   #232323;
+    --ink-64:  rgba(239, 243, 244, .64);
+    --ink-40:  rgba(239, 243, 244, .40);
+    --rule:    rgba(239, 243, 244, .18);
+    --rule-hi: rgba(239, 243, 244, .38);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding-top: var(--bar);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: .875rem;
+  line-height: 1.6;
+  font-variant-ligatures: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--live); color: #232323; }
+
+a { color: inherit; text-decoration: none; }
+
+:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: 3px;
+}
+
+img { max-width: 100%; display: block; }
+
+/* ---------- shell ---------- */
+
+.wrap {
+  width: 100%;
+  max-width: var(--w);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+/* ---------- language switching (CSS-only, no flicker) ---------- */
+
+html[data-lang="en"] [data-es],
+html[data-lang="es"] [data-en] { display: none; }
+
+/* ============================================================
+   STATUS BAR — the signature element.
+   Off air: quiet ink-on-paper. Live: the whole bar floods.
+   ============================================================ */
+
+.status {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  height: var(--bar);
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding-inline: var(--pad);
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  font-size: .6875rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  transition: background .35s ease, border-color .35s ease, color .35s ease;
+}
+
+.status__mark {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -.03em;
+  text-transform: none;
+}
+
+.status__state {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.dot {
+  width: .4rem;
+  height: .4rem;
+  border-radius: 50%;
+  background: var(--ink-40);
+  flex: none;
+}
+
+.status__clock {
+  margin-left: auto;
+  color: var(--ink-64);
+  font-variant-numeric: tabular-nums;
+}
+
+.lang {
+  appearance: none;
+  background: none;
+  border: 1px solid var(--rule-hi);
+  color: inherit;
+  font: inherit;
+  letter-spacing: .1em;
+  padding: .15rem .5rem;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.lang:hover { border-color: currentColor; }
+
+/* --- live state --- */
+
+body.is-live .status {
+  background: var(--live);
+  color: #232323;
+  border-bottom-color: #232323;
+}
+body.is-live .status__clock { color: rgba(35, 35, 35, .7); }
+body.is-live .lang { border-color: rgba(35, 35, 35, .45); }
+body.is-live .dot {
+  background: #232323;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse { 50% { opacity: .25; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ============================================================
+   HERO — wordmark + label copy, the way a record centre
+   sticker lists its own facts.
+   ============================================================ */
+
+.hero { padding-block: clamp(3rem, 11vw, 7rem) clamp(2rem, 6vw, 3.5rem); }
+
+.wordmark {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: clamp(3.75rem, 19vw, 11rem);
+  letter-spacing: -.055em;
+  line-height: .82;
+  margin: 0 0 clamp(1.75rem, 5vw, 3rem);
+}
+
+.specs {
+  border-top: 1px solid var(--ink);
+  max-width: 34rem;
+}
+
+.spec {
+  display: flex;
+  gap: 1rem;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: .75rem;
+  letter-spacing: .04em;
+}
+
+.spec dt {
+  flex: none;
+  width: 6.5rem;
+  color: var(--ink-40);
+  text-transform: uppercase;
+}
+
+.spec dd { margin: 0; }
+
+.bio {
+  margin: clamp(1.75rem, 5vw, 2.5rem) 0 0;
+  max-width: 34rem;
+  font-size: .9375rem;
+  line-height: 1.7;
+}
+
+.hero__img { margin-top: clamp(2rem, 6vw, 3rem); }
+
+.hero__img img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.08);
+}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+
+.section { padding-block: clamp(2.5rem, 7vw, 4.5rem); }
+.section + .section { border-top: 1px solid var(--rule); }
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.section__head h2 {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: .75rem;
+  font-weight: 400;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.section__note {
+  font-size: .6875rem;
+  color: var(--ink-40);
+  letter-spacing: .06em;
+  margin-left: auto;
+  text-align: right;
+}
+
+/* ---------- rows (dates, sets, crate, links) ---------- */
+
+.rows { border-top: 1px solid var(--rule-hi); }
+
+.row {
+  display: grid;
+  gap: .15rem 1.25rem;
+  padding: .85rem 0;
+  border-bottom: 1px solid var(--rule);
+  grid-template-columns: 7.5rem 1fr auto;
+  align-items: baseline;
+}
+
+.row__key {
+  font-size: .75rem;
+  color: var(--ink-40);
+  letter-spacing: .05em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+}
+
+.row__main { font-size: .9375rem; }
+
+.row__sub {
+  grid-column: 2;
+  font-size: .75rem;
+  color: var(--ink-64);
+}
+
+.row__end {
+  font-size: .75rem;
+  color: var(--ink-64);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+a.row:hover { background: rgba(35, 35, 35, .04); }
+@media (prefers-color-scheme: dark) {
+  a.row:hover { background: rgba(239, 243, 244, .06); }
+}
+
+@media (max-width: 34rem) {
+  .row { grid-template-columns: 1fr auto; }
+  .row__key { grid-column: 1 / -1; }
+  .row__sub { grid-column: 1 / -1; }
+}
+
+/* ---------- empty state ---------- */
+
+.empty {
+  font-size: .8125rem;
+  color: var(--ink-64);
+  padding: .5rem 0 0;
+}
+
+/* ============================================================
+   DEFERRED EMBEDS — nothing loads until asked. This is where
+   the page weight savings actually come from.
+   ============================================================ */
+
+.embed {
+  position: relative;
+  width: 100%;
+  border: 1px solid var(--rule-hi);
+  background: transparent;
+}
+
+.embed--video { aspect-ratio: 16 / 9; }
+.embed--audio { min-height: 8.75rem; }
+
+.embed__btn {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  appearance: none;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.embed__btn small {
+  font-size: .625rem;
+  letter-spacing: .1em;
+  color: var(--ink-40);
+  text-transform: none;
+}
+
+.embed__btn:hover { background: rgba(35, 35, 35, .04); }
+@media (prefers-color-scheme: dark) {
+  .embed__btn:hover { background: rgba(239, 243, 244, .06); }
+}
+
+.embed iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
+
+/* ============================================================
+   CONTACT
+   ============================================================ */
+
+.form {
+  display: grid;
+  gap: 1rem;
+  max-width: 34rem;
+}
+
+.field { display: grid; gap: .35rem; }
+
+.field label {
+  font-size: .6875rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+.field input,
+.field textarea {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule-hi);
+  color: var(--ink);
+  font: inherit;
+  padding: .5rem 0;
+  border-radius: 0;
+}
+
+.field textarea { resize: vertical; min-height: 5rem; }
+
+.field input:focus,
+.field textarea:focus {
+  outline: 0;
+  border-bottom-color: var(--ink);
+}
+
+/* honeypot */
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.btn {
+  justify-self: start;
+  appearance: none;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  font: inherit;
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  padding: .6rem 1.4rem;
+  cursor: pointer;
+}
+
+.btn:hover { background: transparent; color: var(--ink); }
+
+.form__msg {
+  font-size: .8125rem;
+  color: var(--ink-64);
+  min-height: 1.2em;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.footer {
+  border-top: 1px solid var(--ink);
+  padding-block: 2.5rem 3.5rem;
+  font-size: .6875rem;
+  letter-spacing: .08em;
+  color: var(--ink-64);
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 2rem;
+  align-items: baseline;
+  text-transform: uppercase;
+}
+
+.footer a { border-bottom: 1px solid var(--rule-hi); }
+.footer a:hover { border-bottom-color: currentColor; }
+
+.footer__end { margin-left: auto; }
+
+.tagline { text-transform: none; letter-spacing: .04em; }

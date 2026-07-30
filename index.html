@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6UMMY</title>
+<meta name="description" content="6UMMY — DJ, collector and curator based in Montevideo, Uruguay. Tech house, deep house and minimal techno. Livestreams, gigs and vinyl since 2004.">
+<meta name="author" content="6ummy">
+<meta name="theme-color" content="#EFF3F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#232323" media="(prefers-color-scheme: dark)">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="6UMMY">
+<meta property="og:description" content="DJ, collector and curator based in Uruguay. Records, livestreams, rare finds.">
+<meta property="og:url" content="https://6ummy.xyz/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@6ummy">
+
+<link rel="canonical" href="https://6ummy.xyz/">
+<link rel="alternate" hreflang="en" href="https://6ummy.xyz/">
+<link rel="alternate" hreflang="es" href="https://6ummy.xyz/?lang=es">
+
+<!-- Yellow square with the 6. Inline SVG = zero requests. -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23FFEA00'/%3E%3Ctext x='32' y='47' font-family='Helvetica,Arial,sans-serif' font-weight='700' font-size='46' text-anchor='middle' fill='%23232323'%3E6%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://www.googleapis.com" crossorigin>
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+
+<body>
+
+<!-- ========== STATUS BAR ========== -->
+<header class="status" id="status">
+  <span class="status__mark">6</span>
+  <span class="status__state">
+    <span class="dot" aria-hidden="true"></span>
+    <span id="stateLabel" aria-live="polite">
+      <span data-en>Off air</span><span data-es>Fuera del aire</span>
+    </span>
+  </span>
+  <span class="status__clock">MVD <span id="clock">--:--</span></span>
+  <button class="lang" id="langBtn" type="button" aria-label="Cambiar a español">ES</button>
+</header>
+
+<main>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero wrap">
+    <h1 class="wordmark" id="wordmark">6UMMY</h1>
+
+    <dl class="specs" id="specs"></dl>
+
+    <p class="bio">
+      <span data-en id="bioEn"></span><span data-es id="bioEs"></span>
+    </p>
+
+    <figure class="hero__img" id="heroImg" hidden></figure>
+  </section>
+
+  <!-- ========== STREAM ========== -->
+  <section class="section wrap" id="stream-section">
+    <div class="section__head">
+      <h2><span data-en>Stream</span><span data-es>En vivo</span></h2>
+      <span class="section__note" id="streamNote"></span>
+    </div>
+    <div class="embed embed--video" id="twitchEmbed">
+      <button class="embed__btn" type="button" data-embed="twitch">
+        <span data-en>Load stream</span><span data-es>Cargar transmisión</span>
+        <small>twitch.tv/6ummy</small>
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== DATES ========== -->
+  <section class="section wrap" id="dates-section">
+    <div class="section__head">
+      <h2><span data-en>Dates</span><span data-es>Fechas</span></h2>
+      <span class="section__note" id="datesNote"></span>
+    </div>
+    <div id="dates">
+      <p class="empty">
+        <span data-en>Loading dates…</span><span data-es>Cargando fechas…</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ========== SETS ========== -->
+  <section class="section wrap" id="sets-section">
+    <div class="section__head">
+      <h2><span data-en>Sets</span><span data-es>Sesiones</span></h2>
+    </div>
+    <div id="sets"></div>
+  </section>
+
+  <!-- ========== CRATE ========== -->
+  <section class="section wrap" id="crate-section">
+    <div class="section__head">
+      <h2><span data-en>Crate</span><span data-es>Cajón</span></h2>
+      <span class="section__note">
+        <span data-en>From the shelf</span><span data-es>De la estantería</span>
+      </span>
+    </div>
+    <div class="rows" id="crate"></div>
+  </section>
+
+  <!-- ========== ELSEWHERE ========== -->
+  <section class="section wrap" id="elsewhere-section">
+    <div class="section__head">
+      <h2><span data-en>Elsewhere</span><span data-es>En otros lados</span></h2>
+    </div>
+    <div class="rows" id="elsewhere"></div>
+  </section>
+
+  <!-- ========== CONTACT ========== -->
+  <section class="section wrap" id="contact-section">
+    <div class="section__head">
+      <h2><span data-en>Bookings &amp; contact</span><span data-es>Contrataciones y contacto</span></h2>
+    </div>
+
+    <form class="form" id="contactForm" novalidate>
+      <div class="field">
+        <label for="f-name"><span data-en>Name</span><span data-es>Nombre</span></label>
+        <input id="f-name" name="name" type="text" autocomplete="name" required>
+      </div>
+      <div class="field">
+        <label for="f-email"><span data-en>Email</span><span data-es>Correo electrónico</span></label>
+        <input id="f-email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label for="f-msg"><span data-en>Message</span><span data-es>Mensaje</span></label>
+        <textarea id="f-msg" name="message" rows="4" required></textarea>
+      </div>
+
+      <!-- honeypot: replaces reCAPTCHA, costs 0 KB -->
+      <div class="hp" aria-hidden="true">
+        <label for="f-company">Company</label>
+        <input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button class="btn" type="submit">
+        <span data-en>Send</span><span data-es>Enviar</span>
+      </button>
+      <p class="form__msg" id="formMsg" role="status"></p>
+    </form>
+  </section>
+
+</main>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer wrap">
+  <span>Montevideo, UY</span>
+  <span id="support"></span>
+  <span class="tagline">art + love + tech</span>
+  <span class="footer__end">© 2004–<span id="year"></span> 6UMMY</span>
+</footer>
+
+<script src="assets/js/content.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
