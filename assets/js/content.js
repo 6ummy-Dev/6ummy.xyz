@@ -12,20 +12,15 @@ window.SITE = {
      --------------------------------------------------------- */
   config: {
 
-    // Google Calendar (public calendar + browser API key).
-    // See README §Calendar for the 3-minute setup.
-    calendarId: "jelhc76e0q5clq9er14l6963fo@group.calendar.google.com",
-    calendarKey: "",              // <-- paste API key here
-
-    // Live check. Expects JSON: { "live": true, "title": "...", "viewers": 42 }
-    // See README §Live for a 15-line Cloudflare Worker.
-    // Leave "" and the site simply always reads OFF AIR.
-    liveEndpoint: "",
+    // Your Cloudflare Worker. One URL powers three sections:
+    //   /live   Twitch status      /dates  calendar      /crate  Discogs
+    // Leave "" and all three degrade quietly instead of breaking.
+    workerUrl: "",                // e.g. "https://6ummy-api.YOURNAME.workers.dev"
 
     // Contact form. Formspree / Web3Forms / your own Worker.
-    // Leave "" and the form falls back to a mailto: link.
+    // Not a secret — safe to keep here.
     formEndpoint: "",
-    email: "hi@6ummy.xyz",        // used for the mailto fallback
+    email: "hi@6ummy.xyz",        // mailto: fallback if the above is empty
 
     twitchChannel: "6ummy",
     defaultLang: "auto"           // "auto" | "en" | "es"
@@ -67,48 +62,21 @@ window.SITE = {
     }
   ],
 
-  /* ---------- 5. CRATE -------------------------------------
-     ⚠️  EXAMPLE DATA — REPLACE WITH YOUR OWN RECORDS.
-     The pressing details below are real, but the notes are
-     placeholder copy. This section is the one thing on the
-     site nobody else has, so it's worth writing yourself.
-     Add or remove entries freely; the layout adapts.
+  /* ---------- 5. CRATE ------------------------------------
+     Records come from Discogs automatically, newest first —
+     add a record there and it appears here. Nothing to maintain.
+
+     What Discogs can't give you is why a record matters. Write
+     a line for the few you care about, keyed by the Discogs
+     release ID (the number in the release URL). Records without
+     a note still show as a clean catalogue row.
      --------------------------------------------------------- */
-  crate: [
-    {
-      artist: "Robert Hood",
-      title: "Minimal Nation",
-      label: "Axis",
-      cat: "AX-008",
-      year: "1994",
-      note: {
-        en: "Placeholder — write why this one matters to you.",
-        es: "Marcador — escribí por qué este te importa."
-      }
-    },
-    {
-      artist: "Basic Channel",
-      title: "Phylyps Trak",
-      label: "Basic Channel",
-      cat: "BC-04",
-      year: "1993",
-      note: {
-        en: "Placeholder — a sentence or two is plenty.",
-        es: "Marcador — con una o dos frases alcanza."
-      }
-    },
-    {
-      artist: "Ricardo Villalobos",
-      title: "Alcachofa",
-      label: "Playhouse",
-      cat: "PLAY-123",
-      year: "2003",
-      note: {
-        en: "Placeholder — where you found it works well here.",
-        es: "Marcador — contar dónde lo encontraste funciona bien."
-      }
-    }
-  ],
+  crateNotes: {
+    // "249504": {
+    //   en: "Found it in a bin in Cordón for nothing.",
+    //   es: "Lo encontré tirado en un cajón en Cordón, por nada."
+    // },
+  },
 
   /* ---------- 6. ELSEWHERE ---------------------------------
      Everything that isn't the main story. Reorder at will.

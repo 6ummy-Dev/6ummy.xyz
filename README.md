@@ -35,70 +35,50 @@ yellow gets better.
 
 ## Setup
 
-### 1. Calendar (required for the Dates section)
+Everything server-side lives in one Cloudflare Worker (`worker/index.js`).
+It exists because three things can't be done from a browser:
 
-The calendar ID is already in `content.js`. You need two things:
+| | Why it needs a server |
+|---|---|
+| Twitch status | needs a client secret, which can't sit in a public repo |
+| Google Calendar | the `.ics` feed sends no CORS headers, so browsers refuse it |
+| Discogs | requires a `User-Agent` header, which browser JS can't set, and a token for sleeve art |
 
-1. **Make the calendar public.** Google Calendar → Settings for that calendar →
-   *Access permissions* → tick **Make available to public**.
-2. **Get a browser API key.** [console.cloud.google.com](https://console.cloud.google.com)
-   → new project → *APIs & Services* → enable **Google Calendar API** →
-   *Credentials* → **Create credentials → API key**.
-3. **Restrict the key** — this matters. On the key: *Application restrictions* →
-   **Websites** → add `6ummy.xyz/*` and `localhost/*`. Then *API restrictions* →
-   **Google Calendar API** only.
-4. Paste it into `content.js` → `calendarKey`.
+One Worker solves all three, and keeps every credential out of the repo.
 
-The key is visible in the page source, which is fine: it's referrer-restricted
-and only reads a calendar you've already made public. Don't reuse it for
-anything else.
+### 1. Deploy the Worker
 
-Behaviour: shows upcoming dates; if there are none it automatically shows recent
-past ones instead, labelled *Recent*. The section never renders empty.
+- **dash.cloudflare.com → Workers & Pages → Create → Hello World → Deploy**
+- **Edit code** → replace everything with `worker/index.js` → Deploy
+- **Settings → Variables and Secrets** → add four **Secrets**:
+  `TWITCH_ID`, `TWITCH_SECRET`, `DISCOGS_TOKEN`, `CALENDAR_ID`
+- Deploy again, then test in a browser tab:
+  `/live` `/dates` `/crate` should each return JSON
 
-### 2. Live status (optional)
+Where the credentials come from:
 
-Twitch's API needs a client secret, so it can't be called safely from the
-browser. A tiny Cloudflare Worker does it — free tier, one file:
+- **Twitch** — dev.twitch.tv/console/apps → Register Your Application.
+  Redirect URL `http://localhost` (unused). Copy the Client ID, then generate a
+  secret (shown once).
+- **Discogs** — discogs.com/settings/developers → generate a personal access
+  token. The API works without one, but returns no cover images.
+- **Calendar** — already public. The ID is
+  `jelhc76e0q5clq9er14l6963fo@group.calendar.google.com`.
 
-```js
-export default {
-  async fetch(req, env) {
-    const auth = await fetch("https://id.twitch.tv/oauth2/token", {
-      method: "POST",
-      body: new URLSearchParams({
-        client_id: env.TWITCH_ID,
-        client_secret: env.TWITCH_SECRET,
-        grant_type: "client_credentials"
-      })
-    }).then(r => r.json());
+### 2. Point the site at it
 
-    const res = await fetch("https://api.twitch.tv/helix/streams?user_login=6ummy", {
-      headers: {
-        "Client-ID": env.TWITCH_ID,
-        "Authorization": `Bearer ${auth.access_token}`
-      }
-    }).then(r => r.json());
+In `content.js` set `workerUrl` to your `*.workers.dev` URL. That's the only
+change. Dates and Crate populate on their own.
 
-    const s = res.data && res.data[0];
-    return Response.json(
-      { live: !!s, title: s ? s.title : null, viewers: s ? s.viewer_count : 0 },
-      { headers: { "Access-Control-Allow-Origin": "https://6ummy.xyz" } }
-    );
-  }
-};
-```
-
-Set `TWITCH_ID` / `TWITCH_SECRET` as Worker secrets, then put the Worker URL in
-`content.js` → `liveEndpoint`. The page polls every two minutes.
-
-Leave it empty and the site simply always reads *Off air* — nothing breaks.
+Leave it empty and both sections say so politely instead of breaking.
 
 ### 3. Contact form
 
 Static hosting can't send mail. Put any form endpoint in `content.js` →
 `formEndpoint` — [Formspree](https://formspree.io), [Web3Forms](https://web3forms.com),
-or your own Worker. Leave it empty and the form falls back to `mailto:`.
+or another Worker route. Leave it empty and the form falls back to `mailto:`.
+
+This one isn't a secret, so it's fine in the repo.
 
 There's a honeypot field instead of reCAPTCHA. reCAPTCHA was roughly half a
 megabyte on the old site; the honeypot is 0 KB and works fine at this scale.
@@ -117,9 +97,11 @@ method instead, it lives at your registrar and none of this applies.
 desaturated in CSS, so *any* photo matches the design with no editing. Swap it
 as often as you like.
 
-**Crate** — the records section is example data. Replace it with your own; this
-is the one thing on the site nobody else has, so it's worth writing yourself.
-Add or remove entries freely, the layout adapts.
+**Crate** — pulls from Discogs automatically, newest first. Add a record there
+and it appears here. Discogs supplies artist, title, label, catalogue number and
+year; it can't supply why a record matters to you. Write a line for the few you
+care about in `crateNotes`, keyed by the Discogs release ID (the number in the
+release URL). Records without a note show as clean catalogue rows.
 
 **Sets, links, support** — all arrays in `content.js`. Reorder at will.
 

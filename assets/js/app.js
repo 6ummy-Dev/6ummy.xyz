@@ -1,7 +1,7 @@
 /* ============================================================
    6UMMY — app.js
-   No dependencies, no build step. Everything degrades: if a
-   key is missing the section falls back rather than breaking.
+   No dependencies, no build step. Everything degrades: if the
+   Worker isn't configured yet, sections say so rather than break.
    ============================================================ */
 
 (function () {
@@ -11,6 +11,7 @@
   var C = S.config;
   var $ = function (id) { return document.getElementById(id); };
   var params = new URLSearchParams(location.search);
+  var API = (C.workerUrl || "").replace(/\/+$/, "");
 
   /* ---------------------------------------------------------
      LANGUAGE — CSS-driven, so there's no flash of wrong text.
@@ -38,6 +39,7 @@
   }
 
   function t(obj) { return obj ? (obj[lang] || obj.en || "") : ""; }
+  function es(a, b) { return lang === "es" ? a : b; }
 
   setLang(lang);
   $("langBtn").addEventListener("click", function () {
@@ -60,8 +62,29 @@
   }
   tick();
   setInterval(tick, 20000);
-
   $("year").textContent = new Date().getFullYear();
+
+  /* ---------------------------------------------------------
+     HELPERS
+     --------------------------------------------------------- */
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function api(route) {
+    if (!API) return Promise.reject(new Error("no worker"));
+    return fetch(API + route, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error(route + " " + r.status);
+      return r.json();
+    });
+  }
+
+  function hostOf(u) {
+    try { return new URL(u).hostname.replace(/^www\./, ""); } catch (e) { return ""; }
+  }
 
   /* ---------------------------------------------------------
      LIVE STATE — the only thing that brings colour in.
@@ -70,8 +93,7 @@
 
   function setLive(on, title) {
     document.body.classList.toggle("is-live", !!on);
-    var label = $("stateLabel");
-    label.innerHTML = on
+    $("stateLabel").innerHTML = on
       ? '<span data-en>Live now</span><span data-es>En vivo ahora</span>'
       : '<span data-en>Off air</span><span data-es>Fuera del aire</span>';
     $("streamNote").textContent = on && title ? title : "";
@@ -79,9 +101,7 @@
 
   function checkLive() {
     if (params.get("live") === "1") { setLive(true, "Preview"); return; }
-    if (!C.liveEndpoint) { setLive(false); return; }
-    fetch(C.liveEndpoint, { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.json() : null; })
+    api("/live")
       .then(function (d) { setLive(d && d.live, d && d.title); })
       .catch(function () { setLive(false); });
   }
@@ -120,9 +140,9 @@
   });
 
   /* ---------------------------------------------------------
-     GOOGLE CALENDAR
-     Upcoming dates. If there are none, show recent past ones
-     instead — an empty section makes a live act look dead.
+     DATES — from the Worker, which reads the .ics feed.
+     If nothing is coming up, show recent past dates instead.
+     An empty section makes a live act look dead.
      --------------------------------------------------------- */
 
   var MONTHS = {
@@ -130,128 +150,134 @@
     es: ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Set","Oct","Nov","Dic"]
   };
 
-  function parseEvent(ev) {
-    var raw = (ev.start && (ev.start.dateTime || ev.start.date)) || "";
-    var allDay = !!(ev.start && ev.start.date && !ev.start.dateTime);
-    var d = new Date(allDay ? raw + "T12:00:00" : raw);
-    return {
-      date: d,
-      allDay: allDay,
-      title: ev.summary || "TBA",
-      where: ev.location || "",
-      url: ev.htmlLink || ""
-    };
-  }
+  var datesState = null;
 
   function fmtDay(d) {
-    return String(d.getDate()).padStart(2, "0") + " " + MONTHS[lang][d.getMonth()] +
-           " " + String(d.getFullYear()).slice(2);
+    return String(d.getDate()).padStart(2, "0") + " " +
+           MONTHS[lang][d.getMonth()] + " " + String(d.getFullYear()).slice(2);
   }
 
-  function fmtTime(e) {
-    if (e.allDay) return "";
+  function fmtTime(ev) {
+    if (ev.allDay) return "";
     try {
-      return new Intl.DateTimeFormat(lang === "es" ? "es-UY" : "en-GB", {
-        hour: "2-digit", minute: "2-digit", hour12: false
-      }).format(e.date);
-    } catch (err) { return ""; }
+      return new Intl.DateTimeFormat(es("es-UY", "en-GB"), {
+        hour: "2-digit", minute: "2-digit", hour12: false,
+        timeZone: "America/Montevideo"
+      }).format(new Date(ev.startMs));
+    } catch (e) { return ""; }
   }
 
-  var calendarCache = null;
-
-  function calUrl(extra) {
-    return "https://www.googleapis.com/calendar/v3/calendars/" +
-      encodeURIComponent(C.calendarId) + "/events?key=" + encodeURIComponent(C.calendarKey) +
-      "&singleEvents=true&orderBy=startTime&maxResults=12" + extra;
-  }
-
-  function loadCalendar() {
-    if (!C.calendarKey) {
-      calendarCache = { mode: "nokey", items: [] };
-      renderDates();
-      return;
-    }
-    var now = new Date().toISOString();
-
-    fetch(calUrl("&timeMin=" + now))
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+  function loadDates() {
+    api("/dates")
       .then(function (d) {
-        var items = (d.items || []).map(parseEvent);
-        if (items.length) {
-          calendarCache = { mode: "upcoming", items: items.slice(0, 8) };
-          renderDates();
-          return;
-        }
-        // Nothing coming up — fall back to what already happened.
-        return fetch(calUrl("&timeMax=" + now))
-          .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
-          .then(function (p) {
-            var past = (p.items || []).map(parseEvent).reverse().slice(0, 6);
-            calendarCache = { mode: "past", items: past };
-            renderDates();
-          });
+        if (d.error) throw new Error(d.error);
+        datesState = (d.upcoming && d.upcoming.length)
+          ? { mode: "upcoming", items: d.upcoming }
+          : { mode: "past", items: d.past || [] };
+        renderDates();
       })
       .catch(function () {
-        calendarCache = { mode: "error", items: [] };
+        datesState = { mode: API ? "error" : "nokey", items: [] };
         renderDates();
       });
   }
 
   function renderDates() {
-    var box = $("dates");
-    var note = $("datesNote");
-    if (!calendarCache) return;
+    if (!datesState) return;
+    var box = $("dates"), note = $("datesNote");
+    var items = datesState.items;
 
-    var mode = calendarCache.mode;
-    var items = calendarCache.items;
-
-    if (mode === "nokey") {
+    if (datesState.mode === "nokey") {
       note.textContent = "";
-      box.innerHTML = '<p class="empty">' + (lang === "es"
-        ? "Agenda no conectada todavía — agregá la clave de API en content.js."
-        : "Calendar not connected yet — add the API key in content.js.") + "</p>";
+      box.innerHTML = '<p class="empty">' + es(
+        "Agenda no conectada todavía — agregá la URL del Worker en content.js.",
+        "Calendar not connected yet — add the Worker URL in content.js.") + "</p>";
       return;
     }
 
     if (!items.length) {
       note.textContent = "";
-      box.innerHTML = '<p class="empty">' + (lang === "es"
-        ? "Nada anunciado por ahora. Escribime para fechas."
-        : "Nothing announced yet. Get in touch for dates.") + "</p>";
+      box.innerHTML = '<p class="empty">' + es(
+        "Nada anunciado por ahora. Escribime para fechas.",
+        "Nothing announced yet. Get in touch for dates.") + "</p>";
       return;
     }
 
-    note.textContent = mode === "past"
-      ? (lang === "es" ? "Recientes" : "Recent")
-      : (lang === "es" ? "Próximas" : "Upcoming");
+    note.textContent = datesState.mode === "past"
+      ? es("Recientes", "Recent")
+      : es("Próximas", "Upcoming");
 
     var html = '<div class="rows">';
-    items.forEach(function (e) {
-      var tag = e.url ? "a" : "div";
-      var attrs = e.url ? ' href="' + esc(e.url) + '" target="_blank" rel="noopener"' : "";
-      html += "<" + tag + ' class="row"' + attrs + ">" +
-        '<span class="row__key">' + fmtDay(e.date) + "</span>" +
-        '<span class="row__main">' + esc(e.title) + "</span>" +
-        '<span class="row__end">' + fmtTime(e) + "</span>" +
-        (e.where ? '<span class="row__sub">' + esc(e.where) + "</span>" : "") +
-        "</" + tag + ">";
+    items.forEach(function (ev) {
+      html += '<div class="row">' +
+        '<span class="row__key">' + fmtDay(new Date(ev.startMs)) + "</span>" +
+        '<span class="row__main">' + esc(ev.title) + "</span>" +
+        '<span class="row__end">' + fmtTime(ev) + "</span>" +
+        (ev.where ? '<span class="row__sub">' + esc(ev.where) + "</span>" : "") +
+        "</div>";
     });
     box.innerHTML = html + "</div>";
   }
 
   /* ---------------------------------------------------------
-     RENDER — everything driven by content.js
+     CRATE — from Discogs via the Worker. Newest additions
+     first. Notes you've written in content.js get merged in
+     by release ID; records without one show as catalogue rows.
      --------------------------------------------------------- */
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
+  var crateState = null;
+
+  function loadCrate() {
+    api("/crate")
+      .then(function (d) {
+        if (d.error) throw new Error(d.error);
+        crateState = { records: d.records || [], count: d.count || 0 };
+        renderCrate();
+      })
+      .catch(function () {
+        crateState = { records: [], count: 0, failed: !!API };
+        renderCrate();
+      });
   }
+
+  function renderCrate() {
+    if (!crateState) return;
+    var box = $("crate"), note = $("crateNote");
+    var recs = crateState.records;
+
+    if (!recs.length) {
+      note.textContent = "";
+      box.innerHTML = '<p class="empty">' + (crateState.failed
+        ? es("No se pudo cargar la colección.", "Couldn't load the collection.")
+        : es("Colección no conectada todavía.", "Collection not connected yet.")) + "</p>";
+      return;
+    }
+
+    note.textContent = crateState.count
+      ? crateState.count + es(" discos", " records")
+      : "";
+
+    box.innerHTML = recs.map(function (r) {
+      var n = (S.crateNotes || {})[String(r.id)];
+      var meta = [r.label, r.cat].filter(Boolean).join(" / ");
+      return '<a class="row rec" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
+        (r.thumb
+          ? '<img src="' + esc(r.thumb) + '" alt="" loading="lazy" decoding="async" width="56" height="56">'
+          : '<span class="rec__blank" aria-hidden="true"></span>') +
+        '<span class="row__main">' + esc(r.artist) + " — " + esc(r.title) + "</span>" +
+        '<span class="row__end">' + esc(r.year) + "</span>" +
+        '<span class="row__sub">' + esc(meta) +
+          (n ? '<em class="rec__note">' + esc(t(n)) + "</em>" : "") +
+        "</span></a>";
+    }).join("");
+  }
+
+  /* ---------------------------------------------------------
+     RENDER — everything else driven by content.js
+     --------------------------------------------------------- */
 
   function render() {
     var id = S.identity;
-
     $("wordmark").textContent = id.name;
 
     var L = lang === "es"
@@ -268,7 +294,6 @@
     $("bioEn").textContent = id.bio.en;
     $("bioEs").textContent = id.bio.es;
 
-    // hero image
     if (S.hero && S.hero.src) {
       var fig = $("heroImg");
       fig.hidden = false;
@@ -276,23 +301,12 @@
                       '" loading="lazy" decoding="async">';
     }
 
-    // sets
     $("sets").innerHTML = (S.sets || []).map(function (s) {
       return '<div class="embed embed--audio" style="margin-bottom:1rem">' +
         '<button class="embed__btn" type="button" data-embed="sc" data-url="' + esc(s.url) + '">' +
         esc(s.title) + "<small>" + esc(t(s.note)) + "</small></button></div>";
     }).join("");
 
-    // crate
-    $("crate").innerHTML = (S.crate || []).map(function (r) {
-      return '<div class="row">' +
-        '<span class="row__key">' + esc(r.year) + "</span>" +
-        '<span class="row__main">' + esc(r.artist) + " — " + esc(r.title) + "</span>" +
-        '<span class="row__end">' + esc(r.label) + " / " + esc(r.cat) + "</span>" +
-        '<span class="row__sub">' + esc(t(r.note)) + "</span></div>";
-    }).join("");
-
-    // elsewhere
     $("elsewhere").innerHTML = (S.elsewhere || []).map(function (l) {
       return '<a class="row" href="' + esc(l.url) + '" target="_blank" rel="noopener me">' +
         '<span class="row__key">' + esc(hostOf(l.url)) + "</span>" +
@@ -300,22 +314,17 @@
         '<span class="row__end">↗</span></a>';
     }).join("");
 
-    // support
     $("support").innerHTML = (S.support || []).map(function (s) {
       return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' +
-        (lang === "es" ? "Apoyame" : "Support") + " · " + esc(s.label) + "</a>";
+        es("Apoyame", "Support") + " · " + esc(s.label) + "</a>";
     }).join(" ");
 
     renderDates();
+    renderCrate();
   }
 
   function spec(k, v) {
     return '<div class="spec"><dt>' + esc(k) + "</dt><dd>" + esc(v) + "</dd></div>";
-  }
-
-  function hostOf(u) {
-    try { return new URL(u).hostname.replace(/^www\./, ""); }
-    catch (e) { return ""; }
   }
 
   /* ---------------------------------------------------------
@@ -324,16 +333,12 @@
 
   $("contactForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    var form = e.currentTarget;
-    var msg = $("formMsg");
-    var data = new FormData(form);
+    var form = e.currentTarget, msg = $("formMsg"), data = new FormData(form);
 
     if (data.get("company")) return;            // bot filled the honeypot
 
     if (!data.get("name") || !data.get("email") || !data.get("message")) {
-      msg.textContent = lang === "es"
-        ? "Completá los tres campos."
-        : "Fill in all three fields.";
+      msg.textContent = es("Completá los tres campos.", "Fill in all three fields.");
       return;
     }
 
@@ -344,27 +349,23 @@
       return;
     }
 
-    msg.textContent = lang === "es" ? "Enviando…" : "Sending…";
-    fetch(C.formEndpoint, {
-      method: "POST",
-      headers: { "Accept": "application/json" },
-      body: data
-    }).then(function (r) {
-      if (!r.ok) throw new Error();
-      form.reset();
-      msg.textContent = lang === "es"
-        ? "Enviado. Te respondo pronto."
-        : "Sent. I'll get back to you.";
-    }).catch(function () {
-      msg.textContent = lang === "es"
-        ? "No se pudo enviar. Escribime a " + C.email
-        : "That didn't send. Email me at " + C.email;
-    });
+    msg.textContent = es("Enviando…", "Sending…");
+    fetch(C.formEndpoint, { method: "POST", headers: { "Accept": "application/json" }, body: data })
+      .then(function (r) {
+        if (!r.ok) throw new Error();
+        form.reset();
+        msg.textContent = es("Enviado. Te respondo pronto.", "Sent. I'll get back to you.");
+      })
+      .catch(function () {
+        msg.textContent = es("No se pudo enviar. Escribime a " + C.email,
+                             "That didn't send. Email me at " + C.email);
+      });
   });
 
   /* --------------------------------------------------------- */
 
   render();
-  loadCalendar();
+  loadDates();
+  loadCrate();
 
 })();

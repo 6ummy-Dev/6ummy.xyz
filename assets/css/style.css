@@ -449,3 +449,47 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 .footer__end { margin-left: auto; }
 
 .tagline { text-transform: none; letter-spacing: .04em; }
+
+/* ============================================================
+   CRATE ROWS — sleeve thumbnails from Discogs.
+   Desaturated like every other image, so the artwork sits
+   inside the palette instead of fighting it.
+   ============================================================ */
+
+.rec {
+  grid-template-columns: 3.5rem 1fr auto;
+  align-items: start;
+  gap: .3rem 1rem;
+}
+
+.rec img,
+.rec__blank {
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.06);
+  background: var(--rule);
+  grid-row: span 2;
+}
+
+.rec .row__main { padding-top: .1rem; }
+
+.rec .row__sub {
+  grid-column: 2 / -1;
+  display: block;
+}
+
+.rec__note {
+  display: block;
+  font-style: normal;
+  color: var(--ink);
+  margin-top: .3rem;
+  max-width: 40rem;
+}
+
+@media (max-width: 34rem) {
+  .rec { grid-template-columns: 2.75rem 1fr auto; }
+  .rec img,
+  .rec__blank { width: 2.75rem; height: 2.75rem; }
+  .rec .row__sub { grid-column: 2 / -1; }
+}
