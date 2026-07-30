@@ -493,3 +493,36 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   .rec__blank { width: 2.75rem; height: 2.75rem; }
   .rec .row__sub { grid-column: 2 / -1; }
 }
+
+/* ============================================================
+   THE MARK
+   Pixel art, so image-rendering: pixelated is mandatory —
+   without it browsers smooth the blocks into mush at any size.
+
+   Desaturated by default like every other image here, and it
+   floods to full colour the moment the stream goes on. The logo
+   is roughly two-thirds #FFEA00, so showing it in colour all the
+   time would spend the one signal the palette has.
+
+   To make it always full colour instead: change the filter on
+   .mark img to `none` and delete the .is-live rule below.
+   ============================================================ */
+
+.mark {
+  margin: 0 0 clamp(1.25rem, 4vw, 2rem);
+  width: clamp(6.5rem, 20vw, 10rem);
+}
+
+.mark img {
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  filter: grayscale(1) contrast(1.06);
+  transition: filter .45s ease;
+}
+
+body.is-live .mark img { filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mark img { transition: none; }
+}
