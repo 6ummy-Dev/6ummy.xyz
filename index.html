@@ -13,15 +13,23 @@
 <meta property="og:title" content="6UMMY">
 <meta property="og:description" content="DJ, collector and curator based in Uruguay. Records, livestreams, rare finds.">
 <meta property="og:url" content="https://6ummy.xyz/">
+<meta property="og:image" content="https://6ummy.xyz/assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://6ummy.xyz/assets/img/og.png">
 <meta name="twitter:site" content="@6ummy">
 
 <link rel="canonical" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="en" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="es" href="https://6ummy.xyz/?lang=es">
 
-<!-- Yellow square with the 6. Inline SVG = zero requests. -->
+<!-- Small sizes keep the 6 glyph (the avatar turns to mush at 32px);
+     larger sizes and the touch icon use the real mark. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23FFEA00'/%3E%3Ctext x='32' y='47' font-family='Helvetica,Arial,sans-serif' font-weight='700' font-size='46' text-anchor='middle' fill='%23232323'%3E6%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/img/icon-48.png">
+<link rel="icon" type="image/png" sizes="80x80" href="assets/img/icon-80.png">
+<link rel="apple-touch-icon" href="assets/img/logo-static.png">
 
 <link rel="preconnect" href="https://www.googleapis.com" crossorigin>
 <link rel="stylesheet" href="assets/css/style.css">
@@ -46,6 +54,14 @@
 
   <!-- ========== HERO ========== -->
   <section class="hero wrap">
+    <figure class="mark">
+      <picture>
+        <!-- Reduced-motion visitors get a still frame instead of the loop. -->
+        <source srcset="assets/img/logo-static.png" media="(prefers-reduced-motion: reduce)">
+        <img src="assets/img/logo.gif" alt="6ummy" width="320" height="320" decoding="async">
+      </picture>
+    </figure>
+
     <h1 class="wordmark" id="wordmark">6UMMY</h1>
 
     <dl class="specs" id="specs"></dl>
