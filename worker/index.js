@@ -60,11 +60,25 @@ export default {
     const path = new URL(req.url).pathname.replace(/\/+$/, "") || "/";
 
     if (req.method === "OPTIONS") {
+      /* Echo whatever headers the caller asked for. A plain browser
+         fetch sends none of these and never preflights at all — but
+         anything that signs its requests (Web Bot Auth sends
+         signature / signature-agent / signature-input) does, and with
+         no Allow-Headers in the response the preflight fails and every
+         route is unreachable to it. That was 4 CORS violations in the
+         Cloudflare Radar scan.
+
+         Safe to mirror: this Worker is read-only public data, the
+         origin allowlist above is what actually gates access, and
+         permitting a header is not the same as trusting it. */
+      const asked = req.headers.get("Access-Control-Request-Headers");
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": corsOrigin(req),
           "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Max-Age": "86400"
+          "Access-Control-Allow-Headers": asked || "Content-Type",
+          "Access-Control-Max-Age": "86400",
+          "Vary": "Origin, Access-Control-Request-Headers"
         }
       });
     }

@@ -42,6 +42,68 @@
   form-action 'self' https://formspree.io https://api.web3forms.com;
 ">
 
+<!-- Structured data. Static rather than generated from content.js:
+     crawlers that don't run JS still get it, and it's the one place
+     duplication is worth the reliability. Keep in sync with the
+     identity + elsewhere blocks in assets/js/content.js. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://6ummy.xyz/#person",
+      "name": "6UMMY",
+      "alternateName": "6ummy",
+      "url": "https://6ummy.xyz/",
+      "image": "https://6ummy.xyz/assets/img/og.png",
+      "jobTitle": "DJ, collector and curator",
+      "description": "DJ, collector and curator based in Montevideo, Uruguay. Tech house, deep house and minimal techno. Livestreams, gigs and vinyl since 2004.",
+      "knowsLanguage": ["en", "es"],
+      "homeLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Montevideo",
+          "addressCountry": "UY"
+        }
+      },
+      "sameAs": [
+        "https://x.com/6ummy",
+        "https://soundcloud.com/6ummy",
+        "https://www.twitch.tv/6ummy",
+        "https://www.youtube.com/10mopiso",
+        "https://www.discogs.com/user/6ummy",
+        "https://opensea.io/6ummy",
+        "https://objkt.com/@6ummy",
+        "https://nightwatcher.life"
+      ]
+    },
+    {
+      "@type": "MusicGroup",
+      "@id": "https://6ummy.xyz/#act",
+      "name": "6UMMY",
+      "url": "https://6ummy.xyz/",
+      "genre": ["Tech house", "Deep house", "Minimal techno"],
+      "foundingDate": "2004",
+      "foundingLocation": {
+        "@type": "Place",
+        "name": "Montevideo, Uruguay"
+      },
+      "member": { "@id": "https://6ummy.xyz/#person" }
+    },
+    {
+      "@type": "ProfilePage",
+      "@id": "https://6ummy.xyz/#page",
+      "url": "https://6ummy.xyz/",
+      "name": "6UMMY",
+      "inLanguage": "en",
+      "mainEntity": { "@id": "https://6ummy.xyz/#person" }
+    }
+  ]
+}
+</script>
+
 <link rel="canonical" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="en" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="es" href="https://6ummy.xyz/?lang=es">

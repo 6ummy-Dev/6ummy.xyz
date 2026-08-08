@@ -692,9 +692,12 @@
       var lab = document.createElement("span");
       lab.className = "index__label";
       [].forEach.call(jump.children, function (n) { lab.appendChild(n.cloneNode(true)); });
+      /* The rail carries the ordinal only — "1.4" is three glyphs of
+         pixel art and made the rail twice as wide as it needed to be.
+         The section head still shows the full 1.n. */
       var n = document.createElement("span");
       n.className = "index__num";
-      n.innerHTML = pixelNum(num);
+      n.innerHTML = pixelNum(String(i + 1));
       a.setAttribute("aria-label", num + " " + (h2.textContent || "").trim());
       a.appendChild(lab);
       a.appendChild(n);

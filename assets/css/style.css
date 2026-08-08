@@ -441,6 +441,13 @@ a.row:hover { background: var(--hover); }
 }
 
 .embed--video { aspect-ratio: 16 / 9; }
+
+/* Off air, a full 16:9 box reads as a broken embed rather than an
+   idle one. Collapse it to a band; it opens back up when live. */
+body:not(.is-live) #twitchEmbed {
+  aspect-ratio: auto;
+  min-height: 7.5rem;
+}
 /* A SoundCloud playlist widget renders its tracklist only when it
    has the room; below ~300px it collapses to its header and reads
    as a single track.
@@ -722,7 +729,11 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
    page gutter already does this. */
 @media (max-width: 70rem) {
   .wrap { padding-right: calc(var(--pad) + 2.25rem); }
-  .footer.wrap { padding-right: calc(var(--pad) + 2.25rem); }
+
+  /* The rail is pinned to the top of the viewport, so it never sits
+     beside the footer. Inheriting its clearance pushed every footer
+     field ~18px left of centre on a phone. */
+  .footer.wrap { padding-right: var(--pad); }
 }
 
 .index__list {
