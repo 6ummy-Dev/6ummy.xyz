@@ -96,6 +96,19 @@ window.SITE = {
      a line for the few you care about, keyed by the Discogs
      release ID (the number in the release URL). Records without
      a note still show as a clean catalogue row.
+
+     To get a paste-ready scaffold with the real IDs already filled
+     in, open the live site and run this in the browser console:
+
+       fetch(SITE.config.workerUrl + "/crate")
+         .then(r => r.json())
+         .then(d => console.log(d.records.map(r =>
+           `    "${r.id}": { // ${r.artist} — ${r.title}\n` +
+           `      en: "",\n      es: ""\n    },`).join("\n")));
+
+     It prints one block per record currently in the crate. Paste the
+     output between the braces below and write the two lines. Only the
+     newest 12 are fetched, so notes on older releases will not render.
      --------------------------------------------------------- */
   crateNotes: {
     // "249504": {

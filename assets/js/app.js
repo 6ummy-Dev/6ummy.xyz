@@ -409,12 +409,18 @@
     }).join("");
   }
 
+  /* The hostname column restated the name in almost every row —
+     soundcloud.com next to SoundCloud, nightwatcher.life next to
+     Nightwatcher. Dropped it: the name is the link, and the two
+     rows that genuinely need context already carry a tag. */
   function linkRow(l) {
-    return '<a class="row" href="' + esc(l.url) + '" target="_blank" rel="noopener me">' +
-      '<span class="row__key">' + esc(hostOf(l.url)) + "</span>" +
-      '<span class="row__main">' + esc(l.label) +
-        (l.note ? ' <span class="row__tag">' + esc(t(l.note)) + "</span>" : "") + "</span>" +
-      '<span class="row__end">\u2197</span></a>';
+    return '<div class="row row--link">' +
+      '<span class="row__main">' +
+        '<a class="row__link" href="' + esc(l.url) + '" target="_blank" rel="noopener me">' +
+          esc(l.label) + "</a>" +
+        (l.note ? ' <span class="row__tag">' + esc(t(l.note)) + "</span>" : "") +
+      "</span>" +
+      '<span class="row__end" aria-hidden="true">\u2197</span></div>';
   }
 
   function spec(k, v) {

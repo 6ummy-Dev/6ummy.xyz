@@ -9,6 +9,37 @@
    survives the promotion.
    ============================================================ */
 
+/* ============================================================
+   SILKSCREEN — SIL Open Font Licence 1.1, licence text alongside
+   the files in assets/fonts/. Self-hosted rather than linked from
+   a CDN: no third-party request, no render-blocking hop, and it
+   can't disappear on us.
+
+   Display only. Silkscreen is a bitmap face drawn for small sizes;
+   set a paragraph in it and it becomes work to read. It takes the
+   section titles, where it echoes the drawn wordmark, and the body
+   text stays in the mono.
+
+   swap: the mono renders immediately and Silkscreen replaces it
+   once loaded, so a slow connection never gets invisible headings.
+   ============================================================ */
+
+@font-face {
+  font-family: "Silkscreen";
+  src: url("../fonts/silkscreen-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Silkscreen";
+  src: url("../fonts/silkscreen-latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --ink:     #EFF3F4;
   --paper:   #232323;
@@ -29,6 +60,7 @@
           "Liberation Mono", ui-monospace, SFMono-Regular, "SF Mono",
           Menlo, Consolas, monospace;
   --sans: var(--mono);
+  --pixel: "Silkscreen", var(--mono);
 
   --w: 62rem;
   --pad: clamp(1.25rem, 5vw, 3.5rem);
@@ -306,11 +338,11 @@ body.is-live .wordmark__cursor { animation: none; }
 
 .section__head h2 {
   margin: 0 auto 0 0;
-  font-family: var(--mono);
-  font-size: clamp(1.05rem, 2.6vw, 1.6rem);
-  font-weight: 700;
-  letter-spacing: .02em;
-  line-height: 1.1;
+  font-family: var(--pixel);
+  font-size: clamp(1rem, 2.4vw, 1.45rem);
+  font-weight: 400;
+  letter-spacing: .06em;
+  line-height: 1.25;
   text-transform: uppercase;
 }
 
@@ -611,8 +643,8 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 .group + .group { margin-top: 1.75rem; }
 
 .group__name {
-  margin: 0 0 .35rem;
-  font-family: var(--mono);
+  margin: 0 0 .45rem;
+  font-family: var(--pixel);
   font-size: .6875rem;
   font-weight: 400;
   letter-spacing: .16em;
@@ -865,4 +897,26 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
     align-items: center;
     text-align: center;
   }
+}
+
+/* ============================================================
+   LINK ROWS — the name carries the link, so the row itself is no
+   longer one large target and the hostname column is gone.
+   ============================================================ */
+
+.row--link { grid-template-columns: 1fr auto; }
+
+.row__link {
+  border-bottom: 1px solid var(--rule-hi);
+  transition: color .2s ease, border-color .2s ease;
+}
+
+.row__link:hover,
+.row__link:focus-visible {
+  color: var(--live);
+  border-bottom-color: var(--live);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row__link { transition: none; }
 }
