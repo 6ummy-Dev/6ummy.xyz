@@ -627,9 +627,18 @@
 
   var sections = [], indexItems = [], enhanced = false;
 
+  /* The status bar is fixed and its height only changes when the
+     viewport does, but this was re-querying the DOM and reading a
+     rect on every scroll frame — a layout read after whatever the
+     frame had just written, which forces the browser to lay the
+     page out again on the spot. Measured once, cached, invalidated
+     on resize. */
+  var barCache = null;
   function barPx() {
+    if (barCache !== null) return barCache;
     var b = document.querySelector(".status");
-    return b ? b.getBoundingClientRect().height : 36;
+    barCache = b ? b.getBoundingClientRect().height : 36;
+    return barCache;
   }
 
   function goTo(sec) {
@@ -747,7 +756,7 @@
     });
   }
   window.addEventListener("scroll", spy, { passive: true });
-  window.addEventListener("resize", spy);
+  window.addEventListener("resize", function () { barCache = null; spy(); });
 
   /* ---------------------------------------------------------
      REVEALS — reveal and settle, nothing pinned or scrubbed.

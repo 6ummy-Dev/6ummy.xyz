@@ -15,10 +15,15 @@ After unzipping, the folder must look exactly like this:
   assets/js/content.js
   assets/js/app.js
   assets/fonts/silkscreen-latin-400-normal.woff2
-  assets/fonts/silkscreen-latin-700-normal.woff2
   assets/fonts/OFL.txt
   assets/img/*.png, *.gif
   worker/index.js
+  llms.txt
+
+Note: silkscreen-latin-700-normal.woff2 is no longer part of the
+site. Nothing ever set a bold Silkscreen, so the face was declared
+and never used. A zip upload does not delete files already in the
+repo — delete that one file in the GitHub UI once, and it's gone.
 
 Check from inside the folder:
 

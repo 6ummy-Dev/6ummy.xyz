@@ -1,34 +1,130 @@
-6ummy.xyz — cron restraint                        8 Aug 2026
+6ummy.xyz — PageSpeed pass                        8 Aug 2026
 
-ONE FILE  worker/index.js   (plus worker/test.mjs, optional, 52/52)
+FIVE FILES  index.html
+            404.html
+            assets/css/style.css
+            assets/js/app.js
+            llms.txt
 
-Upload, redeploy. Nothing else changes.
+Plus VERIFY.txt (checklist text only).
+
+Upload and you're done. Nothing to redeploy — the Worker is untouched.
+
+ONE MANUAL STEP: delete assets/fonts/silkscreen-latin-700-normal.woff2
+in the GitHub UI. A zip upload never deletes files already in the repo,
+and nothing references that font any more.
+
+MOBILE, BEFORE AND AFTER  (Lighthouse, throttled, measured locally)
+
+  Performance          81  ->  99
+  Cumulative Layout Shift   0.257  ->  0
+  Largest Contentful Paint  2.7 s  ->  1.7 s
+  Total Blocking Time       180 ms ->  60 ms
+
+  Accessibility, Best Practices and SEO were already 100 and stayed
+  there. The live PSI run scored 87 rather than 81 on a faster
+  connection; the shift was identical either way, and it is the shift
+  that was costing the points.
 
 WHAT AND WHY
 
-  While the crate is cold, each cron tick was costing three Discogs
-  calls, not one:
+  1. THE HERO NOW SHIPS DRAWN.  This was the whole 0.26.
 
-    1. authenticated attempt        -> 429
-    2. retry after backoff          -> 429
-    3. anonymous fallback           -> 429
+     The hero was four empty elements — <h1>6UMMY</h1>, an empty
+     <dl>, two empty bio spans — that app.js filled in on load. It
+     could not fill them fast enough. The browser painted at 2051 ms;
+     app.js finished compiling and ran render() at 2089 ms. In that
+     38 ms gap the reader saw a hero of nothing, and then everything
+     below it dropped 297 px.
 
-  The retry and the fallback were written for the request path, where
-  a visitor is waiting and it is the only shot. On a per-minute cron
-  the next shot is sixty seconds away, so a cold tick was burning
-  three slots of exactly the shared headroom it is hunting for.
+     Preloading the script did not fix it and could not: 31 KB still
+     has to compile, and a frame gets out during that. The only fix
+     is for the first paint to already be the final layout.
 
-  warm() now always calls the producer with first=false: one plain
-  attempt per tick. 1440 calls/day instead of ~4300. The request path
-  is untouched — a cold visitor still gets retry + anonymous fallback.
+     So the drawn wordmark, the drawn status-bar mark, the five spec
+     rows and both bios are now in index.html. app.js still builds
+     all of it from content.js and still overwrites them on load —
+     content.js remains the one file you edit — but it now overwrites
+     them with the same thing, so nothing moves.
 
-  To be clear about proportion: this was never the cause. Readings
-  were already 78-88 before any cron existed. Our share is a few
-  percent of a bucket that sits around 80 on its own. This is about
-  not being part of the problem, not about fixing it.
+     Two things came free. The wordmark is the LCP element, and it no
+     longer waits on a 31 KB script: LCP fell a full second. And with
+     JS off the page opens on a drawn mark, five facts and a bio
+     instead of the word "6UMMY" alone.
 
-TESTS ADDED
+     If the name ever changes, run this in the console and paste the
+     result back into index.html:
 
-  - cold throttled tick makes ONE call, not three
-  - and stores nothing
-  - a cold visitor request still tries all three
+       document.getElementById("wordmark").innerHTML
+       document.querySelector(".status__mark").innerHTML
+
+  2. FONT-DISPLAY: OPTIONAL, AND THE FONT IS PRELOADED.
+
+     Silkscreen was set to swap, so a late-arriving font re-flowed
+     every section title. PSI named it as a layout-shift culprit.
+     With optional the browser picks one face before first paint and
+     never re-lays-out. The preload is what keeps that face being
+     Silkscreen: it now starts downloading with the stylesheet
+     instead of after it, and at 9 KB it wins comfortably — verified
+     on a throttled 1.6 Mbps / 150 ms profile.
+
+  3. THE BOLD SILKSCREEN IS GONE.
+
+     Declared, never used. Every font-weight: 700 on the page is on
+     the mono. Hence the manual delete above.
+
+  4. PRELOADS AND PRECONNECTS.
+
+     content.js and app.js were discovered only when the parser
+     reached the end of the body. They are named in the head now, so
+     they start with the stylesheet. Nothing about what loads
+     changed, only when it is found.
+
+     The preconnect to googleapis.com went. The browser stopped
+     calling the YouTube API directly when the Worker took that over,
+     so it was a handshake spent on nothing. The Worker's own origin
+     and i.ytimg.com replaced it — both are hit on every load.
+
+  5. THE SCROLL SPY STOPPED MEASURING THE STATUS BAR.
+
+     barPx() was re-querying the DOM and reading a rect on every
+     scroll frame, right after that frame had written to the page —
+     which forces the browser to lay the whole page out again on the
+     spot. The bar is fixed and only changes height when the viewport
+     does, so it is measured once now and re-measured on resize.
+
+  6. LLMS.TXT REWRITTEN TO THE SPEC.
+
+     PSI flagged it: "File does not appear to contain any links."
+     llmstxt.org wants markdown hyperlinks — [Name](url): notes — and
+     the file had bare URLs, which are not links. Every entry is a
+     real link now, grouped Site / Profiles / Projects / Optional.
+     "Optional" is a defined section in the spec: it marks URLs a
+     model can skip when it needs a shorter context, so the two
+     collectibles profiles and the PayPal link went there.
+
+NOT DONE, AND WHY
+
+  CACHE LIFETIMES (est. 124 KiB).  GitHub Pages serves your assets
+  with a 10-minute cache and will not let you set a response header.
+  Same wall as HSTS and X-Frame-Options. It only unlocks by moving
+  the site to Cloudflare Pages.
+
+  IMAGE DELIVERY (est. 65 KiB).  All of it is YouTube's own
+  mqdefault.jpg thumbnails. YouTube does serve WebP versions at
+  /vi_webp/<id>/mqdefault.webp, but <picture> does not fall back when
+  a source 404s — it shows a broken image — and an onerror handler
+  would need inline script, which the CSP forbids. The thumbnails are
+  already lazy-loaded and below the fold. Not worth a fragile
+  dependency on an undocumented URL for a site meant to be left
+  alone.
+
+  MINIFYING CSS AND JS (est. 10 KiB).  Needs a build step, and the
+  site's whole premise is that it doesn't have one. The estimate is
+  measured uncompressed; GitHub Pages gzips both files, so the real
+  saving is a couple of KB, against never being able to edit
+  style.css in place again.
+
+  THE CRATE.  Still Discogs 429 — checked again during this pass,
+  96 used against a ceiling of 60. Unrelated to any of the above and
+  tracked separately.

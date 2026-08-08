@@ -119,7 +119,27 @@
 <link rel="icon" type="image/png" sizes="80x80" href="assets/img/icon-80.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/img/icon-180.png">
 
-<link rel="preconnect" href="https://www.googleapis.com" crossorigin>
+<!-- The two origins the page actually talks to. googleapis.com used to
+     sit here, left over from when the browser called the YouTube API
+     directly — it hasn't since the Worker took that over, so it was a
+     handshake spent on nothing. The Worker is hit on every load
+     (/live, /dates, /crate, /youtube); i.ytimg.com serves the
+     portfolio thumbnails. -->
+<link rel="preconnect" href="https://6ummy-api.6ummy-xyz.workers.dev" crossorigin>
+<link rel="preconnect" href="https://i.ytimg.com" crossorigin>
+
+<!-- Preloads. None of these change what loads — only when it's
+     discovered. The font and both scripts are otherwise found late:
+     the font only after the stylesheet has been fetched and parsed,
+     the scripts only when the parser reaches the end of the body.
+     Named here, all three start with the stylesheet.
+
+     The font preload is what lets style.css use font-display:
+     optional without ever falling back in practice. -->
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/silkscreen-latin-400-normal.woff2" crossorigin>
+<link rel="preload" as="script" href="assets/js/content.js">
+<link rel="preload" as="script" href="assets/js/app.js">
+
 <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
@@ -127,7 +147,7 @@
 
 <!-- ========== STATUS BAR ========== -->
 <header class="status" id="status">
-  <span class="status__mark">6</span>
+  <span class="status__mark"><span class="sr">6</span><svg class="pix" viewBox="0 0 5 7" preserveAspectRatio="xMinYMid meet" fill="currentColor" shape-rendering="crispEdges" focusable="false" aria-hidden="true"><rect x="2" y="0" width="1" height="1"></rect><rect x="3" y="0" width="1" height="1"></rect><rect x="1" y="1" width="1" height="1"></rect><rect x="0" y="2" width="1" height="1"></rect><rect x="0" y="3" width="1" height="1"></rect><rect x="1" y="3" width="1" height="1"></rect><rect x="2" y="3" width="1" height="1"></rect><rect x="3" y="3" width="1" height="1"></rect><rect x="0" y="4" width="1" height="1"></rect><rect x="4" y="4" width="1" height="1"></rect><rect x="0" y="5" width="1" height="1"></rect><rect x="4" y="5" width="1" height="1"></rect><rect x="1" y="6" width="1" height="1"></rect><rect x="2" y="6" width="1" height="1"></rect><rect x="3" y="6" width="1" height="1"></rect></svg></span>
   <span class="status__state">
     <span class="dot" aria-hidden="true"></span>
     <span id="stateLabel" aria-live="polite">
@@ -142,12 +162,35 @@
 
   <!-- ========== HERO ========== -->
   <section class="hero wrap">
-    <h1 class="wordmark" id="wordmark">6UMMY</h1>
+    <!-- The hero ships drawn, not blank.
 
-    <dl class="specs" id="specs"></dl>
+         app.js builds all three of these from content.js, and it is
+         still the source of truth — it overwrites them on load, and
+         a language switch re-renders the labels. What changed is the
+         starting state. Left empty, the browser painted a hero of
+         nothing, app.js filled it ~60 ms later, and the whole page
+         below jumped 297 px: 0.26 CLS on mobile, the only thing
+         keeping the score off 100. Now the first paint is already
+         the final layout and there is nothing to shift.
+
+         It buys two other things. The wordmark is the LCP element,
+         so having it in the HTML means the largest paint no longer
+         waits on a 31 KB script. And with JS off the page opens on
+         a drawn mark, five facts and a bio instead of one word.
+
+         The SVGs are pixelText("6UMMY") and pixelText("6") — the
+         same output app.js generates, pasted. The name has been
+         6UMMY since 2004; if it ever isn't, run
+         `document.getElementById("wordmark").innerHTML` in the
+         console and paste the result back here. Keep the specs and
+         the bio matching the identity block in content.js. -->
+
+    <h1 class="wordmark wordmark--pix" id="wordmark"><span class="sr">6UMMY</span><svg class="pix pix--wordmark" viewBox="0 0 29 7" preserveAspectRatio="xMinYMid meet" fill="currentColor" shape-rendering="crispEdges" focusable="false" aria-hidden="true"><rect x="2" y="0" width="1" height="1"></rect><rect x="3" y="0" width="1" height="1"></rect><rect x="1" y="1" width="1" height="1"></rect><rect x="0" y="2" width="1" height="1"></rect><rect x="0" y="3" width="1" height="1"></rect><rect x="1" y="3" width="1" height="1"></rect><rect x="2" y="3" width="1" height="1"></rect><rect x="3" y="3" width="1" height="1"></rect><rect x="0" y="4" width="1" height="1"></rect><rect x="4" y="4" width="1" height="1"></rect><rect x="0" y="5" width="1" height="1"></rect><rect x="4" y="5" width="1" height="1"></rect><rect x="1" y="6" width="1" height="1"></rect><rect x="2" y="6" width="1" height="1"></rect><rect x="3" y="6" width="1" height="1"></rect><rect x="6" y="0" width="1" height="1"></rect><rect x="10" y="0" width="1" height="1"></rect><rect x="6" y="1" width="1" height="1"></rect><rect x="10" y="1" width="1" height="1"></rect><rect x="6" y="2" width="1" height="1"></rect><rect x="10" y="2" width="1" height="1"></rect><rect x="6" y="3" width="1" height="1"></rect><rect x="10" y="3" width="1" height="1"></rect><rect x="6" y="4" width="1" height="1"></rect><rect x="10" y="4" width="1" height="1"></rect><rect x="6" y="5" width="1" height="1"></rect><rect x="10" y="5" width="1" height="1"></rect><rect x="7" y="6" width="1" height="1"></rect><rect x="8" y="6" width="1" height="1"></rect><rect x="9" y="6" width="1" height="1"></rect><rect x="12" y="0" width="1" height="1"></rect><rect x="16" y="0" width="1" height="1"></rect><rect x="12" y="1" width="1" height="1"></rect><rect x="13" y="1" width="1" height="1"></rect><rect x="15" y="1" width="1" height="1"></rect><rect x="16" y="1" width="1" height="1"></rect><rect x="12" y="2" width="1" height="1"></rect><rect x="14" y="2" width="1" height="1"></rect><rect x="16" y="2" width="1" height="1"></rect><rect x="12" y="3" width="1" height="1"></rect><rect x="14" y="3" width="1" height="1"></rect><rect x="16" y="3" width="1" height="1"></rect><rect x="12" y="4" width="1" height="1"></rect><rect x="16" y="4" width="1" height="1"></rect><rect x="12" y="5" width="1" height="1"></rect><rect x="16" y="5" width="1" height="1"></rect><rect x="12" y="6" width="1" height="1"></rect><rect x="16" y="6" width="1" height="1"></rect><rect x="18" y="0" width="1" height="1"></rect><rect x="22" y="0" width="1" height="1"></rect><rect x="18" y="1" width="1" height="1"></rect><rect x="19" y="1" width="1" height="1"></rect><rect x="21" y="1" width="1" height="1"></rect><rect x="22" y="1" width="1" height="1"></rect><rect x="18" y="2" width="1" height="1"></rect><rect x="20" y="2" width="1" height="1"></rect><rect x="22" y="2" width="1" height="1"></rect><rect x="18" y="3" width="1" height="1"></rect><rect x="20" y="3" width="1" height="1"></rect><rect x="22" y="3" width="1" height="1"></rect><rect x="18" y="4" width="1" height="1"></rect><rect x="22" y="4" width="1" height="1"></rect><rect x="18" y="5" width="1" height="1"></rect><rect x="22" y="5" width="1" height="1"></rect><rect x="18" y="6" width="1" height="1"></rect><rect x="22" y="6" width="1" height="1"></rect><rect x="24" y="0" width="1" height="1"></rect><rect x="28" y="0" width="1" height="1"></rect><rect x="24" y="1" width="1" height="1"></rect><rect x="28" y="1" width="1" height="1"></rect><rect x="25" y="2" width="1" height="1"></rect><rect x="27" y="2" width="1" height="1"></rect><rect x="26" y="3" width="1" height="1"></rect><rect x="26" y="4" width="1" height="1"></rect><rect x="26" y="5" width="1" height="1"></rect><rect x="26" y="6" width="1" height="1"></rect></svg><span class="wordmark__cursor" aria-hidden="true"></span></h1>
+
+    <dl class="specs" id="specs"><div class="spec"><dt><span data-en>Artist</span><span data-es>Artista</span></dt><dd>6ummy</dd></div><div class="spec"><dt><span data-en>Base</span><span data-es>Base</span></dt><dd>Montevideo, UY  ·  UTC−3</dd></div><div class="spec"><dt><span data-en>Since</span><span data-es>Desde</span></dt><dd>2004</dd></div><div class="spec"><dt><span data-en>Format</span><span data-es>Formato</span></dt><dd>Vinyl / Digital</dd></div><div class="spec"><dt><span data-en>Styles</span><span data-es>Estilos</span></dt><dd>Techno · House · Rares</dd></div></dl>
 
     <p class="bio">
-      <span data-en id="bioEn"></span><span data-es id="bioEs"></span>
+      <span data-en id="bioEn">DJ, collector and curator based in Uruguay. Records, livestreams, and the occasional rare find worth talking about.</span><span data-es id="bioEs">DJ, coleccionista y curador radicado en Uruguay. Discos, transmisiones en vivo y de vez en cuando una rareza que vale la pena contar.</span>
     </p>
 
     <figure class="hero__img" id="heroImg" hidden></figure>

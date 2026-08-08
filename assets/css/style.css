@@ -20,8 +20,21 @@
    section titles, where it echoes the drawn wordmark, and the body
    text stays in the mono.
 
-   swap: the mono renders immediately and Silkscreen replaces it
-   once loaded, so a slow connection never gets invisible headings.
+   optional, not swap. Silkscreen is a bitmap face and its metrics
+   are nothing like the mono fallback's, so a late swap re-flowed
+   every section title and moved the page under the reader — 0.26
+   CLS on mobile, the one thing keeping the score off 100. With
+   `optional` the browser commits to one face before first paint
+   and never re-lays-out: if the file is there, Silkscreen; if the
+   connection is too slow, the mono, for that visit only.
+
+   The file is preloaded from index.html so "too slow" almost never
+   happens — it starts downloading alongside the stylesheet instead
+   of after it, and it's 9 KB.
+
+   Only the 400 is declared. Nothing on the page ever asked for a
+   bold Silkscreen; the 700 face was loading a second file to
+   synthesise a weight no rule used.
    ============================================================ */
 
 @font-face {
@@ -29,15 +42,7 @@
   src: url("../fonts/silkscreen-latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: "Silkscreen";
-  src: url("../fonts/silkscreen-latin-700-normal.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 
 :root {

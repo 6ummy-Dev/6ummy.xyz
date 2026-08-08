@@ -1,44 +1,43 @@
 # 6UMMY
 
-> DJ, collector and curator based in Montevideo, Uruguay. Techno, House,
-> and Rares. Livestreams, gigs, and vinyl since 2004.
+> DJ, collector and curator based in Montevideo, Uruguay. Techno, House, and
+> Rares. Livestreams, gigs, and vinyl since 2004. Personal site: one page,
+> bilingual (English / Spanish), no tracking and no cookies. Live data comes
+> from a Cloudflare Worker and everything degrades to readable text if that
+> Worker is unreachable.
 
-Personal site. Single page, bilingual (English / Spanish), no tracking,
-no cookies. Live data is served from a Cloudflare Worker; everything
-degrades to readable text if it is unreachable.
+Identity: 6UMMY, also written 6ummy. Based in Montevideo, Uruguay (UTC-3),
+active since 2004. Formats: vinyl and digital. Styles: techno, house, rares.
+Contact: sync@6ummy.xyz.
 
-## Identity
-- Name: 6UMMY (also written 6ummy)
-- Based: Montevideo, Uruguay (UTC-3)
-- Active since: 2004
-- Formats: vinyl and digital
-- Styles: techno, house, rares
-- Contact: sync@6ummy.xyz
+The page is a single document with seven sections — Stream (live Twitch status
+and player), Dates (upcoming gigs, falling back to recent past dates), Sets
+(recorded SoundCloud sessions), Portfolio (a curated YouTube playlist), Crate
+(the record collection, newest first, from Discogs), Elsewhere (profiles and
+projects), and Bookings & contact. Stream, Dates, Portfolio and Crate are filled
+in by the Worker at page load; the rest is in the HTML.
 
-## Sections
-- Stream — live Twitch status and player
-- Dates — upcoming gigs, falls back to recent past dates
-- Sets — recorded SoundCloud sessions
-- Portfolio — curated YouTube playlist
-- Crate — record collection, newest first, from Discogs
-- Elsewhere — profiles and projects
-- Bookings & contact
+## Site
 
-## Elsewhere
-- https://x.com/6ummy
-- https://soundcloud.com/6ummy
-- https://www.twitch.tv/6ummy
-- https://www.youtube.com/@10mopiso (Décimo Piso)
-- https://www.youtube.com/@domingo_feliz (DMF)
-- https://www.discogs.com/user/6ummy
-- https://opensea.io/6ummy (collectibles)
-- https://objkt.com/@6ummy (collectibles)
-- https://nightwatcher.life
-- https://discord.gg/CfmfMxDZv5 (Techno Punks, Discord)
-- https://x.com/i/communities/1493258083975385088 (VINILOS, X community)
+- [6ummy.xyz](https://6ummy.xyz/): the canonical page, and the whole site — everything below is a profile hosted elsewhere.
 
-## Support
-- https://www.paypal.com/paypalme/6ummy
+## Profiles
 
-## Canonical
-- https://6ummy.xyz/
+- [Twitch](https://www.twitch.tv/6ummy): livestreams; the Stream section on the site reflects this channel's live status.
+- [SoundCloud](https://soundcloud.com/6ummy): recorded vinyl sets, including the Décimo Piso and mnml snds series.
+- [Discogs](https://www.discogs.com/user/6ummy): the record collection the Crate section is drawn from.
+- [X](https://x.com/6ummy): posts and announcements.
+- [Décimo Piso on YouTube](https://www.youtube.com/@10mopiso): video series.
+- [Domingo Feliz on YouTube](https://www.youtube.com/@domingo_feliz): video series, also written DMF.
+
+## Projects
+
+- [Night Watcher](https://nightwatcher.life): separate project, not a 6UMMY release channel.
+- [Techno Punks](https://discord.gg/CfmfMxDZv5): Discord community.
+- [VINILOS](https://x.com/i/communities/1493258083975385088): X community about records.
+
+## Optional
+
+- [OpenSea](https://opensea.io/6ummy): collectibles.
+- [objkt](https://objkt.com/@6ummy): collectibles.
+- [PayPal](https://www.paypal.com/paypalme/6ummy): support link.
