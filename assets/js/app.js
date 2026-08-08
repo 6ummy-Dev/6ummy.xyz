@@ -123,6 +123,11 @@
     if (kind === "twitch") {
       src = "https://player.twitch.tv/?channel=" + encodeURIComponent(C.twitchChannel) +
             "&parent=" + location.hostname + "&autoplay=true";
+    } else if (kind === "yt") {
+      /* nocookie: YouTube sets nothing until someone actually plays,
+         which is the whole point of loading it on demand. */
+      src = "https://www.youtube-nocookie.com/embed/videoseries?list=" +
+            encodeURIComponent(C.youtubePlaylist) + "&rel=0";
     } else {
       // Yellow is the site's accent, so the player's progress bar
       // and controls match instead of arriving in SoundCloud orange.
@@ -302,28 +307,18 @@
   function renderVideos() {
     if (!videoState) return;
     var box = $("portfolio"), note = $("portfolioNote");
-    var max = (S.portfolio && S.portfolio.max) || 12;
-    var vids = videoState.videos.slice(0, max);
+    var n = videoState.videos.length;
 
-    if (!vids.length) {
-      note.textContent = "";
-      box.innerHTML = '<p class="empty">' + (videoState.failed
-        ? es("No se pudo cargar la lista.", "Couldn\u2019t load the playlist.")
-        : es("Lista no conectada todav\u00eda.", "Playlist not connected yet.")) + "</p>";
-      return;
-    }
+    /* The count comes from the Worker, but the player does not — it
+       is built from the playlist ID in content.js, so an unreachable
+       Worker costs the header, not the section. */
+    note.textContent = n ? n + es(" videos", " videos") : "";
 
-    note.textContent = videoState.videos.length > vids.length
-      ? vids.length + " / " + videoState.videos.length
-      : String(vids.length);
-
-    box.innerHTML = vids.map(function (v) {
-      return '<a class="row vid" href="' + esc(v.url) + '" target="_blank" rel="noopener">' +
-        '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" decoding="async" width="96" height="54">' +
-        '<span class="row__main">' + esc(v.title) + "</span>" +
-        '<span class="row__end">' + esc(v.year) + "</span></a>";
-    }).join("");
-    sweep();
+    box.innerHTML =
+      '<button class="embed__btn" type="button" data-embed="yt">' +
+        "<span data-en>Load playlist</span><span data-es>Cargar lista</span>" +
+        "<small>youtube.com" + (n ? " · " + n : "") + "</small>" +
+      "</button>";
   }
 
   /* ---------------------------------------------------------

@@ -608,33 +608,6 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 }
 
 /* ============================================================
-   PORTFOLIO ROWS — YouTube thumbnails are 16:9, so these sit
-   wider and shorter than the square sleeves in the crate.
-   ============================================================ */
-
-.vid {
-  grid-template-columns: 6rem 1fr auto;
-  align-items: center;
-  gap: .3rem 1rem;
-}
-
-.vid img {
-  width: 6rem;
-  height: 3.375rem;
-  object-fit: cover;
-  filter: grayscale(1) contrast(1.06);
-  background: var(--well);
-  transition: filter .35s ease;
-}
-
-.vid:hover img { filter: none; }
-
-@media (max-width: 34rem) {
-  .vid { grid-template-columns: 4.5rem 1fr auto; }
-  .vid img { width: 4.5rem; height: 2.53rem; }
-}
-
-/* ============================================================
    LINK GROUPS — eight flat rows read as a pile. The heading is
    the same weight as a section note, so grouping reads as
    filing rather than as another level of hierarchy.

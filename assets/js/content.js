@@ -23,6 +23,11 @@ window.SITE = {
     email: "sync@6ummy.xyz",      // mailto: fallback if the above is empty
 
     twitchChannel: "6ummy",
+
+    // Public playlist ID. The Worker holds its own copy for the API
+    // call; this one builds the embed URL in the browser, so the
+    // player still works if the Worker is unreachable.
+    youtubePlaylist: "PLToFguQXkN1vWOwHi10bbgIUxUngpc0MI",
     defaultLang: "auto"           // "auto" | "en" | "es"
   },
 
@@ -85,7 +90,7 @@ window.SITE = {
      player is ~900KB per video before anyone presses play.
      --------------------------------------------------------- */
   portfolio: {
-    max: 12                       // how many to show; the Worker returns up to 24
+    max: 24                       // only used for the count shown in the header
   },
 
   /* ---------- 6. CRATE ------------------------------------
