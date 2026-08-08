@@ -6,12 +6,19 @@ After unzipping, the folder must look exactly like this:
   index.html
   README.md
   VERIFY.txt
+  CNAME
+  robots.txt
+  sitemap.xml
   .gitignore
   .well-known/README.txt
   assets/css/style.css
   assets/js/content.js
   assets/js/app.js
-  assets/img/.gitkeep
+  assets/fonts/silkscreen-latin-400-normal.woff2
+  assets/fonts/silkscreen-latin-700-normal.woff2
+  assets/fonts/OFL.txt
+  assets/img/*.png, *.gif
+  worker/index.js
 
 Check from inside the folder:
 

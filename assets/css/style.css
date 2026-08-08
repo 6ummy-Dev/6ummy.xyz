@@ -453,6 +453,10 @@ a.row:hover { background: var(--hover); }
    aspect-ratio gives it a definite height. */
 .embed--audio { height: 22rem; }
 
+/* Was an inline style attribute; moved here so the page can run
+   under style-src 'self' with no unsafe-inline. */
+.set + .set { margin-top: 1rem; }
+
 .embed__btn {
   position: absolute;
   inset: 0;

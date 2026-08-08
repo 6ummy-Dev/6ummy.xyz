@@ -56,7 +56,7 @@ function json(data, req, seconds) {
 }
 
 export default {
-  async fetch(req, env) {
+  async fetch(req, env, ctx) {
     const path = new URL(req.url).pathname.replace(/\/+$/, "") || "/";
 
     if (req.method === "OPTIONS") {
@@ -70,10 +70,14 @@ export default {
     }
 
     try {
+      /* Liveness is deliberately NOT served stale — a cached
+         "live: true" would light the whole bar for a stream that
+         ended. Wrong beats late here. */
       if (path === "/live")  return json(await live(env),  req, 60);
-      if (path === "/dates") return json(await dates(env), req, 900);
-      if (path === "/crate") return json(await crate(env), req, 3600);
-      if (path === "/youtube") return json(await youtube(env), req, 3600);
+
+      if (path === "/dates")   return resilient(req, ctx, "dates",   900,  () => dates(env));
+      if (path === "/crate")   return resilient(req, ctx, "crate",   3600, () => crate(env));
+      if (path === "/youtube") return resilient(req, ctx, "youtube", 3600, () => youtube(env));
       return json({ routes: ["/live", "/dates", "/crate", "/youtube"] }, req, 3600);
     } catch (err) {
       // Never 500 — the site should degrade, not break.
@@ -81,6 +85,45 @@ export default {
     }
   }
 };
+
+/* ============================================================
+   RESILIENCE
+   Discogs rate-limits hard, YouTube has a daily quota, and Google
+   occasionally just fails. Without this, one 429 empties a section
+   and the visitor sees "couldn't load" for an hour.
+
+   So: every successful response is kept in the edge cache for a
+   day under a private key. If upstream then fails, the last good
+   copy is served with stale:true rather than an error. The section
+   goes slightly out of date instead of going blank — the correct
+   trade for a record shelf or a video list.
+   ============================================================ */
+
+async function resilient(req, ctx, name, seconds, producer) {
+  const cache = caches.default;
+  const key = new Request("https://cache.invalid/" + name);
+
+  try {
+    const data = await producer();
+    const keep = new Response(JSON.stringify(data), {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "public, max-age=86400"
+      }
+    });
+    if (ctx && ctx.waitUntil) ctx.waitUntil(cache.put(key, keep));
+    return json(data, req, seconds);
+  } catch (err) {
+    const hit = await cache.match(key);
+    if (hit) {
+      const data = await hit.json();
+      data.stale = true;
+      /* Short TTL so recovery is quick once upstream returns. */
+      return json(data, req, 60);
+    }
+    return json({ error: String(err && err.message || err) }, req, 30);
+  }
+}
 
 /* ============================================================
    TWITCH

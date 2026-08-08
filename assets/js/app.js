@@ -434,7 +434,7 @@
     }
 
     $("sets").innerHTML = (S.sets || []).map(function (s) {
-      return '<div class="embed embed--audio" style="margin-bottom:1rem">' +
+      return '<div class="embed embed--audio set">' +
         '<button class="embed__btn" type="button" data-embed="sc" data-url="' + esc(s.url) + '">' +
         esc(s.title) + "<small>" + esc(t(s.note)) + "</small></button></div>";
     }).join("");

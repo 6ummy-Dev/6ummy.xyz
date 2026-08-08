@@ -19,6 +19,29 @@
 <meta name="twitter:image" content="https://6ummy.xyz/assets/img/og.png">
 <meta name="twitter:site" content="@6ummy">
 
+<!-- Content-Security-Policy. GitHub Pages cannot set response headers,
+     so this is the meta form — it covers everything except
+     frame-ancestors, which meta cannot express.
+
+     Every host here is one the site actually uses: thumbnails from
+     YouTube and Discogs, the three media players, and the Worker.
+     style-src and script-src are strict because there is no inline
+     script and no inline style anywhere in the build. formspree and
+     web3forms are pre-authorised so wiring formEndpoint later does
+     not silently break under this policy. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'none';
+  object-src 'none';
+  script-src 'self';
+  style-src 'self';
+  font-src 'self';
+  img-src 'self' data: https://i.ytimg.com https://i.discogs.com https://img.discogs.com;
+  connect-src 'self' https://6ummy-api.6ummy-xyz.workers.dev;
+  frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://w.soundcloud.com;
+  form-action 'self' https://formspree.io https://api.web3forms.com;
+">
+
 <link rel="canonical" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="en" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="es" href="https://6ummy.xyz/?lang=es">
