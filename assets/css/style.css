@@ -893,3 +893,52 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .row__link { transition: none; }
 }
+
+/* ============================================================
+   PORTFOLIO — a list you can scan, over a player that only
+   appears once something is chosen. YouTube's embed keeps its
+   own playlist behind a flyout, so the visible list has to be
+   ours.
+   ============================================================ */
+
+#portfolioPlayer { margin-bottom: 1.5rem; }
+
+.vid {
+  grid-template-columns: 6rem 1fr auto;
+  align-items: center;
+  gap: .3rem 1rem;
+  width: 100%;
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vid img {
+  width: 6rem;
+  height: 3.375rem;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.06);
+  background: var(--well);
+  transition: filter .35s ease;
+}
+
+.vid:hover { background: var(--hover); }
+.vid:hover img { filter: none; }
+
+.vid.is-playing { background: var(--hover); }
+.vid.is-playing img { filter: none; }
+.vid.is-playing .row__main { color: var(--live); }
+
+@media (max-width: 34rem) {
+  .vid { grid-template-columns: 4.5rem 1fr auto; }
+  .vid img { width: 4.5rem; height: 2.53rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vid img { transition: none; }
+}

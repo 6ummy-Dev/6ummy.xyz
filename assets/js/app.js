@@ -307,19 +307,59 @@
   function renderVideos() {
     if (!videoState) return;
     var box = $("portfolio"), note = $("portfolioNote");
-    var n = videoState.videos.length;
+    var vids = videoState.videos.slice(0, (S.portfolio && S.portfolio.max) || 24);
 
-    /* The count comes from the Worker, but the player does not — it
-       is built from the playlist ID in content.js, so an unreachable
-       Worker costs the header, not the section. */
-    note.textContent = n ? n + es(" videos", " videos") : "";
+    if (!vids.length) {
+      note.textContent = "";
+      box.innerHTML = '<p class="empty">' + (videoState.failed
+        ? es("No se pudo cargar la lista.", "Couldn\u2019t load the playlist.")
+        : es("Lista no conectada todav\u00eda.", "Playlist not connected yet.")) + "</p>";
+      return;
+    }
 
-    box.innerHTML =
-      '<button class="embed__btn" type="button" data-embed="yt">' +
-        "<span data-en>Load playlist</span><span data-es>Cargar lista</span>" +
-        "<small>youtube.com" + (n ? " · " + n : "") + "</small>" +
-      "</button>";
+    note.textContent = vids.length + " videos";
+
+    /* Rows are buttons, not links: clicking plays in place rather
+       than sending anyone to YouTube. The player is only built on
+       the first click, so the page still costs nothing until asked. */
+    box.innerHTML = vids.map(function (v) {
+      return '<button class="row vid" type="button" data-video="' + esc(v.id) + '">' +
+        '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" decoding="async" width="96" height="54">' +
+        '<span class="row__main">' + esc(v.title) + "</span>" +
+        '<span class="row__end">' + esc(v.year) + "</span></button>";
+    }).join("");
+    sweep();
   }
+
+  /* Play a chosen video in the section's own player, continuing
+     into the rest of the playlist afterwards. */
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-video]");
+    if (!btn) return;
+
+    var id = btn.getAttribute("data-video");
+    var player = $("portfolioPlayer");
+
+    var f = player.querySelector("iframe");
+    if (!f) {
+      f = document.createElement("iframe");
+      f.title = "YouTube";
+      f.loading = "lazy";
+      f.allow = "autoplay; fullscreen; encrypted-media; picture-in-picture";
+      f.setAttribute("allowfullscreen", "");
+      player.innerHTML = "";
+      player.appendChild(f);
+    }
+
+    f.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(id) +
+            "?autoplay=1&rel=0&list=" + encodeURIComponent(C.youtubePlaylist);
+    player.hidden = false;
+
+    var rows = $("portfolio").querySelectorAll("[data-video]");
+    Array.prototype.forEach.call(rows, function (r) {
+      r.classList.toggle("is-playing", r === btn);
+    });
+  });
 
   /* ---------------------------------------------------------
      RENDER — everything else driven by content.js
