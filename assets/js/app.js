@@ -391,15 +391,6 @@
         es("Apoyame", "Support") + " · " + esc(s.label) + "</a>";
     }).join(" ");
 
-    if (S.btc) {
-      $("btc").innerHTML =
-        '<button class="btc" type="button" data-copy="' + esc(S.btc) + '">' +
-          '<span class="btc__label">BTC</span>' +
-          '<code class="btc__addr">' + esc(S.btc) + "</code>" +
-          '<span class="btc__msg" aria-live="polite"></span>' +
-        "</button>";
-    }
-
     renderDates();
     renderCrate();
     renderVideos();
@@ -463,46 +454,6 @@
         msg.textContent = es("No se pudo enviar. Escribime a " + C.email,
                              "That didn't send. Email me at " + C.email);
       });
-  });
-
-  /* ---------------------------------------------------------
-     COPY TO CLIPBOARD — for the BTC address. The whole string is
-     on screen either way; this just saves selecting 42 characters
-     by hand on a phone.
-     --------------------------------------------------------- */
-
-  document.addEventListener("click", function (e) {
-    var btn = e.target.closest("[data-copy]");
-    if (!btn) return;
-    var text = btn.getAttribute("data-copy");
-    var msg = btn.querySelector(".btc__msg");
-
-    function done(ok) {
-      if (!msg) return;
-      msg.textContent = ok ? es("copiado", "copied") : es("copiá a mano", "copy manually");
-      btn.classList.add("is-copied");
-      setTimeout(function () {
-        msg.textContent = "";
-        btn.classList.remove("is-copied");
-      }, 2200);
-    }
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function () { done(true); },
-                                              function () { done(false); });
-      return;
-    }
-    /* file:// and older Safari have no async clipboard. */
-    try {
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.cssText = "position:absolute;left:-9999px";
-      document.body.appendChild(ta);
-      ta.select();
-      done(document.execCommand("copy"));
-      document.body.removeChild(ta);
-    } catch (err) { done(false); }
   });
 
   /* ---------------------------------------------------------

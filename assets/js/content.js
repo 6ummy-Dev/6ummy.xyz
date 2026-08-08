@@ -20,7 +20,7 @@ window.SITE = {
     // Contact form. Formspree / Web3Forms / your own Worker.
     // Not a secret — safe to keep here.
     formEndpoint: "",
-    email: "hi@6ummy.xyz",        // mailto: fallback if the above is empty
+    email: "sync@6ummy.xyz",      // mailto: fallback if the above is empty
 
     twitchChannel: "6ummy",
     defaultLang: "auto"           // "auto" | "en" | "es"
@@ -149,11 +149,6 @@ window.SITE = {
   support: [
     { label: "PayPal", url: "https://www.paypal.com/paypalme/6ummy" }
   ],
-
-  /* Bech32 mainnet address (P2WPKH). Shown in full and click to
-     copy — a truncated crypto address is worse than none, because
-     nobody can check what they pasted. */
-  btc: "bc1qey0dwvaht0fchuw9phz508xyp2jdtprq69cch4",
 
   /* ---------- 9. FOOTER ------------------------------------
      The glyph row is decorative, so it's hidden from screen
