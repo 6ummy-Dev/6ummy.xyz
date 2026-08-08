@@ -65,6 +65,9 @@
   --w: 62rem;
   --pad: clamp(1.25rem, 5vw, 3.5rem);
   --bar: 2.25rem;
+  /* Every click-to-load box waits at this height, whatever it will
+     become once loaded. One number so they stay in step. */
+  --idle: 10rem;
 }
 
 * { box-sizing: border-box; }
@@ -441,14 +444,16 @@ a.row:hover { background: var(--hover); }
   background: transparent;
 }
 
-.embed--video { aspect-ratio: 16 / 9; }
-
-/* Off air, a full 16:9 box reads as a broken embed rather than an
-   idle one. Collapse it to a band; it opens back up when live. */
-body:not(.is-live) #twitchEmbed {
+/* Idle: all three boxes are the same band, so a section that hasn't
+   been opened yet reads as a row of consistent cards rather than
+   three differently-sized holes. Loaded: each takes the height its
+   content actually needs. */
+.embed:not(.is-loaded) {
+  height: var(--idle);
   aspect-ratio: auto;
-  min-height: 7.5rem;
 }
+
+.embed--video.is-loaded { aspect-ratio: 16 / 9; height: auto; }
 /* A SoundCloud playlist widget renders its tracklist only when it
    has the room; below ~300px it collapses to its header and reads
    as a single track.
@@ -459,7 +464,12 @@ body:not(.is-live) #twitchEmbed {
    iframe default of 150px and the widget collapsed no matter how
    tall the box around it was. .embed--video never hit this because
    aspect-ratio gives it a definite height. */
-.embed--audio { height: 22rem; }
+/* A SoundCloud playlist widget only renders its tracklist with room
+   to do it; below ~300px it collapses to its header and reads as a
+   single track. Must be `height`, not `min-height` — a percentage
+   height on the iframe resolves against the parent's *specified*
+   height, and min-height leaves that auto. */
+.embed--audio.is-loaded { height: 22rem; }
 
 /* Was an inline style attribute; moved here so the page can run
    under style-src 'self' with no unsafe-inline. */

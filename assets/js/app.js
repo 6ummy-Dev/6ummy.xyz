@@ -145,6 +145,7 @@
     f.setAttribute("allowfullscreen", "");
     box.innerHTML = "";
     box.appendChild(f);
+    box.classList.add("is-loaded");
   });
 
   /* ---------------------------------------------------------
@@ -373,6 +374,7 @@
       f.setAttribute("allowfullscreen", "");
       player.innerHTML = "";
       player.appendChild(f);
+      player.classList.add("is-loaded");
     }
 
     f.src = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(id) +
