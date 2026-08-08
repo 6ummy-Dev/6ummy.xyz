@@ -1,7 +1,7 @@
 # 6UMMY
 
-> DJ, collector and curator based in Montevideo, Uruguay. Tech house,
-> deep house and minimal techno. Livestreams, gigs and vinyl since 2004.
+> DJ, collector and curator based in Montevideo, Uruguay. Techno, House,
+> and Rares. Livestreams, gigs, and vinyl since 2004.
 
 Personal site. Single page, bilingual (English / Spanish), no tracking,
 no cookies. Live data is served from a Cloudflare Worker; everything
@@ -12,7 +12,7 @@ degrades to readable text if it is unreachable.
 - Based: Montevideo, Uruguay (UTC-3)
 - Active since: 2004
 - Formats: vinyl and digital
-- Styles: tech house, deep house, minimal techno
+- Styles: techno, house, rares
 - Contact: sync@6ummy.xyz
 
 ## Sections

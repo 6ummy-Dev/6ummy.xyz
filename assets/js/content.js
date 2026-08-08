@@ -37,7 +37,7 @@ window.SITE = {
     since: "2004",
     base: "Montevideo, UY",
     formats: "Vinyl / Digital",
-    styles: "Tech house · Deep house · Minimal techno",
+    styles: "Techno · House · Rares",
     bio: {
       en: "DJ, collector and curator based in Uruguay. Records, livestreams, and the occasional rare find worth talking about.",
       es: "DJ, coleccionista y curador radicado en Uruguay. Discos, transmisiones en vivo y de vez en cuando una rareza que vale la pena contar."
