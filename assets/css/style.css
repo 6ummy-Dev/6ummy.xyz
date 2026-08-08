@@ -189,7 +189,29 @@ body.is-live .dot {
 .wordmark--pix {
   line-height: 0;
   margin-bottom: clamp(1.75rem, 5vw, 3rem);
+  color: var(--live);
+  display: flex;
+  align-items: stretch;
+  gap: .45em;
 }
+
+/* A blinking block after the name, the way a terminal sits waiting
+   for input — off air is the page waiting. It goes solid the moment
+   the stream starts, so the motion marks the idle state and the
+   colour flood still marks the live one.
+
+   One blink a second: well under the three-per-second flash
+   threshold, and the reduced-motion rule already stops it dead. */
+.wordmark__cursor {
+  align-self: stretch;
+  aspect-ratio: 1 / 7;
+  background: currentColor;
+  animation: blink 1.06s steps(1, end) infinite;
+}
+
+body.is-live .wordmark__cursor { animation: none; }
+
+@keyframes blink { 0%, 55% { opacity: 1; } 56%, 100% { opacity: 0; } }
 
 .pix--wordmark {
   width: 100%;
@@ -673,19 +695,27 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
    in on hover rather than living there permanently.
    ============================================================ */
 
+/* A permanent rail rather than a wide-screen extra. It carries the
+   only copy of the section numbers now, so it can't be something
+   that disappears — the numbers ARE the menu. */
 .index {
   position: fixed;
   top: 50%;
-  right: clamp(.75rem, 2.5vw, 2rem);
+  right: 0;
   transform: translateY(-50%);
   z-index: 40;
-  display: none;
+  padding: .55rem .5rem .55rem .55rem;
+  background: var(--well);
+  border-left: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
 }
 
-/* Only once there is room beside the reading column. Below this
-   the sticky heads are the only wayfinding, which is enough. */
-@media (min-width: 70rem) {
-  .index { display: block; }
+/* Keep the reading column clear of the rail. On wide screens the
+   page gutter already does this. */
+@media (max-width: 70rem) {
+  .wrap { padding-right: calc(var(--pad) + 2.25rem); }
+  .footer.wrap { padding-right: calc(var(--pad) + 2.25rem); }
 }
 
 .index__list {
@@ -705,10 +735,10 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   font: inherit;
   font-size: .6875rem;
   letter-spacing: .1em;
-  font-variant-numeric: tabular-nums;
   text-transform: uppercase;
   cursor: pointer;
-  padding: .3rem .15rem;
+  padding: .32rem .2rem;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -716,17 +746,32 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   width: 100%;
 }
 
+/* Taken out of flow: hidden labels were still reserving width and
+   stretching the rail to three times the size of its numbers. */
 .index__label {
+  position: absolute;
+  right: 100%;
+  margin-right: .55rem;
+  padding: .1rem .45rem;
+  background: var(--well);
+  border: 1px solid var(--rule);
   opacity: 0;
+  pointer-events: none;
   transform: translateX(.35rem);
-  transition: opacity .3s ease, transform .3s ease;
+  transition: opacity .25s ease, transform .25s ease;
   white-space: nowrap;
 }
 
-.index:hover .index__label,
-.index__item:focus-visible .index__label { opacity: 1; transform: none; }
+@media (min-width: 70rem) {
+  .index:hover .index__label,
+  .index__item:focus-visible .index__label { opacity: 1; transform: none; }
+}
 
-.index__num { min-width: 1.6rem; }
+@media (max-width: 70rem) {
+  .index__label { display: none; }
+}
+
+.index__num { display: block; }
 
 .index__item:hover,
 .index__item.is-current { color: var(--live); }

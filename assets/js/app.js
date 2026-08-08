@@ -340,7 +340,8 @@
        doesn't have, this falls back to plain text. */
     var wm = $("wordmark"), drawn = pixelText(id.name, "pix pix--wordmark");
     if (drawn) {
-      wm.innerHTML = '<span class="sr">' + esc(id.name) + "</span>" + drawn;
+      wm.innerHTML = '<span class="sr">' + esc(id.name) + "</span>" + drawn +
+                     '<span class="wordmark__cursor" aria-hidden="true"></span>';
       wm.classList.add("wordmark--pix");
     } else {
       wm.textContent = id.name;

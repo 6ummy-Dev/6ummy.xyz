@@ -113,6 +113,14 @@ window.SITE = {
      --------------------------------------------------------- */
   elsewhere: [
     {
+      group: { en: "Projects", es: "Proyectos" },
+      links: [
+        { label: "Nightwatcher", url: "https://nightwatcher.life" },
+        { label: "Techno Punks", url: "https://discord.gg/CfmfMxDZv5",
+          note: { en: "discord", es: "discord" } }
+      ]
+    },
+    {
       group: { en: "Listen", es: "Escuchar" },
       links: [
         { label: "SoundCloud", url: "https://soundcloud.com/6ummy" },
@@ -123,24 +131,16 @@ window.SITE = {
     {
       group: { en: "Social", es: "Social" },
       links: [
-        { label: "X",           url: "https://x.com/6ummy" },
-        { label: "VINILOS",     url: "https://x.com/i/communities/1493258083975385088",
+        { label: "X",       url: "https://x.com/6ummy" },
+        { label: "VINILOS", url: "https://x.com/i/communities/1493258083975385088",
           note: { en: "community", es: "comunidad" } }
       ]
     },
     {
-      group: { en: "Collect", es: "Coleccionar" },
+      group: { en: "Collection", es: "Colección" },
       links: [
         { label: "OpenSea", url: "https://opensea.io/6ummy" },
         { label: "OBJKT",   url: "https://objkt.com/@6ummy" }
-      ]
-    },
-    {
-      group: { en: "Projects", es: "Proyectos" },
-      links: [
-        { label: "Nightwatcher", url: "https://nightwatcher.life" },
-        { label: "Techno Punks", url: "https://discord.gg/CfmfMxDZv5",
-          note: { en: "discord", es: "discord" } }
       ]
     }
   ],
