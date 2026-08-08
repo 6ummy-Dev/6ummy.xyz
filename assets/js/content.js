@@ -15,7 +15,7 @@ window.SITE = {
     // Your Cloudflare Worker. One URL powers three sections:
     //   /live   Twitch status      /dates  calendar      /crate  Discogs
     // Leave "" and all three degrade quietly instead of breaking.
-    workerUrl: "",                // e.g. "https://6ummy-api.YOURNAME.workers.dev"
+    workerUrl: "https://6ummy-api.6ummy-xyz.workers.dev",
 
     // Contact form. Formspree / Web3Forms / your own Worker.
     // Not a secret — safe to keep here.
