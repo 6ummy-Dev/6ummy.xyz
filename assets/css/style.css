@@ -21,9 +21,14 @@
   --rule-hi: rgba(239, 243, 244, .38);
   --hover:   rgba(239, 243, 244, .06);
 
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-          "Liberation Mono", "Courier New", monospace;
-  --sans: "Helvetica Neue", Helvetica, Inter, "Segoe UI", Arial, sans-serif;
+  /* Squarer first. JetBrains Mono, IBM Plex Mono, DejaVu Sans Mono
+     and Liberation Mono are all free-licence and have flatter
+     terminals than the Apple monos, which is what "less round"
+     actually means here. The Apple ones stay on as fallbacks. */
+  --mono: "JetBrains Mono", "IBM Plex Mono", "DejaVu Sans Mono",
+          "Liberation Mono", ui-monospace, SFMono-Regular, "SF Mono",
+          Menlo, Consolas, monospace;
+  --sans: var(--mono);
 
   --w: 62rem;
   --pad: clamp(1.25rem, 5vw, 3.5rem);
@@ -103,7 +108,11 @@ html[data-lang="es"] [data-en] { display: none; }
   font-size: 1rem;
   letter-spacing: -.03em;
   text-transform: none;
+  display: flex;
+  align-items: center;
 }
+
+.status__mark .pix { height: .8rem; }
 
 .status__state {
   display: inline-flex;
@@ -173,6 +182,34 @@ body.is-live .dot {
   letter-spacing: -.055em;
   line-height: .82;
   margin: 0 0 clamp(1.75rem, 5vw, 3rem);
+}
+
+/* Drawn rather than typeset: the block height is set by the art,
+   not by a font size. */
+.wordmark--pix {
+  line-height: 0;
+  margin-bottom: clamp(1.75rem, 5vw, 3rem);
+}
+
+.pix--wordmark {
+  width: 100%;
+  max-width: 34rem;
+  height: auto;
+}
+
+/* Screen-reader text — the drawn wordmark is decorative, so the
+   real name has to live somewhere readable. */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 .specs {

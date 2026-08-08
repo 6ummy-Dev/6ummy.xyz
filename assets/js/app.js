@@ -332,7 +332,25 @@
 
   function render() {
     var id = S.identity;
-    $("wordmark").textContent = id.name;
+
+    /* The mark is pixel art, so the wordmark is drawn on the same
+       grid instead of being set in a typeface that fights it. The
+       real text stays in the h1 for search and screen readers; the
+       SVG is decorative. If a name ever contains a glyph the set
+       doesn't have, this falls back to plain text. */
+    var wm = $("wordmark"), drawn = pixelText(id.name, "pix pix--wordmark");
+    if (drawn) {
+      wm.innerHTML = '<span class="sr">' + esc(id.name) + "</span>" + drawn;
+      wm.classList.add("wordmark--pix");
+    } else {
+      wm.textContent = id.name;
+    }
+
+    var mk = document.querySelector(".status__mark");
+    var mkPix = pixelText(id.name.charAt(0), "pix");
+    if (mk && mkPix) {
+      mk.innerHTML = '<span class="sr">' + esc(id.name.charAt(0)) + "</span>" + mkPix;
+    }
 
     var L = lang === "es"
       ? { artist: "Artista", base: "Base", since: "Desde", format: "Formato", styles: "Estilos" }
@@ -456,14 +474,46 @@
     "7": ["11111","00001","00010","00100","01000","01000","01000"],
     "8": ["01110","10001","10001","01110","10001","10001","01110"],
     "9": ["01110","10001","10001","01111","00001","00010","01100"],
-    ".": ["00","00","00","00","00","11","11"]
+    "A": ["01110","10001","10001","11111","10001","10001","10001"],
+    "B": ["11110","10001","10001","11110","10001","10001","11110"],
+    "C": ["01110","10001","10000","10000","10000","10001","01110"],
+    "D": ["11110","10001","10001","10001","10001","10001","11110"],
+    "E": ["11111","10000","10000","11110","10000","10000","11111"],
+    "F": ["11111","10000","10000","11110","10000","10000","10000"],
+    "G": ["01110","10001","10000","10111","10001","10001","01111"],
+    "H": ["10001","10001","10001","11111","10001","10001","10001"],
+    "I": ["01110","00100","00100","00100","00100","00100","01110"],
+    "J": ["00111","00010","00010","00010","00010","10010","01100"],
+    "K": ["10001","10010","10100","11000","10100","10010","10001"],
+    "L": ["10000","10000","10000","10000","10000","10000","11111"],
+    "M": ["10001","11011","10101","10101","10001","10001","10001"],
+    "N": ["10001","11001","11001","10101","10011","10011","10001"],
+    "O": ["01110","10001","10001","10001","10001","10001","01110"],
+    "P": ["11110","10001","10001","11110","10000","10000","10000"],
+    "Q": ["01110","10001","10001","10001","10101","10010","01101"],
+    "R": ["11110","10001","10001","11110","10100","10010","10001"],
+    "S": ["01111","10000","10000","01110","00001","00001","11110"],
+    "T": ["11111","00100","00100","00100","00100","00100","00100"],
+    "U": ["10001","10001","10001","10001","10001","10001","01110"],
+    "V": ["10001","10001","10001","10001","10001","01010","00100"],
+    "W": ["10001","10001","10001","10101","10101","11011","10001"],
+    "X": ["10001","10001","01010","00100","01010","10001","10001"],
+    "Y": ["10001","10001","01010","00100","00100","00100","00100"],
+    "Z": ["11111","00001","00010","00100","01000","10000","11111"],
+    ".": ["00","00","00","00","00","11","11"],
+    "-": ["00000","00000","00000","11111","00000","00000","00000"],
+    " ": ["000","000","000","000","000","000","000"]
   };
 
-  function pixelNum(str) {
+  /* Returns "" if the string contains anything the set doesn't
+     cover, so the caller can fall back to real text rather than
+     render a wordmark with holes in it. */
+  function pixelText(str, cls) {
+    str = String(str || "").toUpperCase();
     var x = 0, rects = "";
     for (var i = 0; i < str.length; i++) {
       var g = PIX[str.charAt(i)];
-      if (!g) continue;
+      if (!g) return "";
       for (var y = 0; y < g.length; y++) {
         for (var c = 0; c < g[y].length; c++) {
           if (g[y].charAt(c) === "1") {
@@ -474,10 +524,13 @@
       x += g[0].length + 1;
     }
     var w = Math.max(1, x - 1);
-    return '<svg class="pix" viewBox="0 0 ' + w + ' 7" preserveAspectRatio="xMidYMid meet" ' +
-           'fill="currentColor" shape-rendering="crispEdges" focusable="false" aria-hidden="true">' +
+    return '<svg class="' + (cls || "pix") + '" viewBox="0 0 ' + w + ' 7" ' +
+           'preserveAspectRatio="xMinYMid meet" fill="currentColor" ' +
+           'shape-rendering="crispEdges" focusable="false" aria-hidden="true">' +
            rects + "</svg>";
   }
+
+  function pixelNum(str) { return pixelText(str, "pix"); }
 
   /* ---------------------------------------------------------
      SECTION INDEX + HEAD CONTROLS
