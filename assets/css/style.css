@@ -470,9 +470,9 @@ a.row:hover { background: var(--hover); }
   appearance: none;
   background: none;
   border: 0;
-  color: inherit;
+  color: var(--live);
   font: inherit;
-  font-size: .75rem;
+  font-size: .875rem;
   letter-spacing: .14em;
   text-transform: uppercase;
   cursor: pointer;
