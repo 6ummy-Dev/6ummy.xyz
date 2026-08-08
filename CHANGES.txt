@@ -1,56 +1,34 @@
-6ummy.xyz — /crate hardening, round 3            8 Aug 2026
+6ummy.xyz — cron restraint                        8 Aug 2026
 
-FILES  (upload into the repo, same paths, then redeploy the Worker)
+ONE FILE  worker/index.js   (plus worker/test.mjs, optional, 52/52)
 
-  worker/index.js    three changes, below
-  llms.txt           added Techno Punks, VINILOS, PayPal; marked the
-                     OpenSea/OBJKT links as collectibles
-  worker/test.mjs    optional, NOT deployed. `node worker/test.mjs` -> 49/49
+Upload, redeploy. Nothing else changes.
 
-1. ANONYMOUS FALLBACK — aimed straight at tonight's blocker
+WHAT AND WHY
 
-   When the authenticated call is throttled AND there is no stored copy,
-   the Worker now tries once more without the token.
+  While the crate is cold, each cron tick was costing three Discogs
+  calls, not one:
 
-   That looks backwards: anonymous is a LOWER ceiling, 25 against 60, on
-   the same shared IP. The ceiling is not the point. Without an
-   Authorization header Cloudflare will actually honour cf.cacheTtl, so
-   the request can be answered from Cloudflare's own cache and never
-   reach Discogs at all. With the shared bucket saturated the way it was
-   all evening, a cache hit is the only door left open.
+    1. authenticated attempt        -> 429
+    2. retry after backoff          -> 429
+    3. anonymous fallback           -> 429
 
-   Gated so it can only ever fire cold — once a copy is stored, a
-   throttled refresh serves stale and makes no extra call. Response
-   carries fallback:"anonymous" and limit.cfCache so you can see which
-   door it came through.
+  The retry and the fallback were written for the request path, where
+  a visitor is waiting and it is the only shot. On a per-minute cron
+  the next shot is sixty seconds away, so a cold tick was burning
+  three slots of exactly the shared headroom it is hunting for.
 
-2. warm() NOW CHECKS FRESHNESS FIRST
+  warm() now always calls the producer with first=false: one plain
+  attempt per tick. 1440 calls/day instead of ~4300. The request path
+  is untouched — a cold visitor still gets retry + anonymous fallback.
 
-   It used to fetch on every tick regardless. Fine at every 15 minutes,
-   rude at every minute — and raising the cron frequency is the obvious
-   next lever. Thresholds: crate 30 min, dates 10 min, youtube 60 min.
-   Below that a tick spends nothing.
+  To be clear about proportion: this was never the cause. Readings
+  were already 78-88 before any cron existed. Our share is a few
+  percent of a bucket that sits around 80 on its own. This is about
+  not being part of the problem, not about fixing it.
 
-   This is the prerequisite for moving the cron to `* * * * *`. With it
-   in place, per-minute is safe: it hammers only while stale, then backs
-   off to ~2 calls/hour once healthy.
+TESTS ADDED
 
-3. Small: cf-cache-status surfaced in the limit block.
-
-AFTER DEPLOYING
-
-  Optional but recommended — Settings > Triggers, change the cron from
-  */15 * * * * to * * * * *. 1440 chances a day to catch the shared
-  bucket below its ceiling instead of 96, and thanks to (2) it costs
-  almost nothing once a copy lands.
-
-NOT CHANGED, AND WHY — two items came off the open list as non-defects
-
-  .reel__title — the note said the carousel titles should maybe be
-  yellow. They already are: .reel__item.is-playing .reel__title sets
-  var(--live). The thing described as "yellow at 14px" (.embed__btn
-  small) is --ink-40 at .625rem and never was yellow.
-
-  Twitch 16:9 when off air — it doesn't. aspect-ratio: 16/9 applies to
-  .embed--video.is-loaded only. Idle, every embed is height: var(--idle)
-  = 10rem, the same band as Sets and Portfolio. Nothing to collapse.
+  - cold throttled tick makes ONE call, not three
+  - and stores nothing
+  - a cold visitor request still tries all three

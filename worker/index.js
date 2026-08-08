@@ -149,7 +149,15 @@ async function warm(env, name, producer) {
     const age = entry && entry.at ? (Date.now() - entry.at) / 1000 : Infinity;
     if (age < (WARM_AFTER[name] || 1800)) return;   // fresh — spend nothing
 
-    const data = await producer(!entry);
+    /* Always `false` — one plain attempt per tick, no retry and no
+       anonymous fallback.
+
+       Those two exist for the request path, where a visitor is
+       waiting and it is the only shot. Here the next shot is sixty
+       seconds away, so a cold tick that spent three calls instead of
+       one would be burning three slots of exactly the shared
+       headroom it is hunting for. */
+    const data = await producer(false);
     await st.put(name, { at: Date.now(), data });
   } catch (err) {
     /* Throttled or upstream down. The stored copy is untouched and

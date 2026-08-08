@@ -306,5 +306,29 @@ console.log("\nwarm() freshness gate");
   ok("and the timestamp moves forward", after.at > staleAt);
 }
 
+
+/* ---------- 11. a throttled cron tick costs exactly one call ---------- */
+console.log("\ncron restraint under throttling");
+{
+  reset();
+  discogsStatus = 429;
+  anonStatus = 429;
+  const env = { DISCOGS_TOKEN: "tok", CACHE: makeKV() };
+
+  await worker.scheduled({}, env, ctx);
+  await drain();
+  const cronCalls = upstream.filter(u => u.url.includes("discogs")).length;
+  ok("cold throttled tick makes ONE call, not three", cronCalls === 1, "got " + cronCalls);
+  ok("and stores nothing", !(await env.CACHE.get("v1:crate")));
+
+  // the request path keeps its retry + fallback — a visitor is waiting
+  upstream = [];
+  await worker.fetch(get("/crate"), env, ctx);
+  const reqCalls = upstream.filter(u => u.url.includes("discogs")).length;
+  ok("a cold visitor request still tries all three", reqCalls === 3, "got " + reqCalls);
+
+  discogsStatus = 200; anonStatus = null;
+}
+
 console.log("\n" + pass + " passed, " + fail + " failed\n");
 process.exit(fail ? 1 : 0);
