@@ -129,11 +129,19 @@
       src = "https://www.youtube-nocookie.com/embed/videoseries?list=" +
             encodeURIComponent(C.youtubePlaylist) + "&rel=0";
     } else {
-      // Yellow is the site's accent, so the player's progress bar
-      // and controls match instead of arriving in SoundCloud orange.
+      /* visual=true is the only lever SoundCloud gives us over the
+         widget's background — the classic player is white and the
+         iframe is cross-origin, so CSS cannot reach inside it. In
+         visual mode the artwork becomes the background, which lands
+         in the palette because the sleeve art is monochrome.
+
+         The artwork block scales at ~0.45 x width, so at full desktop
+         width it would swallow the whole box and push the tracklist
+         out of view. The embed is capped at 34rem in CSS to keep both
+         visible. Yellow still drives the progress bar and controls. */
       src = "https://w.soundcloud.com/player/?url=" +
             encodeURIComponent(btn.getAttribute("data-url")) +
-            "&color=%23FFEA00&auto_play=false" +
+            "&color=%23FFEA00&auto_play=false&visual=true" +
             "&hide_related=true&show_comments=false&show_teaser=false&show_reposts=false";
     }
 

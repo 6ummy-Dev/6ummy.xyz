@@ -471,6 +471,13 @@ a.row:hover { background: var(--hover); }
    height, and min-height leaves that auto. */
 .embed--audio.is-loaded { height: 22rem; }
 
+/* Capped to the same 34rem measure the bio and spec table use. At
+   full width the visual player's artwork is ~0.45 x width, which at
+   880px would be taller than the whole box and would hide every
+   track. At 34rem the artwork lands around 242px and the tracklist
+   still shows. */
+.embed--audio { max-width: 34rem; }
+
 /* Was an inline style attribute; moved here so the page can run
    under style-src 'self' with no unsafe-inline. */
 .set + .set { margin-top: 1rem; }
