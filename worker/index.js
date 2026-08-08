@@ -1,18 +1,18 @@
 /* ============================================================
    6UMMY — Worker
-   One file, four routes. Paste into a Cloudflare Worker.
+   One file, three routes. Paste into a Cloudflare Worker.
 
-     GET /live     Twitch: are you streaming right now
-     GET /dates    Google Calendar .ics, parsed to JSON
-     GET /crate    Discogs collection, newest first
-     GET /youtube  One curated playlist, in playlist order
+     GET /live      Twitch: are you streaming right now
+     GET /dates     Google Calendar .ics, parsed to JSON
+     GET /crate     Discogs collection, newest first
+     GET /youtube   One curated playlist, in playlist order
 
    Secrets to set in  Settings > Variables and Secrets:
-     TWITCH_ID       Twitch application client ID
-     TWITCH_SECRET   Twitch application client secret
-     DISCOGS_TOKEN   Discogs personal access token
-     CALENDAR_ID     jelhc76e0q5clq9er14l6963fo@group.calendar.google.com
-     YOUTUBE_KEY     YouTube Data API v3 key
+     TWITCH_ID         Twitch application client ID
+     TWITCH_SECRET     Twitch application client secret
+     DISCOGS_TOKEN     Discogs personal access token
+     CALENDAR_ID       jelhc76e0q5clq9er14l6963fo@group.calendar.google.com
+     YOUTUBE_KEY       YouTube Data API v3 key
 
    The playlist ID is public, so it sits in YT_PLAYLIST below with
    the other handles rather than in secrets. Keeping it server-side
@@ -87,7 +87,7 @@ export default {
       /* Liveness is deliberately NOT served stale — a cached
          "live: true" would light the whole bar for a stream that
          ended. Wrong beats late here. */
-      if (path === "/live") return json(await live(env), req, 60);
+      if (path === "/live")  return json(await live(env),  req, 60);
 
       if (path === "/dates")   return resilient(req, ctx, "dates",   900,  () => dates(env));
       if (path === "/crate")   return resilient(req, ctx, "crate",   3600, () => crate(env));
@@ -106,56 +106,32 @@ export default {
    occasionally just fails. Without this, one 429 empties a section
    and the visitor sees "couldn't load" for an hour.
 
-   READ-THROUGH, not fallback-only. The previous version called
-   upstream on every single request and only looked at the cache
-   after a failure — so a page with any traffic at all hammered
-   Discogs once per view, which is how you earn a 429 in the first
-   place. Now the cache is consulted first:
-
-     fresh copy   (younger than `seconds`)  -> served, no upstream call
-     no copy      -> fetch, store, serve
-     stale copy   + upstream fails          -> served with stale:true
-
-   The stored entry lives for a day, so a section degrades to
-   slightly-out-of-date rather than blank for up to 24h of upstream
-   trouble.
-
-   Note `caches.default` is per-colo: each Cloudflare data centre
-   keeps its own copy, so upstream sees roughly one call per colo
-   per TTL instead of one per visitor. That is the whole fix.
+   So: every successful response is kept in the edge cache for a
+   day under a private key. If upstream then fails, the last good
+   copy is served with stale:true rather than an error. The section
+   goes slightly out of date instead of going blank — the correct
+   trade for a record shelf or a video list.
    ============================================================ */
-
-const STALE_MAX = 86400;   // seconds a stored copy stays usable
 
 async function resilient(req, ctx, name, seconds, producer) {
   const cache = caches.default;
   const key = new Request("https://cache.invalid/" + name);
-
-  const hit = await cache.match(key);
-  const at  = hit ? Number(hit.headers.get("X-Fetched-At") || 0) : 0;
-  const ageMs = at ? Date.now() - at : Infinity;
-
-  /* Fresh enough — answer without touching upstream at all. */
-  if (hit && ageMs < seconds * 1000) {
-    return json(await hit.json(), req, seconds);
-  }
 
   try {
     const data = await producer();
     const keep = new Response(JSON.stringify(data), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": `public, max-age=${STALE_MAX}`,
-        "X-Fetched-At": String(Date.now())
+        "Cache-Control": "public, max-age=86400"
       }
     });
     if (ctx && ctx.waitUntil) ctx.waitUntil(cache.put(key, keep));
     return json(data, req, seconds);
   } catch (err) {
+    const hit = await cache.match(key);
     if (hit) {
       const data = await hit.json();
       data.stale = true;
-      data.staleSeconds = Math.round(ageMs / 1000);
       /* Short TTL so recovery is quick once upstream returns. */
       return json(data, req, 60);
     }
@@ -360,7 +336,7 @@ function expand(rrule, startMs, from, to) {
 
   const out = [];
   const d = new Date(startMs);
-  let guard = 0;
+  let n = 0, guard = 0;
 
   while (out.length < count && d.getTime() <= to && guard++ < 2000) {
     const ms = d.getTime();
@@ -368,6 +344,7 @@ function expand(rrule, startMs, from, to) {
 
     const dayOk = !byday || byday.includes(d.getUTCDay());
     if (dayOk && ms >= from) out.push(ms);
+    if (dayOk) n++;
 
     if (freq === "DAILY") d.setUTCDate(d.getUTCDate() + interval);
     else if (freq === "WEEKLY") {
@@ -386,73 +363,22 @@ function expand(rrule, startMs, from, to) {
 
 /* ============================================================
    DISCOGS
-   Needs a User-Agent header, which browser JS can't set — that's
-   the reason this route exists at all.
-
-   The token is NOT needed for cover art, whatever the old README
-   said. The public collection endpoint hands `thumb` and
-   `cover_image` to anonymous callers, and those are pre-signed
-   i.discogs.com CDN URLs that load without credentials — verified,
-   not assumed. (The docs line "image requests require
-   authentication" is about the API's own image endpoints.)
-
-   What the token actually buys is headroom. Per the Discogs docs:
-
-     "Requests are throttled by the server by source IP to 60 per
-      minute for authenticated requests, and 25 per minute for
-      unauthenticated requests."
-
-   Read that carefully: the bucket is per SOURCE IP in both cases,
-   not per token. A Worker has no fixed IP and egresses from
-   Cloudflare's shared pool, so the token raises a shared ceiling
-   from 25 to 60 rather than granting a private allowance.
-
-   Which means the token was never the whole story. The real
-   defect was call volume: the old code hit Discogs on every
-   single request to /crate, and its `cf: { cacheTtl }` hint was
-   silently dead because Cloudflare won't cache a subrequest
-   carrying an Authorization header. Burn the bucket, cache
-   nothing, and every later visitor re-burns it — a 429 that
-   never recovers on its own. That is what we found.
-
-   The read-through cache in resilient() is the fix; the token is
-   the safety margin. Both, not either.
+   Needs a User-Agent header, which browser JS can't set, and
+   a token for cover images. Both fine from here.
    ============================================================ */
 
 async function crate(env) {
-  const authed = !!env.DISCOGS_TOKEN;
-
   const headers = { "User-Agent": UA };
-  if (authed) headers.Authorization = "Discogs token=" + env.DISCOGS_TOKEN;
+  if (env.DISCOGS_TOKEN) headers.Authorization = "Discogs token=" + env.DISCOGS_TOKEN;
 
   const url = "https://api.discogs.com/users/" + encodeURIComponent(DISCOGS_USER) +
               "/collection/folders/0/releases?sort=added&sort_order=desc&per_page=12&page=1";
 
-  /* The `cf` cache hint only does anything on an unauthenticated
-     request — Cloudflare refuses to cache a response to a
-     subrequest that carried an Authorization header. So ask for it
-     when it can actually work, and rely on resilient() otherwise. */
-  const opts = { headers };
-  if (!authed) opts.cf = { cacheTtl: 1800, cacheEverything: true };
-
-  let limit = null;
-  const data = await withRetry(() => fetch(url, opts).then(r => {
-    /* Keep the rate-limit headers — the only honest way to tell
-       "we are being throttled" from "something else broke". */
-    limit = {
-      allowed:   r.headers.get("X-Discogs-Ratelimit"),
-      used:      r.headers.get("X-Discogs-Ratelimit-Used"),
-      remaining: r.headers.get("X-Discogs-Ratelimit-Remaining")
-    };
-    if (!r.ok) {
-      throw new Error("discogs " + r.status +
-        (r.status === 429
-          ? " (rate limited" + (authed ? ", authenticated" : ", NO TOKEN — 25/min not 60") +
-            "; used " + limit.used + "/" + limit.allowed + ")"
-          : ""));
-    }
-    return r.json();
-  }));
+  const data = await fetch(url, { headers, cf: { cacheTtl: 1800, cacheEverything: true } })
+    .then(r => {
+      if (!r.ok) throw new Error("discogs " + r.status);
+      return r.json();
+    });
 
   const clean = s => String(s || "").replace(/\s*\(\d+\)$/, "").trim();
 
@@ -473,26 +399,7 @@ async function crate(env) {
     };
   });
 
-  return {
-    count: data.pagination ? data.pagination.items : records.length,
-    records,
-    /* Diagnostics. `auth` is a boolean, never the token itself —
-       it answers "is DISCOGS_TOKEN actually bound?" from a browser
-       tab, without anyone digging through the dashboard. */
-    auth: authed,
-    limit
-  };
-}
-
-/* One retry, short backoff. Worth it for a rate-limited upstream:
-   turns a momentary 429 into a hit instead of an hour of stale. */
-async function withRetry(fn, waitMs = 700) {
-  try {
-    return await fn();
-  } catch (err) {
-    await new Promise(r => setTimeout(r, waitMs));
-    return fn();
-  }
+  return { count: data.pagination ? data.pagination.items : records.length, records };
 }
 
 /* ============================================================
