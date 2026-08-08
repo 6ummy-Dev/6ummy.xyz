@@ -1,19 +1,25 @@
 /* ============================================================
    6UMMY — stylesheet
-   Palette rule: ink + paper always. #FFEA00 appears ONLY when
-   live, and only ever as a fill with ink on top (yellow text on
-   the light ground is ~1.06:1 contrast — effectively invisible).
+   Palette: dark and darker. --paper (#232323) is the lead black
+   and carries the page; --well (#1A1A1A) recedes underneath it
+   for the fixed bar, the wells and the footer.
+   #FFEA00 is the secondary brand colour, carried over from the
+   mark: section numbers, the primary button, focus and selection.
+   The live flood still owns the whole status bar, so the signal
+   survives the promotion.
    ============================================================ */
 
 :root {
-  --ink:     #232323;
-  --paper:   #EFF3F4;
+  --ink:     #EFF3F4;
+  --paper:   #232323;
+  --well:    #1A1A1A;
   --live:    #FFEA00;
 
-  --ink-64:  rgba(35, 35, 35, .64);
-  --ink-40:  rgba(35, 35, 35, .40);
-  --rule:    rgba(35, 35, 35, .18);
-  --rule-hi: rgba(35, 35, 35, .38);
+  --ink-64:  rgba(239, 243, 244, .64);
+  --ink-40:  rgba(239, 243, 244, .52);
+  --rule:    rgba(239, 243, 244, .18);
+  --rule-hi: rgba(239, 243, 244, .38);
+  --hover:   rgba(239, 243, 244, .06);
 
   --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
           "Liberation Mono", "Courier New", monospace;
@@ -22,17 +28,6 @@
   --w: 62rem;
   --pad: clamp(1.25rem, 5vw, 3.5rem);
   --bar: 2.25rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink:     #EFF3F4;
-    --paper:   #232323;
-    --ink-64:  rgba(239, 243, 244, .64);
-    --ink-40:  rgba(239, 243, 244, .40);
-    --rule:    rgba(239, 243, 244, .18);
-    --rule-hi: rgba(239, 243, 244, .38);
-  }
 }
 
 * { box-sizing: border-box; }
@@ -45,6 +40,7 @@ html {
 body {
   margin: 0;
   padding-top: var(--bar);
+  counter-reset: sec;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--mono);
@@ -93,7 +89,7 @@ html[data-lang="es"] [data-en] { display: none; }
   align-items: center;
   gap: 1.25rem;
   padding-inline: var(--pad);
-  background: var(--paper);
+  background: var(--well);
   border-bottom: 1px solid var(--rule);
   font-size: .6875rem;
   letter-spacing: .1em;
@@ -180,7 +176,7 @@ body.is-live .dot {
 }
 
 .specs {
-  border-top: 1px solid var(--ink);
+  border-top: 1px solid var(--rule-hi);
   max-width: 34rem;
 }
 
@@ -222,18 +218,25 @@ body.is-live .dot {
    SECTIONS
    ============================================================ */
 
-.section { padding-block: clamp(2.5rem, 7vw, 4.5rem); }
-.section + .section { border-top: 1px solid var(--rule); }
+.section {
+  padding-block: clamp(2.5rem, 7vw, 4.5rem);
+  counter-increment: sec;
+}
 
+/* Head is a ruled band: label left, note and index right. The
+   index is generated, so adding or reordering a section renumbers
+   the page on its own. */
 .section__head {
   display: flex;
   align-items: baseline;
   gap: 1rem;
   margin-bottom: 1.75rem;
+  padding-bottom: .65rem;
+  border-bottom: 1px solid var(--rule-hi);
 }
 
 .section__head h2 {
-  margin: 0;
+  margin: 0 auto 0 0;
   font-family: var(--mono);
   font-size: .75rem;
   font-weight: 400;
@@ -241,13 +244,26 @@ body.is-live .dot {
   text-transform: uppercase;
 }
 
+.section__head::after {
+  content: "1." counter(sec);
+  margin-left: 1.5rem;
+  flex: none;
+  color: var(--live);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+}
+
 .section__note {
   font-size: .6875rem;
   color: var(--ink-40);
   letter-spacing: .06em;
-  margin-left: auto;
   text-align: right;
 }
+
+/* The rows already carry a top rule; the ruled head would double it. */
+.section__head + .rows,
+.section__head + #dates .rows { border-top: 0; }
 
 /* ---------- rows (dates, sets, crate, links) ---------- */
 
@@ -285,10 +301,7 @@ body.is-live .dot {
   text-align: right;
 }
 
-a.row:hover { background: rgba(35, 35, 35, .04); }
-@media (prefers-color-scheme: dark) {
-  a.row:hover { background: rgba(239, 243, 244, .06); }
-}
+a.row:hover { background: var(--hover); }
 
 @media (max-width: 34rem) {
   .row { grid-template-columns: 1fr auto; }
@@ -347,10 +360,7 @@ a.row:hover { background: rgba(35, 35, 35, .04); }
   text-transform: none;
 }
 
-.embed__btn:hover { background: rgba(35, 35, 35, .04); }
-@media (prefers-color-scheme: dark) {
-  .embed__btn:hover { background: rgba(239, 243, 244, .06); }
-}
+.embed__btn:hover { background: var(--hover); }
 
 .embed iframe { width: 100%; height: 100%; border: 0; display: block; }
 
@@ -407,9 +417,9 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 .btn {
   justify-self: start;
   appearance: none;
-  background: var(--ink);
-  color: var(--paper);
-  border: 1px solid var(--ink);
+  background: var(--live);
+  color: #232323;
+  border: 1px solid var(--live);
   font: inherit;
   font-size: .75rem;
   letter-spacing: .14em;
@@ -418,7 +428,7 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   cursor: pointer;
 }
 
-.btn:hover { background: transparent; color: var(--ink); }
+.btn:hover { background: transparent; color: var(--live); }
 
 .form__msg {
   font-size: .8125rem;

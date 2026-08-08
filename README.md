@@ -18,16 +18,21 @@ Open `index.html` directly in a browser to preview. Everything works from
 
 ## The palette rule
 
-`#232323` ink, `#EFF3F4` paper, and that's the whole site — **except when you're
-live**, when `#FFEA00` floods the status bar. Colour is information here, not
-decoration, so it stays meaningful.
+Dark and darker. `#232323` is the lead black and carries the page; `#1A1A1A`
+recedes underneath it for the fixed status bar and the footer. Type is
+`#EFF3F4` at 14.07:1.
 
-Yellow is never used as text on the light ground: the contrast is about 1.06:1,
-which is invisible rather than merely non-compliant. It's always a fill with ink
-on top (~12.8:1). Keep that rule if you extend the design.
+`#FFEA00` is the secondary brand colour, carried over from the mark. On the
+black ground it measures **12.74:1**, so it works as text — which is what the
+old light-ground rule forbade (1.06:1 there, invisible rather than merely
+non-compliant). It now carries the section indices, the primary button, focus
+rings and selection.
 
-Dark mode comes free from `prefers-color-scheme` — ink and paper swap, the
-yellow gets better.
+The live state still floods the entire status bar yellow, so promoting the
+colour did not spend the signal: a yellow index is 12 characters, a yellow bar
+is the full width of the screen.
+
+There is no light mode. `prefers-color-scheme` was removed — one palette.
 
 **Preview the live state any time:** add `?live=1` to the URL.
 
