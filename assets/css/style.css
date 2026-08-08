@@ -471,18 +471,10 @@ a.row:hover { background: var(--hover); }
    height, and min-height leaves that auto. */
 .embed--audio.is-loaded { height: 22rem; }
 
-/* The widget ships white and lives in a cross-origin iframe, so its
-   internals are out of reach. Inverting the whole frame and rotating
-   the hue back is the only way to darken it from outside: white
-   becomes near-black, dark text becomes light, and the yellow accent
-   lands close to where it started.
-
-   The cost is that photographs invert too — the sleeve thumbnail and
-   the small row images render as negatives. Delete this one rule to
-   go back to the stock white player. */
-.embed--audio iframe {
-  filter: invert(1) hue-rotate(180deg);
-}
+/* No filter here on purpose. Darkening a cross-origin iframe is only
+   possible by inverting the whole frame, which turns every sleeve
+   thumbnail into a colour negative. The white player is the honest
+   trade: SoundCloud's chrome stays theirs, the artwork stays right. */
 
 /* Was an inline style attribute; moved here so the page can run
    under style-src 'self' with no unsafe-inline. */
