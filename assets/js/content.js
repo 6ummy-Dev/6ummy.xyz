@@ -148,5 +148,14 @@ window.SITE = {
   /* ---------- 8. SUPPORT ----------------------------------- */
   support: [
     { label: "PayPal", url: "https://www.paypal.com/paypalme/6ummy" }
-  ]
+  ],
+
+  /* ---------- 9. FOOTER ------------------------------------
+     The glyph row is decorative, so it's hidden from screen
+     readers — the tagline underneath carries the meaning.
+     --------------------------------------------------------- */
+  footer: {
+    glyphs: "🎧 🎚 🖤 🎛️ 🎶",
+    tagline: "art + love + tech"
+  }
 };

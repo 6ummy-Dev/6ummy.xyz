@@ -363,6 +363,10 @@
 
     $("elsewhere").innerHTML = linkGroups(S.elsewhere || []);
 
+    var F = S.footer || {};
+    $("glyphs").textContent = F.glyphs || "";
+    $("tagline").textContent = F.tagline || "";
+
     $("support").innerHTML = (S.support || []).map(function (s) {
       return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' +
         es("Apoyame", "Support") + " · " + esc(s.label) + "</a>";
@@ -432,6 +436,48 @@
                              "That didn't send. Email me at " + C.email);
       });
   });
+
+  /* ---------------------------------------------------------
+     PIXEL NUMERALS — a 5x7 dot-matrix set, the character cell
+     80s terminals used. Drawn as SVG rects rather than loaded as
+     a font: eleven glyphs is far less than a font file, it can't
+     fail to arrive, and it scales without ever being resampled —
+     which matters when the mark it sits next to is pixel art.
+     --------------------------------------------------------- */
+
+  var PIX = {
+    "0": ["01110","10001","10011","10101","11001","10001","01110"],
+    "1": ["00100","01100","00100","00100","00100","00100","01110"],
+    "2": ["01110","10001","00001","00010","00100","01000","11111"],
+    "3": ["11111","00010","00100","00010","00001","10001","01110"],
+    "4": ["00010","00110","01010","10010","11111","00010","00010"],
+    "5": ["11111","10000","11110","00001","00001","10001","01110"],
+    "6": ["00110","01000","10000","11110","10001","10001","01110"],
+    "7": ["11111","00001","00010","00100","01000","01000","01000"],
+    "8": ["01110","10001","10001","01110","10001","10001","01110"],
+    "9": ["01110","10001","10001","01111","00001","00010","01100"],
+    ".": ["00","00","00","00","00","11","11"]
+  };
+
+  function pixelNum(str) {
+    var x = 0, rects = "";
+    for (var i = 0; i < str.length; i++) {
+      var g = PIX[str.charAt(i)];
+      if (!g) continue;
+      for (var y = 0; y < g.length; y++) {
+        for (var c = 0; c < g[y].length; c++) {
+          if (g[y].charAt(c) === "1") {
+            rects += '<rect x="' + (x + c) + '" y="' + y + '" width="1" height="1"/>';
+          }
+        }
+      }
+      x += g[0].length + 1;
+    }
+    var w = Math.max(1, x - 1);
+    return '<svg class="pix" viewBox="0 0 ' + w + ' 7" preserveAspectRatio="xMidYMid meet" ' +
+           'fill="currentColor" shape-rendering="crispEdges" focusable="false" aria-hidden="true">' +
+           rects + "</svg>";
+  }
 
   /* ---------------------------------------------------------
      SECTION INDEX + HEAD CONTROLS
@@ -529,7 +575,8 @@
       [].forEach.call(jump.children, function (n) { lab.appendChild(n.cloneNode(true)); });
       var n = document.createElement("span");
       n.className = "index__num";
-      n.textContent = num;
+      n.innerHTML = pixelNum(num);
+      a.setAttribute("aria-label", num + " " + (h2.textContent || "").trim());
       a.appendChild(lab);
       a.appendChild(n);
       a.addEventListener("click", function () { goTo(sec); });
