@@ -129,19 +129,19 @@
       src = "https://www.youtube-nocookie.com/embed/videoseries?list=" +
             encodeURIComponent(C.youtubePlaylist) + "&rel=0";
     } else {
-      /* visual=true is the only lever SoundCloud gives us over the
-         widget's background — the classic player is white and the
-         iframe is cross-origin, so CSS cannot reach inside it. In
-         visual mode the artwork becomes the background, which lands
-         in the palette because the sleeve art is monochrome.
+      /* Classic player, not visual=true. In visual mode the artwork
+         becomes the background and is sized at ~0.45 x the player's
+         width — at 880px that is 391px, so it swallows the box and
+         the tracklist falls off the bottom. Its share cannot be
+         changed: show_artwork=false has no effect in that mode.
 
-         The artwork block scales at ~0.45 x width, so at full desktop
-         width it would swallow the whole box and push the tracklist
-         out of view. The embed is capped at 34rem in CSS to keep both
-         visible. Yellow still drives the progress bar and controls. */
+         The classic player's header is a FIXED height instead, so the
+         artwork stays a small constant and the tracklist takes the
+         rest at every width. The white background it ships with is
+         handled by a filter in CSS. */
       src = "https://w.soundcloud.com/player/?url=" +
             encodeURIComponent(btn.getAttribute("data-url")) +
-            "&color=%23FFEA00&auto_play=false&visual=true" +
+            "&color=%23FFEA00&auto_play=false" +
             "&hide_related=true&show_comments=false&show_teaser=false&show_reposts=false";
     }
 
