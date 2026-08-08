@@ -346,8 +346,9 @@ body.is-live .wordmark__cursor { animation: none; }
   text-transform: uppercase;
 }
 
+/* Matches the rail and the enhanced head: a plain ordinal, not 1.n. */
 .section__head::after {
-  content: "1." counter(sec);
+  content: counter(sec);
   margin-left: 1.5rem;
   flex: none;
   color: var(--live);
