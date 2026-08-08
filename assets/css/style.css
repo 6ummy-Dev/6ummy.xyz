@@ -1028,3 +1028,59 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .reel__item img { transition: none; }
 }
+
+/* ============================================================
+   404 — its own page, so it carries its own layout rather than
+   borrowing the index's. No JS: the glyphs are static SVG in the
+   markup, which keeps it working even if everything else fails.
+   ============================================================ */
+
+.nf {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: var(--pad);
+  text-align: center;
+}
+
+.nf__wrap {
+  max-width: 32rem;
+  display: grid;
+  justify-items: center;
+  gap: 1.5rem;
+}
+
+.nf__code { margin: 0; line-height: 0; color: var(--live); }
+
+.nf__num { width: clamp(7rem, 34vw, 12rem); height: auto; }
+
+.nf__title {
+  margin: 0;
+  font-family: var(--pixel);
+  font-size: clamp(.95rem, 3vw, 1.3rem);
+  font-weight: 400;
+  letter-spacing: .06em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.nf__body {
+  margin: 0;
+  max-width: 26rem;
+  font-size: .875rem;
+  line-height: 1.7;
+  color: var(--ink-64);
+}
+
+.nf__home { margin: .5rem 0 0; line-height: 0; }
+
+.nf__home .row__link {
+  display: inline-block;
+  border-bottom: 0;
+  color: var(--ink);
+}
+
+.nf__home .row__link:hover { color: var(--live); }
+
+.nf__mark { width: clamp(5.5rem, 22vw, 8rem); height: auto; }
