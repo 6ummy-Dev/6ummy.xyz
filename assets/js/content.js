@@ -56,13 +56,34 @@ window.SITE = {
      --------------------------------------------------------- */
   sets: [
     {
+      title: "Vinyl DJ Sets",
+      note: { en: "Recorded vinyl sessions.", es: "Sesiones grabadas en vinilo." },
+      url: "https://soundcloud.com/6ummy/sets/sets"
+    },
+    {
       title: "mnml snds",
       note: { en: "Minimal selections, ongoing series.", es: "Selecciones minimal, serie en curso." },
       url: "https://soundcloud.com/6ummy/sets/mnml-snds"
     }
+    // Add the rest here — same three fields. Order on this list is
+    // the order on the page.
   ],
 
-  /* ---------- 5. CRATE ------------------------------------
+  /* ---------- 5. PORTFOLIO --------------------------------
+     One curated YouTube playlist, mirrored in playlist order.
+     Rearrange it on YouTube and the page follows — nothing to
+     edit here. The playlist ID goes in the Worker as a secret
+     (YOUTUBE_PLAYLIST), not in this file, so it stays with the
+     API key it's used against.
+
+     Rows link out to YouTube rather than embedding: an embedded
+     player is ~900KB per video before anyone presses play.
+     --------------------------------------------------------- */
+  portfolio: {
+    max: 12                       // how many to show; the Worker returns up to 24
+  },
+
+  /* ---------- 6. CRATE ------------------------------------
      Records come from Discogs automatically, newest first —
      add a record there and it appears here. Nothing to maintain.
 
@@ -78,21 +99,47 @@ window.SITE = {
     // },
   },
 
-  /* ---------- 6. ELSEWHERE ---------------------------------
-     Everything that isn't the main story. Reorder at will.
+  /* ---------- 7. ELSEWHERE ---------------------------------
+     Grouped, because eight flat rows read as a pile. Each group
+     is a heading plus its links; reorder either freely.
+
+     A flat array still works if you'd rather not group — the
+     renderer accepts both shapes.
      --------------------------------------------------------- */
   elsewhere: [
-    { label: "X",            url: "https://x.com/6ummy" },
-    { label: "VINILOS · X",  url: "https://x.com/i/communities/1493258083975385088" },
-    { label: "SoundCloud",   url: "https://soundcloud.com/6ummy" },
-    { label: "Twitch",       url: "https://www.twitch.tv/6ummy" },
-    { label: "YouTube",      url: "https://www.youtube.com/10mopiso" },
-    { label: "Discord",      url: "https://discord.gg/CfmfMxDZv5" },
-    { label: "OpenSea",      url: "https://opensea.io/6ummy" },
-    { label: "OBJKT",        url: "https://objkt.com/@6ummy" }
+    {
+      group: { en: "Listen", es: "Escuchar" },
+      links: [
+        { label: "SoundCloud", url: "https://soundcloud.com/6ummy" },
+        { label: "YouTube",    url: "https://www.youtube.com/10mopiso" },
+        { label: "Twitch",     url: "https://www.twitch.tv/6ummy" }
+      ]
+    },
+    {
+      group: { en: "Social", es: "Social" },
+      links: [
+        { label: "X",           url: "https://x.com/6ummy" },
+        { label: "VINILOS",     url: "https://x.com/i/communities/1493258083975385088",
+          note: { en: "community", es: "comunidad" } },
+        { label: "Discord",     url: "https://discord.gg/CfmfMxDZv5" }
+      ]
+    },
+    {
+      group: { en: "Collect", es: "Coleccionar" },
+      links: [
+        { label: "OpenSea", url: "https://opensea.io/6ummy" },
+        { label: "OBJKT",   url: "https://objkt.com/@6ummy" }
+      ]
+    },
+    {
+      group: { en: "Projects", es: "Proyectos" },
+      links: [
+        { label: "Nightwatcher", url: "https://nightwatcher.life" }
+      ]
+    }
   ],
 
-  /* ---------- 7. SUPPORT ----------------------------------- */
+  /* ---------- 8. SUPPORT ----------------------------------- */
   support: [
     { label: "PayPal", url: "https://www.paypal.com/paypalme/6ummy" }
   ]

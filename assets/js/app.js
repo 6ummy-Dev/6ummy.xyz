@@ -124,9 +124,12 @@
       src = "https://player.twitch.tv/?channel=" + encodeURIComponent(C.twitchChannel) +
             "&parent=" + location.hostname + "&autoplay=true";
     } else {
+      // Yellow is the site's accent, so the player's progress bar
+      // and controls match instead of arriving in SoundCloud orange.
       src = "https://w.soundcloud.com/player/?url=" +
             encodeURIComponent(btn.getAttribute("data-url")) +
-            "&color=%23232323&hide_related=true&show_comments=false&show_teaser=false";
+            "&color=%23FFEA00&auto_play=false" +
+            "&hide_related=true&show_comments=false&show_teaser=false&show_reposts=false";
     }
 
     var f = document.createElement("iframe");
@@ -217,6 +220,7 @@
         "</div>";
     });
     box.innerHTML = html + "</div>";
+    sweep();
   }
 
   /* ---------------------------------------------------------
@@ -270,6 +274,56 @@
           (n ? '<em class="rec__note">' + esc(t(n)) + "</em>" : "") +
         "</span></a>";
     }).join("");
+    sweep();
+  }
+
+  /* ---------------------------------------------------------
+     PORTFOLIO — one curated YouTube playlist via the Worker.
+     Rows link out rather than embed: an embedded player costs
+     the better part of a megabyte before anyone presses play,
+     and this is a list you scan, not a thing you watch in place.
+     --------------------------------------------------------- */
+
+  var videoState = null;
+
+  function loadVideos() {
+    api("/youtube")
+      .then(function (d) {
+        if (d.error) throw new Error(d.error);
+        videoState = { videos: d.videos || [] };
+        renderVideos();
+      })
+      .catch(function () {
+        videoState = { videos: [], failed: !!API };
+        renderVideos();
+      });
+  }
+
+  function renderVideos() {
+    if (!videoState) return;
+    var box = $("portfolio"), note = $("portfolioNote");
+    var max = (S.portfolio && S.portfolio.max) || 12;
+    var vids = videoState.videos.slice(0, max);
+
+    if (!vids.length) {
+      note.textContent = "";
+      box.innerHTML = '<p class="empty">' + (videoState.failed
+        ? es("No se pudo cargar la lista.", "Couldn\u2019t load the playlist.")
+        : es("Lista no conectada todav\u00eda.", "Playlist not connected yet.")) + "</p>";
+      return;
+    }
+
+    note.textContent = videoState.videos.length > vids.length
+      ? vids.length + " / " + videoState.videos.length
+      : String(vids.length);
+
+    box.innerHTML = vids.map(function (v) {
+      return '<a class="row vid" href="' + esc(v.url) + '" target="_blank" rel="noopener">' +
+        '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" decoding="async" width="96" height="54">' +
+        '<span class="row__main">' + esc(v.title) + "</span>" +
+        '<span class="row__end">' + esc(v.year) + "</span></a>";
+    }).join("");
+    sweep();
   }
 
   /* ---------------------------------------------------------
@@ -307,12 +361,7 @@
         esc(s.title) + "<small>" + esc(t(s.note)) + "</small></button></div>";
     }).join("");
 
-    $("elsewhere").innerHTML = (S.elsewhere || []).map(function (l) {
-      return '<a class="row" href="' + esc(l.url) + '" target="_blank" rel="noopener me">' +
-        '<span class="row__key">' + esc(hostOf(l.url)) + "</span>" +
-        '<span class="row__main">' + esc(l.label) + "</span>" +
-        '<span class="row__end">↗</span></a>';
-    }).join("");
+    $("elsewhere").innerHTML = linkGroups(S.elsewhere || []);
 
     $("support").innerHTML = (S.support || []).map(function (s) {
       return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' +
@@ -321,6 +370,28 @@
 
     renderDates();
     renderCrate();
+    renderVideos();
+    sweep();
+  }
+
+  /* Accepts either a flat array of links or an array of
+     { group, links } — so an older flat list still renders. */
+  function linkGroups(list) {
+    var grouped = list.length && list[0] && list[0].links;
+    if (!grouped) return list.map(linkRow).join("");
+    return list.map(function (g) {
+      if (!g.links || !g.links.length) return "";
+      return '<div class="group"><h3 class="group__name">' + esc(t(g.group)) + "</h3>" +
+             g.links.map(linkRow).join("") + "</div>";
+    }).join("");
+  }
+
+  function linkRow(l) {
+    return '<a class="row" href="' + esc(l.url) + '" target="_blank" rel="noopener me">' +
+      '<span class="row__key">' + esc(hostOf(l.url)) + "</span>" +
+      '<span class="row__main">' + esc(l.label) +
+        (l.note ? ' <span class="row__tag">' + esc(t(l.note)) + "</span>" : "") + "</span>" +
+      '<span class="row__end">\u2197</span></a>';
   }
 
   function spec(k, v) {
@@ -362,10 +433,63 @@
       });
   });
 
+  /* ---------------------------------------------------------
+     REVEALS — reveal and settle, nothing pinned or scrubbed.
+     The page is short; heavy choreography would read as padding.
+
+     The .reveal class is added from here rather than sitting in
+     the HTML, so a reader with JS disabled never meets a page of
+     permanently invisible sections. Same reason it bails out
+     entirely under prefers-reduced-motion instead of relying on
+     the stylesheet to neutralise it.
+     --------------------------------------------------------- */
+
+  var reduced = false;
+  try {
+    reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch (e) {}
+
+  var observer = null;
+
+  function watch(nodes) {
+    if (reduced || !observer) return;
+    Array.prototype.forEach.call(nodes, function (el, i) {
+      if (el.dataset.revealed) return;
+      el.dataset.revealed = "1";
+      el.classList.add("reveal");
+      el.style.setProperty("--i", Math.min(i, 8));
+      observer.observe(el);
+    });
+  }
+
+  function initReveals() {
+    if (reduced || !("IntersectionObserver" in window)) return;
+
+    observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        en.target.classList.add("is-in");
+        observer.unobserve(en.target);       // one-way: no re-animating on scroll back
+      });
+    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
+
+    sweep();
+  }
+
+  /* Rows arrive after their fetch resolves, so this runs again
+     each time a section renders. */
+  function sweep() {
+    watch(document.querySelectorAll(".section__head"));
+    watch(document.querySelectorAll(".hero .specs, .hero .bio"));
+    watch(document.querySelectorAll(".row, .group, .embed"));
+  }
+
   /* --------------------------------------------------------- */
 
   render();
+  initReveals();
   loadDates();
   loadCrate();
+  loadVideos();
 
 })();

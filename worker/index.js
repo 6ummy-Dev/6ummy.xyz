@@ -2,15 +2,26 @@
    6UMMY — Worker
    One file, three routes. Paste into a Cloudflare Worker.
 
-     GET /live    Twitch: are you streaming right now
-     GET /dates   Google Calendar .ics, parsed to JSON
-     GET /crate   Discogs collection, newest first
+     GET /live      Twitch: are you streaming right now
+     GET /dates     Google Calendar .ics, parsed to JSON
+     GET /crate     Discogs collection, newest first
+     GET /youtube   One curated playlist, in playlist order
 
    Secrets to set in  Settings > Variables and Secrets:
-     TWITCH_ID       Twitch application client ID
-     TWITCH_SECRET   Twitch application client secret
-     DISCOGS_TOKEN   Discogs personal access token
-     CALENDAR_ID     jelhc76e0q5clq9er14l6963fo@group.calendar.google.com
+     TWITCH_ID         Twitch application client ID
+     TWITCH_SECRET     Twitch application client secret
+     DISCOGS_TOKEN     Discogs personal access token
+     CALENDAR_ID       jelhc76e0q5clq9er14l6963fo@group.calendar.google.com
+     YOUTUBE_KEY       YouTube Data API v3 key
+
+   The playlist ID is public, so it sits in YT_PLAYLIST below with
+   the other handles rather than in secrets. Keeping it server-side
+   also means this Worker can't be used to spend your API quota on
+   somebody else's playlist.
+
+   Restrict YOUTUBE_KEY to the YouTube Data API v3 in the Google
+   Cloud console. Workers have no fixed IP, so an API restriction
+   is the useful one; a referrer restriction would do nothing here.
 
    Nothing here ever reaches the browser except the JSON output,
    so none of these values touch the public repo.
@@ -18,6 +29,7 @@
 
 const DISCOGS_USER = "6ummy";
 const TWITCH_LOGIN = "6ummy";
+const YT_PLAYLIST  = "PLToFguQXkN1vWOwHi10bbgIUxUngpc0MI";
 const UA = "6ummy.xyz/1.0 (+https://6ummy.xyz)";
 
 /* Who may call this Worker. Read-only public data, so this is
@@ -61,7 +73,8 @@ export default {
       if (path === "/live")  return json(await live(env),  req, 60);
       if (path === "/dates") return json(await dates(env), req, 900);
       if (path === "/crate") return json(await crate(env), req, 3600);
-      return json({ routes: ["/live", "/dates", "/crate"] }, req, 3600);
+      if (path === "/youtube") return json(await youtube(env), req, 3600);
+      return json({ routes: ["/live", "/dates", "/crate", "/youtube"] }, req, 3600);
     } catch (err) {
       // Never 500 — the site should degrade, not break.
       return json({ error: String(err && err.message || err) }, req, 30);
@@ -330,4 +343,55 @@ async function crate(env) {
   });
 
   return { count: data.pagination ? data.pagination.items : records.length, records };
+}
+
+/* ============================================================
+   YOUTUBE
+   One curated playlist, returned in the order you arranged it —
+   so the running order is editable on YouTube, not in the repo.
+
+   A playlist keeps private and deleted entries in the response
+   as placeholder items with no thumbnail. They're filtered out
+   here, otherwise the site would render rows titled
+   "Private video".
+
+   Quota: playlistItems.list costs 1 unit against 10,000/day,
+   and the response is cached for an hour. This is free.
+   ============================================================ */
+
+async function youtube(env) {
+  if (!env.YOUTUBE_KEY) return { videos: [], reason: "not configured" };
+
+  const url = "https://www.googleapis.com/youtube/v3/playlistItems" +
+              "?part=snippet,contentDetails&maxResults=24" +
+              "&playlistId=" + encodeURIComponent(YT_PLAYLIST) +
+              "&key=" + encodeURIComponent(env.YOUTUBE_KEY);
+
+  const data = await fetch(url, {
+    headers: { "User-Agent": UA },
+    cf: { cacheTtl: 1800, cacheEverything: true }
+  }).then(r => {
+    if (!r.ok) throw new Error("youtube " + r.status);
+    return r.json();
+  });
+
+  const dead = /^(private|deleted) video$/i;
+
+  const videos = (data.items || []).map(item => {
+    const sn = item.snippet || {};
+    const th = sn.thumbnails || {};
+    const id = (sn.resourceId && sn.resourceId.videoId) || "";
+    const published = (item.contentDetails && item.contentDetails.videoPublishedAt) || sn.publishedAt || "";
+    return {
+      id,
+      title: sn.title || "",
+      channel: sn.videoOwnerChannelTitle || "",
+      year: published ? published.slice(0, 4) : "",
+      published,
+      thumb: (th.medium || th.default || {}).url || "",
+      url: id ? "https://www.youtube.com/watch?v=" + id : ""
+    };
+  }).filter(v => v.id && v.thumb && !dead.test(v.title));
+
+  return { count: videos.length, videos };
 }

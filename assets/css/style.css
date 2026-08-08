@@ -274,11 +274,18 @@ body.is-live .dot {
   gap: .15rem 1.25rem;
   padding: .85rem 0;
   border-bottom: 1px solid var(--rule);
-  grid-template-columns: 7.5rem 1fr auto;
+  grid-template-columns: 9rem 1fr auto;
   align-items: baseline;
 }
 
 .row__key {
+  /* Hostnames vary a lot in length — nightwatcher.life is nearly
+     twice soundcloud.com. Clip rather than let a long one push
+     the whole row out of column. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: .75rem;
   color: var(--ink-40);
   letter-spacing: .05em;
@@ -504,3 +511,71 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   .rec .row__sub { grid-column: 2 / -1; }
 }
 
+/* ============================================================
+   PORTFOLIO ROWS — YouTube thumbnails are 16:9, so these sit
+   wider and shorter than the square sleeves in the crate.
+   ============================================================ */
+
+.vid {
+  grid-template-columns: 6rem 1fr auto;
+  align-items: center;
+  gap: .3rem 1rem;
+}
+
+.vid img {
+  width: 6rem;
+  height: 3.375rem;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.06);
+  background: var(--well);
+  transition: filter .35s ease;
+}
+
+.vid:hover img { filter: none; }
+
+@media (max-width: 34rem) {
+  .vid { grid-template-columns: 4.5rem 1fr auto; }
+  .vid img { width: 4.5rem; height: 2.53rem; }
+}
+
+/* ============================================================
+   LINK GROUPS — eight flat rows read as a pile. The heading is
+   the same weight as a section note, so grouping reads as
+   filing rather than as another level of hierarchy.
+   ============================================================ */
+
+.group + .group { margin-top: 1.75rem; }
+
+.group__name {
+  margin: 0 0 .35rem;
+  font-family: var(--mono);
+  font-size: .6875rem;
+  font-weight: 400;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--live);
+}
+
+.row__tag {
+  margin-left: .5rem;
+  font-size: .6875rem;
+  color: var(--ink-40);
+}
+
+/* ============================================================
+   REVEALS — reveal and settle. The class is applied by JS, so
+   with JS off nothing is ever hidden in the first place.
+   ============================================================ */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(.6rem);
+  transition:
+    opacity .55s cubic-bezier(.22, .61, .36, 1) calc(var(--i, 0) * 45ms),
+    transform .55s cubic-bezier(.22, .61, .36, 1) calc(var(--i, 0) * 45ms);
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}

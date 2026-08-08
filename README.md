@@ -16,6 +16,21 @@ Open `index.html` directly in a browser to preview. Everything works from
 
 ---
 
+## Worker routes
+
+`/live` Twitch · `/dates` calendar · `/crate` Discogs · `/youtube` playlist
+
+The YouTube route mirrors one curated playlist in playlist order, so the running
+order is edited on YouTube rather than in this repo. The playlist ID lives in
+`YT_PLAYLIST` at the top of `worker/index.js` (it's public); only `YOUTUBE_KEY`
+is a secret. Restrict that key to the YouTube Data API v3 — Workers have no
+fixed IP, so a referrer restriction would do nothing.
+
+Rows link out instead of embedding. An embedded player costs the better part of
+a megabyte per video before anyone presses play.
+
+---
+
 ## The palette rule
 
 Dark and darker. `#232323` is the lead black and carries the page; `#1A1A1A`
