@@ -319,17 +319,41 @@
 
     note.textContent = vids.length + " videos";
 
-    /* Rows are buttons, not links: clicking plays in place rather
-       than sending anyone to YouTube. The player is only built on
-       the first click, so the page still costs nothing until asked. */
-    box.innerHTML = vids.map(function (v) {
-      return '<button class="row vid" type="button" data-video="' + esc(v.id) + '">' +
-        '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" decoding="async" width="96" height="54">' +
-        '<span class="row__main">' + esc(v.title) + "</span>" +
-        '<span class="row__end">' + esc(v.year) + "</span></button>";
-    }).join("");
+    /* A strip rather than a stack: twenty-four rows made this
+       section taller than the rest of the page put together, and
+       worse on a phone. Horizontal scroll-snap costs no library —
+       a swipe is native, and the arrows are only for pointers. */
+    box.innerHTML =
+      '<div class="reel__track" id="reelTrack">' +
+      vids.map(function (v) {
+        return '<button class="reel__item" type="button" data-video="' + esc(v.id) + '">' +
+          '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" decoding="async" width="320" height="180">' +
+          '<span class="reel__title">' + esc(v.title) + "</span>" +
+          '<span class="reel__year">' + esc(v.year) + "</span></button>";
+      }).join("") + "</div>" +
+      '<div class="reel__nav">' +
+        '<button class="reel__arrow" type="button" data-reel="-1" aria-label="' +
+          es("Anterior", "Previous") + '">\u2190</button>' +
+        '<button class="reel__arrow" type="button" data-reel="1" aria-label="' +
+          es("Siguiente", "Next") + '">\u2192</button>' +
+      "</div>";
     sweep();
   }
+
+  /* Arrows page the strip by roughly one screenful. */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest("[data-reel]");
+    if (!a) return;
+    var track = $("reelTrack");
+    if (!track) return;
+    var step = Math.max(160, Math.round(track.clientWidth * 0.8));
+    try {
+      track.scrollBy({ left: step * Number(a.getAttribute("data-reel")),
+                       behavior: reduced ? "auto" : "smooth" });
+    } catch (err) {
+      track.scrollLeft += step * Number(a.getAttribute("data-reel"));
+    }
+  });
 
   /* Play a chosen video in the section's own player, continuing
      into the rest of the playlist afterwards. */
