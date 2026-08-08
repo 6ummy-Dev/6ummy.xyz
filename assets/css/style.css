@@ -469,14 +469,16 @@ a.row:hover { background: var(--hover); }
    single track. Must be `height`, not `min-height` — a percentage
    height on the iframe resolves against the parent's *specified*
    height, and min-height leaves that auto. */
+/* Full width, so the height has to move with it. In visual mode the
+   artwork block is ~0.45 x the player's width — at 880px that alone
+   is 392px, so a 22rem box would show artwork and nothing else.
+   22rem still suits a phone (artwork ~140px, five tracks visible);
+   35rem carries the wider player with about four. */
 .embed--audio.is-loaded { height: 22rem; }
 
-/* Capped to the same 34rem measure the bio and spec table use. At
-   full width the visual player's artwork is ~0.45 x width, which at
-   880px would be taller than the whole box and would hide every
-   track. At 34rem the artwork lands around 242px and the tracklist
-   still shows. */
-.embed--audio { max-width: 34rem; }
+@media (min-width: 46rem) {
+  .embed--audio.is-loaded { height: 35rem; }
+}
 
 /* Was an inline style attribute; moved here so the page can run
    under style-src 'self' with no unsafe-inline. */

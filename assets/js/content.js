@@ -133,17 +133,13 @@ window.SITE = {
     {
       group: { en: "Projects", es: "Proyectos" },
       links: [
-        { label: "Nightwatcher", url: "https://nightwatcher.life" },
-        { label: "Techno Punks", url: "https://discord.gg/CfmfMxDZv5",
-          note: { en: "discord", es: "discord" } }
-      ]
-    },
-    {
-      group: { en: "Listen", es: "Escuchar" },
-      links: [
-        { label: "SoundCloud", url: "https://soundcloud.com/6ummy" },
-        { label: "YouTube",    url: "https://www.youtube.com/10mopiso" },
-        { label: "Twitch",     url: "https://www.twitch.tv/6ummy" }
+        { label: "Nightwatcher",  url: "https://nightwatcher.life" },
+        { label: "Techno Punks",  url: "https://discord.gg/CfmfMxDZv5",
+          note: { en: "discord", es: "discord" } },
+        { label: "DMF",           url: "https://www.youtube.com/@domingo_feliz",
+          note: { en: "youtube", es: "youtube" } },
+        { label: "Décimo Piso",   url: "https://www.youtube.com/@10mopiso",
+          note: { en: "youtube", es: "youtube" } }
       ]
     },
     {
