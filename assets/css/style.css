@@ -700,14 +700,12 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
    that disappears — the numbers ARE the menu. */
 .index {
   position: fixed;
-  top: 50%;
+  top: var(--bar);
   right: 0;
-  transform: translateY(-50%);
   z-index: 40;
   padding: .55rem .5rem .55rem .55rem;
   background: var(--well);
   border-left: 1px solid var(--rule);
-  border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
 }
 
@@ -867,4 +865,51 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
     align-items: center;
     text-align: center;
   }
+}
+
+/* ============================================================
+   BTC — the address is shown in full. A truncated crypto address
+   is worse than none: nobody can verify what they pasted.
+   ============================================================ */
+
+.btc {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .1rem .5rem;
+}
+
+.btc__label {
+  color: var(--live);
+  letter-spacing: .12em;
+}
+
+.btc__addr {
+  font-family: var(--mono);
+  font-size: .625rem;
+  letter-spacing: .02em;
+  text-transform: none;
+  color: var(--ink-64);
+  /* 42 characters have to be able to break on a narrow screen
+     rather than widening the footer column. */
+  word-break: break-all;
+  border-bottom: 1px solid var(--rule);
+}
+
+.btc:hover .btc__addr,
+.btc.is-copied .btc__addr { color: var(--ink); border-bottom-color: var(--live); }
+
+.btc__msg {
+  color: var(--live);
+  font-size: .625rem;
+  letter-spacing: .1em;
 }

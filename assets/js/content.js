@@ -150,6 +150,11 @@ window.SITE = {
     { label: "PayPal", url: "https://www.paypal.com/paypalme/6ummy" }
   ],
 
+  /* Bech32 mainnet address (P2WPKH). Shown in full and click to
+     copy — a truncated crypto address is worse than none, because
+     nobody can check what they pasted. */
+  btc: "bc1qey0dwvaht0fchuw9phz508xyp2jdtprq69cch4",
+
   /* ---------- 9. FOOTER ------------------------------------
      The glyph row is decorative, so it's hidden from screen
      readers — the tagline underneath carries the meaning.
