@@ -1,59 +1,56 @@
-6ummy.xyz — /crate fix + Collectibles rename          8 Aug 2026
+6ummy.xyz — /crate hardening, round 3            8 Aug 2026
 
-FILES IN THIS ZIP  (upload into the repo, same paths)
+FILES  (upload into the repo, same paths, then redeploy the Worker)
 
-  worker/index.js        rebuilt — see below
-  assets/js/content.js   "Collection" -> "Collectibles" / "Coleccionables"
-  README.md              Discogs token claim corrected, KV + cron step added
-  worker/test.mjs        optional, NOT deployed. `node worker/test.mjs` -> 35/35
+  worker/index.js    three changes, below
+  llms.txt           added Techno Punks, VINILOS, PayPal; marked the
+                     OpenSea/OBJKT links as collectibles
+  worker/test.mjs    optional, NOT deployed. `node worker/test.mjs` -> 49/49
 
-WHAT WAS ACTUALLY WRONG
+1. ANONYMOUS FALLBACK — aimed straight at tonight's blocker
 
-  /crate answered:  discogs 429 (rate limited, authenticated; used 88/60)
+   When the authenticated call is throttled AND there is no stored copy,
+   the Worker now tries once more without the token.
 
-  The token is bound and working. The bucket is counted per SOURCE IP, and a
-  Worker egresses from Cloudflare's shared pool — 88 of a 60/min ceiling had
-  already been spent by whoever else shares that address. Being well behaved on
-  the request path cannot win that.
+   That looks backwards: anonymous is a LOWER ceiling, 25 against 60, on
+   the same shared IP. The ceiling is not the point. Without an
+   Authorization header Cloudflare will actually honour cf.cacheTtl, so
+   the request can be answered from Cloudflare's own cache and never
+   reach Discogs at all. With the shared bucket saturated the way it was
+   all evening, a cache hit is the only door left open.
 
-THE FIX
+   Gated so it can only ever fire cold — once a copy is stored, a
+   throttled refresh serves stale and makes no extra call. Response
+   carries fallback:"anonymous" and limit.cfCache so you can see which
+   door it came through.
 
-  1. Cron warmer (new). A scheduled handler refreshes Discogs on a timer and
-     writes the result to KV. Page views only read KV, so a visitor never spends
-     a Discogs call. A throttled tick changes nothing and retries in 15 minutes.
+2. warm() NOW CHECKS FRESHNESS FIRST
 
-  2. Read-through cache. Was fallback-only: upstream on every request, cache
-     consulted only after a failure. Now a copy younger than the route TTL is
-     served with no upstream call at all. 25 requests inside TTL: 1 call, was 25.
+   It used to fetch on every tick regardless. Fine at every 15 minutes,
+   rude at every minute — and raising the cron frequency is the obvious
+   next lever. Thresholds: crate 30 min, dates 10 min, youtube 60 min.
+   Below that a tick spends nothing.
 
-  3. KV store when bound, per-colo edge cache when not. caches.default is local
-     to one data centre; KV is global, so one success anywhere serves everywhere.
+   This is the prerequisite for moving the cron to `* * * * *`. With it
+   in place, per-minute is safe: it hammers only while stale, then backs
+   off to ~2 calls/hour once healthy.
 
-  4. Stale beats blank. An expired copy plus a failing upstream serves the
-     records with stale:true. Deliberately no `error` key on that payload —
-     app.js throws the records away if it sees one.
+3. Small: cf-cache-status surfaced in the limit block.
 
-  5. Honest errors. 429 now names the auth mode and prints used/ceiling.
-     /crate returns auth:<boolean> and a limit block. Never the token.
+AFTER DEPLOYING
 
-  6. cf.cacheTtl is requested only on the anonymous path. Cloudflare silently
-     ignores it on any subrequest carrying an Authorization header — which is
-     exactly why /crate was the one route with no working cache.
+  Optional but recommended — Settings > Triggers, change the cron from
+  */15 * * * * to * * * * *. 1440 chances a day to catch the shared
+  bucket below its ceiling instead of 96, and thanks to (2) it costs
+  almost nothing once a copy lands.
 
-  7. One retry with backoff, honouring Retry-After, and only when there is no
-     stored copy to fall back on.
+NOT CHANGED, AND WHY — two items came off the open list as non-defects
 
-TWO DASHBOARD STEPS (the fix works without them, but not well)
+  .reel__title — the note said the carousel titles should maybe be
+  yellow. They already are: .reel__item.is-playing .reel__title sets
+  var(--live). The thing described as "yellow at 14px" (.embed__btn
+  small) is --ink-40 at .625rem and never was yellow.
 
-  KV    Storage & Databases > KV > Create namespace, then
-        Worker > Settings > Bindings > Add > KV namespace, variable name  CACHE
-
-  Cron  Worker > Settings > Triggers > Cron Triggers > Add
-        expression:  0,15,30,45 * * * *
-
-  Then deploy and open /crate. auth:true means the token is bound; cached:true
-  means it was served without touching Discogs.
-
-NOTE — the repo copy of worker/index.js was behind what is deployed (it still
-had the fallback-only resilient() and no ratelimit detail). This file supersedes
-both, so repo and deployment match again after you upload and deploy it.
+  Twitch 16:9 when off air — it doesn't. aspect-ratio: 16/9 applies to
+  .embed--video.is-loaded only. Idle, every embed is height: var(--idle)
+  = 10rem, the same band as Sets and Portfolio. Nothing to collapse.

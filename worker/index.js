@@ -127,17 +127,30 @@ export default {
      to refreshing themselves on demand. */
   async scheduled(event, env, ctx) {
     ctx.waitUntil(Promise.all([
-      warm(env, "crate",   () => crate(env, true)),
-      warm(env, "dates",   () => dates(env, true)),
-      warm(env, "youtube", () => youtube(env, true))
+      warm(env, "crate",   first => crate(env, first)),
+      warm(env, "dates",   first => dates(env, first)),
+      warm(env, "youtube", first => youtube(env, first))
     ]));
   }
 };
 
+/* How stale a stored copy has to be before a tick bothers refreshing
+   it. Without this the warmer fetches on every single tick, which is
+   merely wasteful every 15 minutes and outright rude every minute —
+   raising the cron frequency is the obvious lever when Discogs is
+   contended. Self-throttling: retries hard while stale, then backs
+   off to roughly one call per interval once healthy. */
+const WARM_AFTER = { crate: 1800, dates: 600, youtube: 3600 };
+
 async function warm(env, name, producer) {
+  const st = store(env);
   try {
-    const data = await producer();
-    await store(env).put(name, { at: Date.now(), data });
+    const entry = await st.get(name);
+    const age = entry && entry.at ? (Date.now() - entry.at) / 1000 : Infinity;
+    if (age < (WARM_AFTER[name] || 1800)) return;   // fresh — spend nothing
+
+    const data = await producer(!entry);
+    await st.put(name, { at: Date.now(), data });
   } catch (err) {
     /* Throttled or upstream down. The stored copy is untouched and
        keeps serving; the next tick tries again. Swallowing this is
@@ -502,6 +515,7 @@ async function crate(env, first) {
                      : { headers, cf: { cacheTtl: 1800, cacheEverything: true } };
 
   let res = await fetch(url, init);
+  let fallback = null;
 
   /* One retry, and only when there is no stored copy to fall back
      on — retrying into a saturated bucket otherwise just adds to
@@ -513,10 +527,31 @@ async function crate(env, first) {
     res = await fetch(url, init);
   }
 
+  /* Cold and still throttled. Try once more WITHOUT the token.
+
+     This looks backwards — anonymous is a lower ceiling, 25 against
+     60, on the same shared IP. The point is not the ceiling. Without
+     an Authorization header Cloudflare will actually honour
+     cf.cacheTtl, so this request can be answered from Cloudflare's
+     own cache and never reach Discogs at all. When the shared bucket
+     is saturated, a cache hit is the only door left.
+
+     Gated on `first` so it can never fire once a stored copy exists,
+     and skipped entirely when no token is bound (the initial attempt
+     was already the anonymous one). */
+  if (!res.ok && res.status === 429 && token && first) {
+    const anon = await fetch(url, {
+      headers: { "User-Agent": UA },
+      cf: { cacheTtl: 1800, cacheEverything: true }
+    });
+    if (anon.ok) { res = anon; fallback = "anonymous"; }
+  }
+
   const limit = {
     ceiling:   res.headers.get("X-Discogs-Ratelimit"),
     used:      res.headers.get("X-Discogs-Ratelimit-Used"),
-    remaining: res.headers.get("X-Discogs-Ratelimit-Remaining")
+    remaining: res.headers.get("X-Discogs-Ratelimit-Remaining"),
+    cfCache:   res.headers.get("cf-cache-status")
   };
 
   if (!res.ok) {
@@ -556,6 +591,10 @@ async function crate(env, first) {
     /* Never the token itself — just whether one is bound, so this
        is answerable from a browser tab instead of the dashboard. */
     auth: !!token,
+    /* Set only when the token path was throttled and the anonymous
+       path answered instead — so "the token is bound" and "the token
+       is what served this" stay distinguishable. */
+    fallback,
     limit,
     records
   };

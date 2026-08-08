@@ -26,12 +26,16 @@ const DISCOGS_BODY = {
   }]
 };
 
+let anonStatus = null;   // when set, anonymous (no Authorization) calls use this
+
 globalThis.fetch = async (url, init = {}) => {
   upstream.push({ url: String(url), init });
   if (String(url).includes("api.discogs.com")) {
+    const isAnon = !(init.headers && init.headers.Authorization);
+    const status = (isAnon && anonStatus != null) ? anonStatus : discogsStatus;
     return new Response(JSON.stringify(DISCOGS_BODY), {
-      status: discogsStatus,
-      headers: { "Content-Type": "application/json", ...discogsHeaders }
+      status,
+      headers: { "Content-Type": "application/json", ...discogsHeaders, "cf-cache-status": isAnon ? "HIT" : "BYPASS" }
     });
   }
   return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
@@ -97,8 +101,10 @@ console.log("\n429, cold");
   const b = await r.json();
   ok("reports the ceiling and usage", /used 88\/60/.test(b.error || ""), JSON.stringify(b));
   ok("names the auth mode", /authenticated/.test(b.error || ""));
-  ok("retries once when there is nothing to fall back on",
-     upstream.filter(u => u.url.includes("discogs")).length === 2);
+  ok("cold path exhausts every option: authed, authed retry, anonymous",
+     upstream.filter(u => u.url.includes("discogs")).length === 3,
+     "got " + upstream.filter(u => u.url.includes("discogs")).length);
+  ok("gives up with an error once all three fail", !!b.error);
   discogsStatus = 200;
 }
 
@@ -232,6 +238,72 @@ console.log("\n/live");
   await worker.fetch(get("/live"), env, ctx);
   await drain();
   ok("liveness is never written to the store", env.CACHE._m.size === 0);
+}
+
+
+/* ---------- 9. anonymous fallback when cold and throttled ---------- */
+console.log("\nanonymous fallback (cold + 429)");
+{
+  reset();
+  discogsStatus = 429;      // authenticated path throttled
+  anonStatus = 200;         // anonymous path answers (Cloudflare cache hit)
+  const env = { DISCOGS_TOKEN: "tok", CACHE: makeKV() };
+  const b = await (await worker.fetch(get("/crate"), env, ctx)).json();
+  await drain();
+
+  const calls = upstream.filter(u => u.url.includes("discogs"));
+  ok("serves records instead of an error", Array.isArray(b.records) && b.records.length === 1);
+  ok("marks how it was served", b.fallback === "anonymous");
+  ok("auth still reports the token is bound", b.auth === true);
+  ok("surfaces the cf cache status", b.limit.cfCache === "HIT");
+  ok("the fallback call carried no Authorization header",
+     !calls[calls.length - 1].init.headers.Authorization);
+  ok("the fallback call asked for cf.cacheTtl",
+     !!calls[calls.length - 1].init.cf);
+  ok("authed attempt + retry + one anonymous = 3", calls.length === 3, "got " + calls.length);
+
+  // and it must NOT fire once a copy exists
+  const raw = JSON.parse(await env.CACHE.get("v1:crate"));
+  raw.at = Date.now() - 7200 * 1000;
+  await env.CACHE.put("v1:crate", JSON.stringify(raw));
+  anonStatus = 200; discogsStatus = 429; upstream = [];
+  const b2 = await (await worker.fetch(get("/crate"), env, ctx)).json();
+  ok("warm + throttled serves stale rather than falling back", b2.stale === true);
+  ok("no anonymous attempt when a copy exists",
+     upstream.filter(u => u.url.includes("discogs")).length === 1);
+
+  discogsStatus = 200; anonStatus = null;
+}
+
+/* ---------- 10. warm() only spends a call when the copy is stale ---------- */
+console.log("\nwarm() freshness gate");
+{
+  reset();
+  const env = { DISCOGS_TOKEN: "tok", CACHE: makeKV() };
+  await worker.scheduled({}, env, ctx);
+  await drain();
+  const firstRun = upstream.filter(u => u.url.includes("discogs")).length;
+  ok("cold tick fetches", firstRun === 1, "got " + firstRun);
+
+  upstream = [];
+  await worker.scheduled({}, env, ctx);
+  await drain();
+  ok("a tick right after does NOT fetch again",
+     upstream.filter(u => u.url.includes("discogs")).length === 0);
+
+  // age it past the 30-minute crate threshold
+  const raw = JSON.parse(await env.CACHE.get("v1:crate"));
+  const staleAt = Date.now() - 3600 * 1000;
+  raw.at = staleAt;
+  await env.CACHE.put("v1:crate", JSON.stringify(raw));
+
+  upstream = [];
+  await worker.scheduled({}, env, ctx);
+  await drain();
+  ok("a tick once it is stale does fetch",
+     upstream.filter(u => u.url.includes("discogs")).length === 1);
+  const after = await env.CACHE.get("v1:crate", "json");
+  ok("and the timestamp moves forward", after.at > staleAt);
 }
 
 console.log("\n" + pass + " passed, " + fail + " failed\n");
