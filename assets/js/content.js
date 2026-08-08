@@ -61,6 +61,11 @@ window.SITE = {
       url: "https://soundcloud.com/6ummy/sets/sets"
     },
     {
+      title: "Décimo Piso",
+      note: { en: "Series.", es: "Serie." },
+      url: "https://soundcloud.com/6ummy/sets/decimo-piso"
+    },
+    {
       title: "mnml snds",
       note: { en: "Minimal selections, ongoing series.", es: "Selecciones minimal, serie en curso." },
       url: "https://soundcloud.com/6ummy/sets/mnml-snds"
@@ -120,8 +125,7 @@ window.SITE = {
       links: [
         { label: "X",           url: "https://x.com/6ummy" },
         { label: "VINILOS",     url: "https://x.com/i/communities/1493258083975385088",
-          note: { en: "community", es: "comunidad" } },
-        { label: "Discord",     url: "https://discord.gg/CfmfMxDZv5" }
+          note: { en: "community", es: "comunidad" } }
       ]
     },
     {
@@ -134,7 +138,9 @@ window.SITE = {
     {
       group: { en: "Projects", es: "Proyectos" },
       links: [
-        { label: "Nightwatcher", url: "https://nightwatcher.life" }
+        { label: "Nightwatcher", url: "https://nightwatcher.life" },
+        { label: "Techno Punks", url: "https://discord.gg/CfmfMxDZv5",
+          note: { en: "discord", es: "discord" } }
       ]
     }
   ],

@@ -23,12 +23,15 @@
 <link rel="alternate" hreflang="en" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="es" href="https://6ummy.xyz/?lang=es">
 
-<!-- Small sizes keep the 6 glyph (the avatar turns to mush at 32px);
-     larger sizes and the touch icon use the real mark. -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23FFEA00'/%3E%3Ctext x='32' y='47' font-family='Helvetica,Arial,sans-serif' font-weight='700' font-size='46' text-anchor='middle' fill='%23232323'%3E6%3C/text%3E%3C/svg%3E">
+<!-- The real mark at every size. It's pixel art on a 40×40 grid, so
+     16 and 32 are non-integer downscales — these were resampled with
+     Lanczos, which keeps the ring and the figure readable where
+     nearest-neighbour drops whole rows of blocks. -->
+<link rel="icon" type="image/png" sizes="16x16" href="assets/img/icon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/img/icon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="assets/img/icon-48.png">
 <link rel="icon" type="image/png" sizes="80x80" href="assets/img/icon-80.png">
-<link rel="apple-touch-icon" href="assets/img/logo-static.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/img/icon-180.png">
 
 <link rel="preconnect" href="https://www.googleapis.com" crossorigin>
 <link rel="stylesheet" href="assets/css/style.css">

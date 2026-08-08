@@ -231,9 +231,19 @@ body.is-live .dot {
   align-items: baseline;
   gap: 1rem;
   margin-bottom: 1.75rem;
-  padding-bottom: .65rem;
+  padding-block: .7rem .65rem;
   border-bottom: 1px solid var(--rule-hi);
+
+  /* Each head holds under the status bar for the length of its own
+     section, then the next one pushes it out. Same top for all of
+     them: sticky is scoped to the parent section, so the handover
+     happens on its own without any scroll maths. */
+  position: sticky;
+  top: var(--bar);
+  z-index: 20;
+  background: var(--paper);
 }
+
 
 .section__head h2 {
   margin: 0 auto 0 0;
@@ -261,9 +271,11 @@ body.is-live .dot {
   text-align: right;
 }
 
-/* The rows already carry a top rule; the ruled head would double it. */
-.section__head + .rows,
-.section__head + #dates .rows { border-top: 0; }
+/* The rows already carry a top rule; the ruled head would double it.
+   Matched through the body wrapper rather than as a sibling of the
+   head, since collapsing put a container between the two. */
+.section__body .rows:first-child,
+.section__head + .rows { border-top: 0; }
 
 /* ---------- rows (dates, sets, crate, links) ---------- */
 
@@ -337,7 +349,11 @@ a.row:hover { background: var(--hover); }
 }
 
 .embed--video { aspect-ratio: 16 / 9; }
-.embed--audio { min-height: 8.75rem; }
+/* A SoundCloud playlist widget renders its tracklist only when it
+   has the room; below ~300px it collapses to the header and looks
+   like a single track. 20rem shows the header plus several rows,
+   and the widget scrolls the rest internally. */
+.embed--audio { min-height: 20rem; }
 
 .embed__btn {
   position: absolute;
@@ -578,4 +594,119 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 .reveal.is-in {
   opacity: 1;
   transform: none;
+}
+
+/* ============================================================
+   HEAD CONTROLS — the label jumps, the index toggles. Both are
+   real buttons, stripped back to look like the text they replaced.
+   ============================================================ */
+
+.section__jump,
+.section__toggle {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.section__jump:hover { color: var(--live); }
+
+/* The generated index steps aside once the real button exists, so
+   a reader without JS still gets numbered sections. */
+.section__head.is-enhanced::after { content: none; }
+
+.section__toggle {
+  flex: none;
+  margin-left: 1.5rem;
+  color: var(--live);
+  font-size: .75rem;
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.section__toggle::after {
+  content: "\2212";              /* minus — shut sections show a plus */
+  margin-left: .5rem;
+  color: var(--ink-40);
+}
+
+.is-shut .section__toggle::after { content: "+"; }
+.section__toggle:hover::after { color: var(--live); }
+
+.is-shut .section__head { margin-bottom: 0; }
+
+/* ============================================================
+   SECTION INDEX — numbers only, so the column stays narrow
+   enough to sit outside the 62rem text measure. The name slides
+   in on hover rather than living there permanently.
+   ============================================================ */
+
+.index {
+  position: fixed;
+  top: 50%;
+  right: clamp(.75rem, 2.5vw, 2rem);
+  transform: translateY(-50%);
+  z-index: 40;
+  display: none;
+}
+
+/* Only once there is room beside the reading column. Below this
+   the sticky heads are the only wayfinding, which is enough. */
+@media (min-width: 70rem) {
+  .index { display: block; }
+}
+
+.index__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: .1rem;
+  text-align: right;
+}
+
+.index__item {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: var(--ink-40);
+  font: inherit;
+  font-size: .6875rem;
+  letter-spacing: .1em;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: .3rem .15rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .6rem;
+  width: 100%;
+}
+
+.index__label {
+  opacity: 0;
+  transform: translateX(.35rem);
+  transition: opacity .3s ease, transform .3s ease;
+  white-space: nowrap;
+}
+
+.index:hover .index__label,
+.index__item:focus-visible .index__label { opacity: 1; transform: none; }
+
+.index__num { min-width: 1.6rem; }
+
+.index__item:hover,
+.index__item.is-current { color: var(--live); }
+
+.index__item.is-current .index__num { font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .index__label { transition: none; }
 }

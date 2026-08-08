@@ -434,6 +434,139 @@
   });
 
   /* ---------------------------------------------------------
+     SECTION INDEX + HEAD CONTROLS
+
+     Two behaviours were asked for on one gesture, so they get
+     separate targets rather than a mode: the label jumps to the
+     section's own top, the index toggles it open or shut. A single
+     tap doing both would have to guess.
+
+     All of this is added from JS. The HTML stays a plain document,
+     so with JS off there are still seven readable sections, a CSS
+     counter for the numbering, and no dead buttons.
+     --------------------------------------------------------- */
+
+  var sections = [], indexItems = [], enhanced = false;
+
+  function barPx() {
+    var b = document.querySelector(".status");
+    return b ? b.getBoundingClientRect().height : 36;
+  }
+
+  function goTo(sec) {
+    var y = sec.getBoundingClientRect().top + window.pageYOffset - barPx();
+    try {
+      window.scrollTo({ top: y, behavior: reduced ? "auto" : "smooth" });
+    } catch (e) { window.scrollTo(0, y); }
+  }
+
+  function enhanceSections() {
+    if (enhanced) return;
+    sections = [].slice.call(document.querySelectorAll("main .section"));
+    if (!sections.length) return;
+    enhanced = true;
+
+    var nav = document.createElement("nav");
+    nav.className = "index";
+    nav.setAttribute("aria-label", "Sections");
+    var list = document.createElement("ol");
+    list.className = "index__list";
+
+    sections.forEach(function (sec, i) {
+      var head = sec.querySelector(".section__head");
+      var h2 = head && head.querySelector("h2");
+      if (!head || !h2) return;
+
+      var num = "1." + (i + 1);
+      if (!sec.id) sec.id = "sec-" + (i + 1);
+      var bodyId = sec.id + "-body";
+
+      /* Everything after the head becomes one collapsible body. */
+      var body = document.createElement("div");
+      body.className = "section__body";
+      body.id = bodyId;
+      while (head.nextSibling) body.appendChild(head.nextSibling);
+      sec.appendChild(body);
+
+      /* Label -> jump. The h2's two language spans move inside the
+         button, so the CSS language switch keeps working untouched. */
+      var jump = document.createElement("button");
+      jump.type = "button";
+      jump.className = "section__jump";
+      while (h2.firstChild) jump.appendChild(h2.firstChild);
+      h2.appendChild(jump);
+      jump.addEventListener("click", function () { goTo(sec); });
+
+      /* Index -> collapse. */
+      var tog = document.createElement("button");
+      tog.type = "button";
+      tog.className = "section__toggle";
+      tog.textContent = num;
+      tog.setAttribute("aria-controls", bodyId);
+      tog.setAttribute("aria-expanded", "true");
+      tog.setAttribute("aria-label", num);
+      head.appendChild(tog);
+      head.classList.add("is-enhanced");
+
+      tog.addEventListener("click", function () {
+        var open = sec.classList.toggle("is-shut") === false;
+        tog.setAttribute("aria-expanded", open ? "true" : "false");
+        body.hidden = !open;
+        /* Collapsing above the viewport would yank the page out from
+           under the reader, so hold this section's head in place. */
+        if (!open) goTo(sec);
+        spy();
+      });
+
+      /* Index entry. The label spans are cloned, so switching
+         language updates the sidebar with no extra wiring. */
+      var li = document.createElement("li");
+      var a = document.createElement("button");
+      a.type = "button";
+      a.className = "index__item";
+      var lab = document.createElement("span");
+      lab.className = "index__label";
+      [].forEach.call(jump.children, function (n) { lab.appendChild(n.cloneNode(true)); });
+      var n = document.createElement("span");
+      n.className = "index__num";
+      n.textContent = num;
+      a.appendChild(lab);
+      a.appendChild(n);
+      a.addEventListener("click", function () { goTo(sec); });
+      li.appendChild(a);
+      list.appendChild(li);
+      indexItems.push({ sec: sec, el: a });
+    });
+
+    nav.appendChild(list);
+    document.body.appendChild(nav);
+    spy();
+  }
+
+  /* Which section owns the top of the screen. */
+  var spying = false;
+  function spy() {
+    if (spying) return;
+    spying = true;
+    requestAnimationFrame(function () {
+      spying = false;
+      var edge = barPx() + 4, current = null;
+      indexItems.forEach(function (it) {
+        if (it.sec.getBoundingClientRect().top <= edge) current = it;
+      });
+      if (!current && indexItems.length) current = null;
+      indexItems.forEach(function (it) {
+        var on = it === current;
+        it.el.classList.toggle("is-current", on);
+        if (on) it.el.setAttribute("aria-current", "true");
+        else it.el.removeAttribute("aria-current");
+      });
+    });
+  }
+  window.addEventListener("scroll", spy, { passive: true });
+  window.addEventListener("resize", spy);
+
+  /* ---------------------------------------------------------
      REVEALS — reveal and settle, nothing pinned or scrubbed.
      The page is short; heavy choreography would read as padding.
 
@@ -479,7 +612,6 @@
   /* Rows arrive after their fetch resolves, so this runs again
      each time a section renders. */
   function sweep() {
-    watch(document.querySelectorAll(".section__head"));
     watch(document.querySelectorAll(".hero .specs, .hero .bio"));
     watch(document.querySelectorAll(".row, .group, .embed"));
   }
@@ -487,6 +619,7 @@
   /* --------------------------------------------------------- */
 
   render();
+  enhanceSections();
   initReveals();
   loadDates();
   loadCrate();
