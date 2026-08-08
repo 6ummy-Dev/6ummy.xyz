@@ -151,7 +151,7 @@ window.SITE = {
       ]
     },
     {
-      group: { en: "Collection", es: "Colección" },
+      group: { en: "Collectibles", es: "Coleccionables" },
       links: [
         { label: "OpenSea", url: "https://opensea.io/6ummy" },
         { label: "OBJKT",   url: "https://objkt.com/@6ummy" }

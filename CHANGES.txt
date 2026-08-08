@@ -1,0 +1,59 @@
+6ummy.xyz — /crate fix + Collectibles rename          8 Aug 2026
+
+FILES IN THIS ZIP  (upload into the repo, same paths)
+
+  worker/index.js        rebuilt — see below
+  assets/js/content.js   "Collection" -> "Collectibles" / "Coleccionables"
+  README.md              Discogs token claim corrected, KV + cron step added
+  worker/test.mjs        optional, NOT deployed. `node worker/test.mjs` -> 35/35
+
+WHAT WAS ACTUALLY WRONG
+
+  /crate answered:  discogs 429 (rate limited, authenticated; used 88/60)
+
+  The token is bound and working. The bucket is counted per SOURCE IP, and a
+  Worker egresses from Cloudflare's shared pool — 88 of a 60/min ceiling had
+  already been spent by whoever else shares that address. Being well behaved on
+  the request path cannot win that.
+
+THE FIX
+
+  1. Cron warmer (new). A scheduled handler refreshes Discogs on a timer and
+     writes the result to KV. Page views only read KV, so a visitor never spends
+     a Discogs call. A throttled tick changes nothing and retries in 15 minutes.
+
+  2. Read-through cache. Was fallback-only: upstream on every request, cache
+     consulted only after a failure. Now a copy younger than the route TTL is
+     served with no upstream call at all. 25 requests inside TTL: 1 call, was 25.
+
+  3. KV store when bound, per-colo edge cache when not. caches.default is local
+     to one data centre; KV is global, so one success anywhere serves everywhere.
+
+  4. Stale beats blank. An expired copy plus a failing upstream serves the
+     records with stale:true. Deliberately no `error` key on that payload —
+     app.js throws the records away if it sees one.
+
+  5. Honest errors. 429 now names the auth mode and prints used/ceiling.
+     /crate returns auth:<boolean> and a limit block. Never the token.
+
+  6. cf.cacheTtl is requested only on the anonymous path. Cloudflare silently
+     ignores it on any subrequest carrying an Authorization header — which is
+     exactly why /crate was the one route with no working cache.
+
+  7. One retry with backoff, honouring Retry-After, and only when there is no
+     stored copy to fall back on.
+
+TWO DASHBOARD STEPS (the fix works without them, but not well)
+
+  KV    Storage & Databases > KV > Create namespace, then
+        Worker > Settings > Bindings > Add > KV namespace, variable name  CACHE
+
+  Cron  Worker > Settings > Triggers > Cron Triggers > Add
+        expression:  0,15,30,45 * * * *
+
+  Then deploy and open /crate. auth:true means the token is bound; cached:true
+  means it was served without touching Discogs.
+
+NOTE — the repo copy of worker/index.js was behind what is deployed (it still
+had the fallback-only resilient() and no ratelimit detail). This file supersedes
+both, so repo and deployment match again after you upload and deploy it.

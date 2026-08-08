@@ -25,6 +25,27 @@
 
    Nothing here ever reaches the browser except the JSON output,
    so none of these values touch the public repo.
+
+   OPTIONAL, and the thing that actually fixes /crate:
+
+     KV binding    CACHE                  Settings > Bindings
+     Cron trigger  0,15,30,45 * * * *     Settings > Triggers
+
+   Discogs throttles per SOURCE IP, and a Worker egresses from
+   Cloudflare's shared pool — so the bucket is shared with every
+   other tenant hitting Discogs from the same address. We have
+   measured 88 used against a ceiling of 60. No amount of being
+   well behaved wins that on the request path.
+
+   The answer is to leave the request path entirely: the cron
+   handler fetches on a timer and writes to KV, and page views
+   only ever read KV. A visitor never touches Discogs. When an
+   attempt is throttled it simply tries again in fifteen minutes,
+   and the last good copy keeps serving in the meantime.
+
+   Both bindings are optional. With no KV the store falls back to
+   the per-colo edge cache, which still works — it just has to be
+   warmed once per data centre instead of once globally.
    ============================================================ */
 
 const DISCOGS_USER = "6ummy";
@@ -89,53 +110,140 @@ export default {
          ended. Wrong beats late here. */
       if (path === "/live")  return json(await live(env),  req, 60);
 
-      if (path === "/dates")   return resilient(req, ctx, "dates",   900,  () => dates(env));
-      if (path === "/crate")   return resilient(req, ctx, "crate",   3600, () => crate(env));
-      if (path === "/youtube") return resilient(req, ctx, "youtube", 3600, () => youtube(env));
+      if (path === "/dates")   return resilient(req, env, ctx, "dates",   900,  first => dates(env, first));
+      if (path === "/crate")   return resilient(req, env, ctx, "crate",   3600, first => crate(env, first));
+      if (path === "/youtube") return resilient(req, env, ctx, "youtube", 3600, first => youtube(env, first));
       return json({ routes: ["/live", "/dates", "/crate", "/youtube"] }, req, 3600);
     } catch (err) {
       // Never 500 — the site should degrade, not break.
       return json({ error: String(err && err.message || err) }, req, 30);
     }
+  },
+
+  /* Cron. Refreshes the three cached routes off the request path,
+     so no visitor's page view is ever the thing that spends a
+     Discogs call. Add the trigger in Settings > Triggers; without
+     one this handler simply never runs and the routes fall back
+     to refreshing themselves on demand. */
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(Promise.all([
+      warm(env, "crate",   () => crate(env, true)),
+      warm(env, "dates",   () => dates(env, true)),
+      warm(env, "youtube", () => youtube(env, true))
+    ]));
   }
 };
 
-/* ============================================================
-   RESILIENCE
-   Discogs rate-limits hard, YouTube has a daily quota, and Google
-   occasionally just fails. Without this, one 429 empties a section
-   and the visitor sees "couldn't load" for an hour.
-
-   So: every successful response is kept in the edge cache for a
-   day under a private key. If upstream then fails, the last good
-   copy is served with stale:true rather than an error. The section
-   goes slightly out of date instead of going blank — the correct
-   trade for a record shelf or a video list.
-   ============================================================ */
-
-async function resilient(req, ctx, name, seconds, producer) {
-  const cache = caches.default;
-  const key = new Request("https://cache.invalid/" + name);
-
+async function warm(env, name, producer) {
   try {
     const data = await producer();
-    const keep = new Response(JSON.stringify(data), {
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        "Cache-Control": "public, max-age=86400"
-      }
-    });
-    if (ctx && ctx.waitUntil) ctx.waitUntil(cache.put(key, keep));
+    await store(env).put(name, { at: Date.now(), data });
+  } catch (err) {
+    /* Throttled or upstream down. The stored copy is untouched and
+       keeps serving; the next tick tries again. Swallowing this is
+       deliberate — a failed warm is not an incident. */
+  }
+}
+
+/* ============================================================
+   STORE
+   KV when it's bound, the per-colo edge cache when it isn't.
+
+   The difference matters more than it looks. caches.default is
+   local to one data centre, so a copy fetched in Santiago does
+   nothing for a visitor in Frankfurt — each colo has to earn its
+   own successful upstream call, and against a saturated shared
+   rate limit that can take a while. KV is global: one success
+   anywhere serves everywhere.
+
+   Entries are { at, data }. Keeping our own timestamp rather than
+   leaning on Cache-Control is what makes read-through possible —
+   we need to know the age of a copy while still holding on to it.
+   ============================================================ */
+
+const STORE_TTL = 604800;   // 7 days — how long a copy stays usable
+const KEY = name => "v1:" + name;
+
+function store(env) {
+  if (env && env.CACHE && typeof env.CACHE.get === "function") {
+    return {
+      kind: "kv",
+      get: name => env.CACHE.get(KEY(name), "json"),
+      put: (name, entry) =>
+        env.CACHE.put(KEY(name), JSON.stringify(entry), { expirationTtl: STORE_TTL })
+    };
+  }
+
+  const cache = caches.default;
+  const req = name => new Request("https://cache.invalid/" + name);
+  return {
+    kind: "edge",
+    async get(name) {
+      const hit = await cache.match(req(name));
+      return hit ? hit.json() : null;
+    },
+    put(name, entry) {
+      return cache.put(req(name), new Response(JSON.stringify(entry), {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Cache-Control": "public, max-age=" + STORE_TTL
+        }
+      }));
+    }
+  };
+}
+
+/* ============================================================
+   RESILIENCE — read-through, not fallback-only
+
+   The old version called upstream on every single request and
+   only looked at the cache after a failure. One page view, one
+   Discogs call. That is what burned the bucket, and the cf.cacheTtl
+   hint that was supposed to absorb it was silently ignored,
+   because Cloudflare will not cache a subrequest carrying an
+   Authorization header.
+
+   Now: a copy younger than the route's TTL is served with no
+   upstream call at all. A missing copy is fetched and stored. An
+   expired copy plus a failing upstream is served with stale:true —
+   the section goes slightly out of date instead of going blank,
+   which is the right trade for a record shelf.
+
+   The stale payload deliberately does NOT carry an `error` key:
+   the frontend treats any `error` as a hard failure and throws
+   away the records, which would defeat the whole point.
+   ============================================================ */
+
+async function resilient(req, env, ctx, name, seconds, producer) {
+  const st = store(env);
+  const now = Date.now();
+
+  let entry = null;
+  try { entry = await st.get(name); } catch (_) { /* store miss is not fatal */ }
+
+  const age = entry && entry.at ? Math.round((now - entry.at) / 1000) : Infinity;
+
+  /* Fresh enough. No upstream call — this is the whole fix. */
+  if (entry && age < seconds) {
+    return json({ ...entry.data, cached: true, age }, req, Math.max(30, seconds - age));
+  }
+
+  try {
+    /* `first` tells the producer whether we have anything to fall
+       back on. With a copy in hand there's no reason to spend a
+       retry on a throttled upstream. */
+    const data = await producer(!entry);
+    const keep = { at: now, data };
+    if (ctx && ctx.waitUntil) ctx.waitUntil(st.put(name, keep));
+    else await st.put(name, keep);
     return json(data, req, seconds);
   } catch (err) {
-    const hit = await cache.match(key);
-    if (hit) {
-      const data = await hit.json();
-      data.stale = true;
+    const why = String((err && err.message) || err);
+    if (entry) {
       /* Short TTL so recovery is quick once upstream returns. */
-      return json(data, req, 60);
+      return json({ ...entry.data, stale: true, age, staleReason: why }, req, 60);
     }
-    return json({ error: String(err && err.message || err) }, req, 30);
+    return json({ error: why, store: st.kind }, req, 30);
   }
 }
 
@@ -363,22 +471,66 @@ function expand(rrule, startMs, from, to) {
 
 /* ============================================================
    DISCOGS
-   Needs a User-Agent header, which browser JS can't set, and
-   a token for cover images. Both fine from here.
+   The Worker exists here for one reason: Discogs requires a
+   User-Agent header and browser JS cannot set one.
+
+   Not for cover art. Folder 0 of a public collection needs no
+   authentication — the docs are explicit that auth is required
+   only when folder_id is not 0 or the collection is private —
+   and the i.discogs.com URLs it returns are pre-signed and load
+   without credentials. The token buys rate-limit headroom and
+   nothing else: 60 requests/min instead of 25.
+
+   And that ceiling is per SOURCE IP, not per token, so from a
+   Worker it is shared with every other Cloudflare tenant calling
+   Discogs. Hence the cron warmer above — the only real defence is
+   to call Discogs on a timer rather than on page views.
    ============================================================ */
 
-async function crate(env) {
+async function crate(env, first) {
+  const token = env.DISCOGS_TOKEN || "";
   const headers = { "User-Agent": UA };
-  if (env.DISCOGS_TOKEN) headers.Authorization = "Discogs token=" + env.DISCOGS_TOKEN;
+  if (token) headers.Authorization = "Discogs token=" + token;
 
   const url = "https://api.discogs.com/users/" + encodeURIComponent(DISCOGS_USER) +
               "/collection/folders/0/releases?sort=added&sort_order=desc&per_page=12&page=1";
 
-  const data = await fetch(url, { headers, cf: { cacheTtl: 1800, cacheEverything: true } })
-    .then(r => {
-      if (!r.ok) throw new Error("discogs " + r.status);
-      return r.json();
-    });
+  /* cf.cacheTtl is silently ignored on a subrequest carrying an
+     Authorization header, so only ask for it on the anonymous
+     path where it actually does something. */
+  const init = token ? { headers }
+                     : { headers, cf: { cacheTtl: 1800, cacheEverything: true } };
+
+  let res = await fetch(url, init);
+
+  /* One retry, and only when there is no stored copy to fall back
+     on — retrying into a saturated bucket otherwise just adds to
+     the problem it is trying to solve. */
+  if (res.status === 429 && first) {
+    const after = parseInt(res.headers.get("Retry-After") || "", 10);
+    const wait = Math.min(3000, after > 0 ? after * 1000 : 700);
+    await new Promise(r => setTimeout(r, wait));
+    res = await fetch(url, init);
+  }
+
+  const limit = {
+    ceiling:   res.headers.get("X-Discogs-Ratelimit"),
+    used:      res.headers.get("X-Discogs-Ratelimit-Used"),
+    remaining: res.headers.get("X-Discogs-Ratelimit-Remaining")
+  };
+
+  if (!res.ok) {
+    /* Say which failure this is. "429" alone cannot distinguish
+       "our token is missing" from "the shared egress IP is over
+       its bucket", and those have completely different fixes. */
+    const detail = res.status === 429
+      ? " (rate limited, " + (token ? "authenticated" : "anonymous") +
+        "; used " + (limit.used || "?") + "/" + (limit.ceiling || "?") + ")"
+      : "";
+    throw new Error("discogs " + res.status + detail);
+  }
+
+  const data = await res.json();
 
   const clean = s => String(s || "").replace(/\s*\(\d+\)$/, "").trim();
 
@@ -399,7 +551,14 @@ async function crate(env) {
     };
   });
 
-  return { count: data.pagination ? data.pagination.items : records.length, records };
+  return {
+    count: data.pagination ? data.pagination.items : records.length,
+    /* Never the token itself — just whether one is bound, so this
+       is answerable from a browser tab instead of the dashboard. */
+    auth: !!token,
+    limit,
+    records
+  };
 }
 
 /* ============================================================

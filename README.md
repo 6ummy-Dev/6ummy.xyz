@@ -62,7 +62,7 @@ It exists because three things can't be done from a browser:
 |---|---|
 | Twitch status | needs a client secret, which can't sit in a public repo |
 | Google Calendar | the `.ics` feed sends no CORS headers, so browsers refuse it |
-| Discogs | requires a `User-Agent` header, which browser JS can't set, and a token for sleeve art |
+| Discogs | requires a `User-Agent` header, which browser JS can't set |
 
 One Worker solves all three, and keeps every credential out of the repo.
 
@@ -70,10 +70,30 @@ One Worker solves all three, and keeps every credential out of the repo.
 
 - **dash.cloudflare.com → Workers & Pages → Create → Hello World → Deploy**
 - **Edit code** → replace everything with `worker/index.js` → Deploy
-- **Settings → Variables and Secrets** → add four **Secrets**:
-  `TWITCH_ID`, `TWITCH_SECRET`, `DISCOGS_TOKEN`, `CALENDAR_ID`
+- **Settings → Variables and Secrets** → add five **Secrets**:
+  `TWITCH_ID`, `TWITCH_SECRET`, `DISCOGS_TOKEN`, `CALENDAR_ID`, `YOUTUBE_KEY`
 - Deploy again, then test in a browser tab:
-  `/live` `/dates` `/crate` should each return JSON
+  `/live` `/dates` `/crate` `/youtube` should each return JSON
+
+Redeploying does not carry secrets over automatically — if a route starts
+answering `"reason": "not configured"`, that is the secret missing, not the code.
+
+### 1b. KV + cron — what actually keeps `/crate` alive
+
+Optional, but `/crate` is unreliable without it.
+
+- **Storage & Databases → KV → Create** a namespace, then
+  **Worker → Settings → Bindings → Add → KV namespace**, variable name `CACHE`
+- **Worker → Settings → Triggers → Cron Triggers → Add**, expression `*/15 * * * *`
+
+With both in place the cron handler refreshes Discogs on a timer and writes to
+KV; page views only ever read KV, so a visitor never spends a Discogs call. A
+throttled attempt just waits for the next tick while the last good copy keeps
+serving.
+
+Without KV the Worker falls back to the per-colo edge cache. That still works,
+but each data centre has to land its own successful call, which against a
+saturated shared bucket can take a long time.
 
 Where the credentials come from:
 
@@ -81,7 +101,13 @@ Where the credentials come from:
   Redirect URL `http://localhost` (unused). Copy the Client ID, then generate a
   secret (shown once).
 - **Discogs** — discogs.com/settings/developers → generate a personal access
-  token. The API works without one, but returns no cover images.
+  token. Cover art is *not* the reason: folder 0 of a public collection needs no
+  authentication, and the `i.discogs.com` URLs it returns are pre-signed and load
+  without credentials. The token buys rate-limit headroom — 60 requests/minute
+  instead of 25 — and that ceiling is counted **per source IP, not per token**.
+  A Worker egresses from Cloudflare's shared pool, so the token raises a *shared*
+  ceiling rather than granting a private allowance. See the KV + cron step below,
+  which is what actually keeps `/crate` alive.
 - **Calendar** — already public. The ID is
   `jelhc76e0q5clq9er14l6963fo@group.calendar.google.com`.
 
