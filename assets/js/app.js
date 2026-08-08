@@ -482,14 +482,18 @@
      soundcloud.com next to SoundCloud, nightwatcher.life next to
      Nightwatcher. Dropped it: the name is the link, and the two
      rows that genuinely need context already carry a tag. */
+  /* The whole row is the anchor, not just the name: the arrow and
+     the gap between them were dead pixels sitting inside something
+     that already read as one target. Matches the crate rows, which
+     have always been full-row links. */
   function linkRow(l) {
-    return '<div class="row row--link">' +
+    return '<a class="row row--link" href="' + esc(l.url) + '" target="_blank" rel="noopener me">' +
       '<span class="row__main">' +
-        '<a class="row__link" href="' + esc(l.url) + '" target="_blank" rel="noopener me">' +
-          esc(l.label) + "</a>" +
+        '<span class="row__link">' +
+          esc(l.label) + "</span>" +
         (l.note ? ' <span class="row__tag">' + esc(t(l.note)) + "</span>" : "") +
       "</span>" +
-      '<span class="row__end" aria-hidden="true">\u2197</span></div>';
+      '<span class="row__end" aria-hidden="true">\u2197</span></a>';
   }
 
   function spec(k, v) {
@@ -652,8 +656,11 @@
       var h2 = head && head.querySelector("h2");
       if (!head || !h2) return;
 
-      var num = String(i + 1);
-      if (!sec.id) sec.id = "sec-" + (i + 1);
+      /* Zero-based: the hero is the page's 0th beat in everything
+         but the counter, and starting the list at 0 lands the last
+         section on 6 — the mark. */
+      var num = String(i);
+      if (!sec.id) sec.id = "sec-" + i;
       var bodyId = sec.id + "-body";
 
       /* Everything after the head becomes one collapsible body. */

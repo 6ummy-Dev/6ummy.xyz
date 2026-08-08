@@ -80,7 +80,9 @@ html {
 body {
   margin: 0;
   padding-top: var(--bar);
-  counter-reset: sec;
+  /* -1 so the first counter-increment lands on 0: the sections run
+     0–6 rather than 1–7, and the last index is the mark. */
+  counter-reset: sec -1;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--mono);
@@ -904,8 +906,10 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 }
 
 /* ============================================================
-   LINK ROWS — the name carries the link, so the row itself is no
-   longer one large target and the hostname column is gone.
+   LINK ROWS — the whole row is the anchor. The name still carries
+   the rule under it so the row reads as a link rather than as a
+   block that happens to respond, but the target is the full band:
+   name, arrow, and the gap between them. Same as the crate rows.
    ============================================================ */
 
 .row--link { grid-template-columns: 1fr auto; }
@@ -915,14 +919,37 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   transition: color .2s ease, border-color .2s ease;
 }
 
+/* Driven from the row, so pointing anywhere in the band lights the
+   name and the arrow together — the hover state has to name its own
+   target or the enlarged hit area is invisible. */
+a.row--link:hover .row__link,
+a.row--link:focus-visible .row__link,
 .row__link:hover,
 .row__link:focus-visible {
   color: var(--live);
   border-bottom-color: var(--live);
 }
 
+/* Only on link rows: there the end column is the arrow, which is
+   part of the affordance. On a crate row it's the pressing year,
+   which lighting up would say nothing. */
+.row--link .row__end { transition: color .2s ease; }
+
+a.row--link:hover .row__end,
+a.row--link:focus-visible .row__end { color: var(--live); }
+
+/* The row is one target, so the ring belongs on the row. Inset
+   rather than offset: at 3px an outline on a full-width row is
+   clipped by the section's own padding. */
+a.row:focus-visible {
+  outline: 2px solid var(--live);
+  outline-offset: -2px;
+  background: var(--hover);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .row__link { transition: none; }
+  .row__link,
+  .row--link .row__end { transition: none; }
 }
 
 /* ============================================================
