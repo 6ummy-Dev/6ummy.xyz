@@ -110,9 +110,9 @@ export default {
          ended. Wrong beats late here. */
       if (path === "/live")  return json(await live(env),  req, 60);
 
-      if (path === "/dates")   return resilient(req, env, ctx, "dates",   900,  first => dates(env, first));
-      if (path === "/crate")   return resilient(req, env, ctx, "crate",   3600, first => crate(env, first));
-      if (path === "/youtube") return resilient(req, env, ctx, "youtube", 3600, first => youtube(env, first));
+      if (path === "/dates")   return resilient(req, env, ctx, "dates",   FRESH.dates,   first => dates(env, first));
+      if (path === "/crate")   return resilient(req, env, ctx, "crate",   FRESH.crate,   first => crate(env, first));
+      if (path === "/youtube") return resilient(req, env, ctx, "youtube", FRESH.youtube, first => youtube(env, first));
       return json({ routes: ["/live", "/dates", "/crate", "/youtube"] }, req, 3600);
     } catch (err) {
       // Never 500 — the site should degrade, not break.
@@ -134,20 +134,35 @@ export default {
   }
 };
 
-/* How stale a stored copy has to be before a tick bothers refreshing
-   it. Without this the warmer fetches on every single tick, which is
-   merely wasteful every 15 minutes and outright rude every minute —
-   raising the cron frequency is the obvious lever when Discogs is
-   contended. Self-throttling: retries hard while stale, then backs
-   off to roughly one call per interval once healthy. */
-const WARM_AFTER = { crate: 1800, dates: 600, youtube: 3600 };
+/* How long a stored copy counts as fresh. One table, used by both
+   paths — the cron warmer and the request path — so a route can
+   never be "stale enough for a visitor to refetch" while the cron
+   still considers it fine. That gap is what put page views back on
+   the Discogs bucket.
+
+   Crate and YouTube are weekly. A record shelf and a video list do
+   not change every half hour, and every doomed attempt against a
+   contended shared rate limit costs headroom the next one needs.
+   Dates stays at ten minutes: a gig can be added or cancelled the
+   same day, and Google Calendar is not throttled.
+
+   Six days rather than seven, so a refresh always lands before the
+   stored copy reaches STORE_TTL and disappears. */
+const DAY = 86400;
+const FRESH = { crate: 6 * DAY, dates: 600, youtube: 6 * DAY };
+
+/* Longest the browser is told to hold a response. Server-side
+   freshness is now measured in days; handing that number straight to
+   Cache-Control would freeze a visitor's copy for a week after the
+   store had already moved on. */
+const BROWSER_MAX = 3600;
 
 async function warm(env, name, producer) {
   const st = store(env);
   try {
     const entry = await st.get(name);
     const age = entry && entry.at ? (Date.now() - entry.at) / 1000 : Infinity;
-    if (age < (WARM_AFTER[name] || 1800)) return;   // fresh — spend nothing
+    if (age < (FRESH[name] || 1800)) return;   // fresh — spend nothing
 
     /* Always `false` — one plain attempt per tick, no retry and no
        anonymous fallback.
@@ -182,7 +197,10 @@ async function warm(env, name, producer) {
    we need to know the age of a copy while still holding on to it.
    ============================================================ */
 
-const STORE_TTL = 604800;   // 7 days — how long a copy stays usable
+/* 30 days — how long a copy stays usable. Comfortably longer than the
+   six-day freshness window above, so a throttled week of failed
+   refreshes still leaves a served copy rather than an empty shelf. */
+const STORE_TTL = 30 * DAY;
 const KEY = name => "v1:" + name;
 
 function store(env) {
@@ -246,7 +264,8 @@ async function resilient(req, env, ctx, name, seconds, producer) {
 
   /* Fresh enough. No upstream call — this is the whole fix. */
   if (entry && age < seconds) {
-    return json({ ...entry.data, cached: true, age }, req, Math.max(30, seconds - age));
+    return json({ ...entry.data, cached: true, age }, req,
+                Math.min(BROWSER_MAX, Math.max(30, seconds - age)));
   }
 
   try {
@@ -257,7 +276,7 @@ async function resilient(req, env, ctx, name, seconds, producer) {
     const keep = { at: now, data };
     if (ctx && ctx.waitUntil) ctx.waitUntil(st.put(name, keep));
     else await st.put(name, keep);
-    return json(data, req, seconds);
+    return json(data, req, Math.min(BROWSER_MAX, seconds));
   } catch (err) {
     const why = String((err && err.message) || err);
     if (entry) {
