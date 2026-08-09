@@ -149,7 +149,10 @@ export default {
    Six days rather than seven, so a refresh always lands before the
    stored copy reaches STORE_TTL and disappears. */
 const DAY = 86400;
-const FRESH = { crate: 6 * DAY, dates: 600, youtube: 6 * DAY };
+/* Exported so the test harness ages entries relative to the real
+   table instead of a hard-coded number that drifts when this
+   changes — which is exactly what broke the suite once before. */
+export const FRESH = { crate: 6 * DAY, dates: 600, youtube: 6 * DAY };
 
 /* Longest the browser is told to hold a response. Server-side
    freshness is now measured in days; handing that number straight to
@@ -168,10 +171,10 @@ async function warm(env, name, producer) {
        anonymous fallback.
 
        Those two exist for the request path, where a visitor is
-       waiting and it is the only shot. Here the next shot is sixty
-       seconds away, so a cold tick that spent three calls instead of
-       one would be burning three slots of exactly the shared
-       headroom it is hunting for. */
+       waiting and it is the only shot. Here the next shot is one
+       cron tick away (fifteen minutes), so a cold tick that spent
+       three calls instead of one would be burning three slots of
+       exactly the shared headroom it is hunting for. */
     const data = await producer(false);
     await st.put(name, { at: Date.now(), data });
   } catch (err) {
@@ -486,7 +489,12 @@ function expand(rrule, startMs, from, to) {
   const d = new Date(startMs);
   let n = 0, guard = 0;
 
-  while (out.length < count && d.getTime() <= to && guard++ < 2000) {
+  /* COUNT bounds the series from DTSTART, not from our window —
+     `n` counts every occurrence generated, `out` only the ones
+     inside the window. Bounding on out.length kept generating past
+     the series' real end whenever early occurrences fell before
+     `from`, inventing future gigs that don't exist. */
+  while (n < count && d.getTime() <= to && guard++ < 2000) {
     const ms = d.getTime();
     if (ms > until) break;
 

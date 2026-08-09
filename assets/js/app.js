@@ -169,9 +169,26 @@
 
   var datesState = null;
 
-  function fmtDay(d) {
-    return String(d.getDate()).padStart(2, "0") + " " +
-           MONTHS[lang][d.getMonth()] + " " + String(d.getFullYear()).slice(2);
+  /* Day/month/year in Montevideo, same zone as the time column and
+     the clock. The visitor's local calendar can disagree with the
+     MVD clock by a day on either side of midnight, which produced
+     pairs like "21 Aug · 23:30" for a gig that is on the 20th. */
+  function fmtDay(ms) {
+    var day, month, year;
+    try {
+      var p = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "America/Montevideo",
+        year: "numeric", month: "numeric", day: "numeric"
+      }).formatToParts(new Date(ms)).reduce(function (a, x) {
+        a[x.type] = x.value; return a;
+      }, {});
+      day = +p.day; month = +p.month - 1; year = p.year;
+    } catch (e) {
+      var d = new Date(ms);
+      day = d.getDate(); month = d.getMonth(); year = String(d.getFullYear());
+    }
+    return String(day).padStart(2, "0") + " " +
+           MONTHS[lang][month] + " " + String(year).slice(2);
   }
 
   function fmtTime(ev) {
@@ -212,6 +229,17 @@
       return;
     }
 
+    /* A dead Worker is not an empty calendar. "Nothing announced"
+       makes a live act look idle; say the load failed instead,
+       like Crate and Portfolio already do. */
+    if (datesState.mode === "error") {
+      note.textContent = "";
+      box.innerHTML = '<p class="empty">' + es(
+        "No se pudo cargar la agenda.",
+        "Couldn't load the dates.") + "</p>";
+      return;
+    }
+
     if (!items.length) {
       note.textContent = "";
       box.innerHTML = '<p class="empty">' + es(
@@ -227,7 +255,7 @@
     var html = '<div class="rows">';
     items.forEach(function (ev) {
       html += '<div class="row">' +
-        '<span class="row__key">' + fmtDay(new Date(ev.startMs)) + "</span>" +
+        '<span class="row__key">' + fmtDay(ev.startMs) + "</span>" +
         '<span class="row__main">' + esc(ev.title) + "</span>" +
         '<span class="row__end">' + fmtTime(ev) + "</span>" +
         (ev.where ? '<span class="row__sub">' + esc(ev.where) + "</span>" : "") +
@@ -715,7 +743,14 @@
       tog.textContent = num;
       tog.setAttribute("aria-controls", bodyId);
       tog.setAttribute("aria-expanded", "true");
-      tog.setAttribute("aria-label", num);
+      /* The visible label is just the number; a screen reader needs
+         the section name too. Cloning the language spans keeps the
+         name correct when the language switches, since the inactive
+         span is display:none and drops out of the accessible name. */
+      var togLab = document.createElement("span");
+      togLab.className = "sr";
+      [].forEach.call(jump.children, function (nn) { togLab.appendChild(nn.cloneNode(true)); });
+      tog.appendChild(togLab);
       head.appendChild(tog);
       head.classList.add("is-enhanced");
 
@@ -741,7 +776,10 @@
       var n = document.createElement("span");
       n.className = "index__num";
       n.innerHTML = pixelNum(num);
-      a.setAttribute("aria-label", num + " " + (h2.textContent || "").trim());
+      /* No aria-label here: it would have to concatenate both
+         language spans ("StreamEn vivo"). The cloned label spans
+         already provide the name — only the active language's span
+         is rendered, and it follows the toggle for free. */
       a.appendChild(lab);
       a.appendChild(n);
       a.addEventListener("click", function () { goTo(sec); });
@@ -766,7 +804,6 @@
       indexItems.forEach(function (it) {
         if (it.sec.getBoundingClientRect().top <= edge) current = it;
       });
-      if (!current && indexItems.length) current = null;
       indexItems.forEach(function (it) {
         var on = it === current;
         it.el.classList.toggle("is-current", on);

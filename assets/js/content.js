@@ -82,9 +82,10 @@ window.SITE = {
   /* ---------- 5. PORTFOLIO --------------------------------
      One curated YouTube playlist, mirrored in playlist order.
      Rearrange it on YouTube and the page follows — nothing to
-     edit here. The playlist ID goes in the Worker as a secret
-     (YOUTUBE_PLAYLIST), not in this file, so it stays with the
-     API key it's used against.
+     edit here. The Worker holds its own copy of the playlist ID —
+     the public YT_PLAYLIST const at the top of worker/index.js,
+     not a secret; only YOUTUBE_KEY is. Keeping it server-side just
+     stops the Worker spending your quota on someone else's list.
 
      Rows link out to YouTube rather than embedding: an embedded
      player is ~900KB per video before anyone presses play.

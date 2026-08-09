@@ -4,11 +4,14 @@
 After unzipping, the folder must look exactly like this:
 
   index.html
+  404.html
   README.md
   VERIFY.txt
+  CHANGES.txt
   CNAME
   robots.txt
   sitemap.xml
+  llms.txt
   .gitignore
   .well-known/README.txt
   assets/css/style.css
@@ -18,12 +21,17 @@ After unzipping, the folder must look exactly like this:
   assets/fonts/OFL.txt
   assets/img/*.png, *.gif
   worker/index.js
-  llms.txt
+  worker/test.mjs
 
 Note: silkscreen-latin-700-normal.woff2 is no longer part of the
 site. Nothing ever set a bold Silkscreen, so the face was declared
 and never used. A zip upload does not delete files already in the
 repo — delete that one file in the GitHub UI once, and it's gone.
+
+Note: logo.gif, logo-sm.gif and logo-static.png are not referenced
+by any page. They're kept for use OFF the site — avatars, profiles,
+anywhere that hotlinks https://6ummy.xyz/assets/img/... — so don't
+"clean them up" just because a grep comes back empty.
 
 Check from inside the folder:
 
@@ -42,8 +50,8 @@ Preview Spanish:         index.html?lang=es
 IMPORTANT — dotfiles and the GitHub web uploader
 --------------------------------------------------------------
 Dragging files into github.com in a browser SILENTLY SKIPS anything
-starting with a dot. That means .gitignore, .well-known/ and
-assets/img/.gitkeep will not upload that way.
+starting with a dot. That means .gitignore and the .well-known/
+folder will not upload that way.
 
 Nothing breaks if they're missing today, but .well-known/ is where
 your Brave verification file has to live. Two options:

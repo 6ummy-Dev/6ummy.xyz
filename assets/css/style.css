@@ -471,11 +471,6 @@ a.row:hover { background: var(--hover); }
    iframe default of 150px and the widget collapsed no matter how
    tall the box around it was. .embed--video never hit this because
    aspect-ratio gives it a definite height. */
-/* A SoundCloud playlist widget only renders its tracklist with room
-   to do it; below ~300px it collapses to its header and reads as a
-   single track. Must be `height`, not `min-height` — a percentage
-   height on the iframe resolves against the parent's *specified*
-   height, and min-height leaves that auto. */
 .embed--audio.is-loaded { height: 22rem; }
 
 /* No filter here on purpose. Darkening a cross-origin iframe is only
@@ -592,12 +587,6 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 }
 
 /* ============================================================
-   FOOTER
-   ============================================================ */
-
-
-
-/* ============================================================
    CRATE — the same strip as Portfolio, square. Sleeves are
    1:1 and cropping them to 16:9 cuts the corners off the one
    thing the section is about.
@@ -609,6 +598,10 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 .reel__blank {
   aspect-ratio: 1;
   width: 100%;
+  /* The height="150" attribute on the img is only a pre-layout
+     hint; without this it becomes a used height and switches
+     aspect-ratio off entirely. */
+  height: auto;
   object-fit: cover;
   background: var(--well);
   filter: grayscale(1) contrast(1.06);
@@ -997,6 +990,9 @@ a.row:focus-visible {
 .reel__item img {
   width: 100%;
   aspect-ratio: 16 / 9;
+  /* Same trap as the square variant: the width/height attributes
+     would otherwise fix the height and disable aspect-ratio. */
+  height: auto;
   object-fit: cover;
   background: var(--well);
   filter: grayscale(1) contrast(1.06);

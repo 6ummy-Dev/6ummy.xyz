@@ -108,6 +108,7 @@
 <link rel="canonical" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="en" href="https://6ummy.xyz/">
 <link rel="alternate" hreflang="es" href="https://6ummy.xyz/?lang=es">
+<link rel="alternate" hreflang="x-default" href="https://6ummy.xyz/">
 
 <!-- The real mark at every size. It's pixel art on a 40×40 grid, so
      16 and 32 are non-integer downscales — these were resampled with
@@ -247,7 +248,10 @@
       <h2><span data-en>Crate</span><span data-es>Cajón</span></h2>
       <span class="section__note" id="crateNote"></span>
     </div>
-    <div class="rows" id="crate"></div>
+    <!-- Same strip component as Portfolio, square variant. This must
+         carry reel/reel--sq: the arrow handler finds its track via
+         .closest(".reel"), and reel--sq is what keeps sleeves 1:1. -->
+    <div class="reel reel--sq" id="crate"></div>
   </section>
 
   <!-- ========== ELSEWHERE ========== -->

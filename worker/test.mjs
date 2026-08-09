@@ -1,7 +1,13 @@
 /* Test harness: runs worker/index.js against a stubbed Discogs.
    No network. Asserts the behaviours the fix is supposed to have. */
 
-import worker from "./index.js";
+import worker, { FRESH } from "./index.js";
+
+/* Old enough to be stale for any route — one hour past the crate
+   freshness window, which is the longest in the table. Derived from
+   the real FRESH export so a freshness change can't silently turn
+   these tests into no-ops again. */
+const STALE_MS = (FRESH.crate + 3600) * 1000;
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra = "") => {
@@ -27,9 +33,13 @@ const DISCOGS_BODY = {
 };
 
 let anonStatus = null;   // when set, anonymous (no Authorization) calls use this
+let icsBody = "";        // served for calendar fetches
 
 globalThis.fetch = async (url, init = {}) => {
   upstream.push({ url: String(url), init });
+  if (String(url).includes("calendar.google.com")) {
+    return new Response(icsBody, { status: 200 });
+  }
   if (String(url).includes("api.discogs.com")) {
     const isAnon = !(init.headers && init.headers.Authorization);
     const status = (isAnon && anonStatus != null) ? anonStatus : discogsStatus;
@@ -116,9 +126,9 @@ console.log("\n429, warm — the case that was showing 'Couldn't load'");
   await worker.fetch(get("/crate"), env, ctx);          // seed
   await drain();
 
-  // age the stored entry past its TTL
+  // age the stored entry past its freshness window
   const raw = JSON.parse(await env.CACHE.get("v1:crate"));
-  raw.at = Date.now() - 7200 * 1000;
+  raw.at = Date.now() - STALE_MS;
   await env.CACHE.put("v1:crate", JSON.stringify(raw));
 
   discogsStatus = 429;
@@ -262,9 +272,9 @@ console.log("\nanonymous fallback (cold + 429)");
      !!calls[calls.length - 1].init.cf);
   ok("authed attempt + retry + one anonymous = 3", calls.length === 3, "got " + calls.length);
 
-  // and it must NOT fire once a copy exists
+  // and it must NOT fire once a copy exists — even a stale one
   const raw = JSON.parse(await env.CACHE.get("v1:crate"));
-  raw.at = Date.now() - 7200 * 1000;
+  raw.at = Date.now() - STALE_MS;
   await env.CACHE.put("v1:crate", JSON.stringify(raw));
   anonStatus = 200; discogsStatus = 429; upstream = [];
   const b2 = await (await worker.fetch(get("/crate"), env, ctx)).json();
@@ -291,9 +301,9 @@ console.log("\nwarm() freshness gate");
   ok("a tick right after does NOT fetch again",
      upstream.filter(u => u.url.includes("discogs")).length === 0);
 
-  // age it past the 30-minute crate threshold
+  // age it past the crate freshness window
   const raw = JSON.parse(await env.CACHE.get("v1:crate"));
-  const staleAt = Date.now() - 3600 * 1000;
+  const staleAt = Date.now() - STALE_MS;
   raw.at = staleAt;
   await env.CACHE.put("v1:crate", JSON.stringify(raw));
 
@@ -328,6 +338,41 @@ console.log("\ncron restraint under throttling");
   ok("a cold visitor request still tries all three", reqCalls === 3, "got " + reqCalls);
 
   discogsStatus = 200; anonStatus = null;
+}
+
+/* ---------- 12. RRULE COUNT is bounded by the series, not the window ---------- */
+console.log("\nRRULE COUNT vs the 6-month window");
+{
+  reset();
+  const stamp = t => {
+    const d = new Date(t);
+    const p = n => String(n).padStart(2, "0");
+    return d.getUTCFullYear() + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) +
+           "T" + p(d.getUTCHours()) + p(d.getUTCMinutes()) + p(d.getUTCSeconds()) + "Z";
+  };
+  const WEEK = 7 * 86400 * 1000;
+  const vevent = (title, startMs, rrule) =>
+    "BEGIN:VEVENT\nSUMMARY:" + title + "\nDTSTART:" + stamp(startMs) +
+    "\nRRULE:" + rrule + "\nEND:VEVENT\n";
+
+  /* A weekly series of 10 that ENDED ~30 weeks ago — every real
+     occurrence predates the 6-month window. Bounding the loop on
+     in-window occurrences kept generating phantom gigs here. */
+  icsBody = "BEGIN:VCALENDAR\n" +
+    vevent("Ended long ago", Date.now() - 40 * WEEK, "FREQ=WEEKLY;COUNT=10") +
+    vevent("Still running",  Date.now() - 2 * WEEK,  "FREQ=WEEKLY;COUNT=5") +
+    "END:VCALENDAR\n";
+
+  const b = await (await worker.fetch(get("/dates"), { CALENDAR_ID: "cal" }, ctx)).json();
+  const ended = b.events.filter(e => e.title === "Ended long ago");
+  const running = b.events.filter(e => e.title === "Still running");
+  ok("a series that ended before the window yields no phantom events",
+     ended.length === 0, "got " + ended.length);
+  ok("a live series still expands to its full COUNT",
+     running.length === 5, "got " + running.length);
+  ok("no phantom occurrence lands in the future",
+     b.events.every(e => e.title !== "Ended long ago"));
+  icsBody = "";
 }
 
 console.log("\n" + pass + " passed, " + fail + " failed\n");
