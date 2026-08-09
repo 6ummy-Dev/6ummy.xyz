@@ -275,19 +275,36 @@
       ? crateState.count + es(" discos", " records")
       : "";
 
-    box.innerHTML = recs.map(function (r) {
-      var n = (S.crateNotes || {})[String(r.id)];
-      var meta = [r.label, r.cat].filter(Boolean).join(" / ");
-      return '<a class="row rec" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
-        (r.thumb
-          ? '<img src="' + esc(r.thumb) + '" alt="" loading="lazy" decoding="async" width="56" height="56">'
-          : '<span class="rec__blank" aria-hidden="true"></span>') +
-        '<span class="row__main">' + esc(r.artist) + " — " + esc(r.title) + "</span>" +
-        '<span class="row__end">' + esc(r.year) + "</span>" +
-        '<span class="row__sub">' + esc(meta) +
-          (n ? '<em class="rec__note">' + esc(t(n)) + "</em>" : "") +
-        "</span></a>";
-    }).join("");
+    /* A strip, like Portfolio. Twelve stacked rows with a note
+       each ran taller than every other section combined; the
+       sleeve is the point, so let the artwork carry the row and
+       scroll sideways. Square cards rather than 16:9 — a sleeve
+       cropped to widescreen is a sleeve with its corners cut off. */
+    box.innerHTML =
+      '<div class="reel__track">' +
+      recs.map(function (r) {
+        var n = (S.crateNotes || {})[String(r.id)];
+        var meta = [r.year, [r.label, r.cat].filter(Boolean).join(" / ")]
+                     .filter(Boolean).join("  ·  ");
+        var art = r.cover && r.cover !== r.thumb
+          ? ' srcset="' + esc(r.thumb) + ' 1x, ' + esc(r.cover) + ' 2x"'
+          : "";
+        return '<a class="reel__item" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
+          (r.thumb
+            ? '<img src="' + esc(r.thumb) + '"' + art +
+              ' alt="" loading="lazy" decoding="async" width="150" height="150">'
+            : '<span class="reel__blank" aria-hidden="true"></span>') +
+          '<span class="reel__title">' + esc(r.artist) + " — " + esc(r.title) + "</span>" +
+          '<span class="reel__year">' + esc(meta) + "</span>" +
+          (n ? '<span class="reel__note">' + esc(t(n)) + "</span>" : "") +
+          "</a>";
+      }).join("") + "</div>" +
+      '<div class="reel__nav">' +
+        '<button class="reel__arrow" type="button" data-reel="-1" aria-label="' +
+          es("Anterior", "Previous") + '">\u2190</button>' +
+        '<button class="reel__arrow" type="button" data-reel="1" aria-label="' +
+          es("Siguiente", "Next") + '">\u2192</button>' +
+      "</div>";
     sweep();
   }
 
@@ -333,7 +350,7 @@
        worse on a phone. Horizontal scroll-snap costs no library —
        a swipe is native, and the arrows are only for pointers. */
     box.innerHTML =
-      '<div class="reel__track" id="reelTrack">' +
+      '<div class="reel__track">' +
       vids.map(function (v) {
         return '<button class="reel__item" type="button" data-video="' + esc(v.id) + '">' +
           '<img src="' + esc(v.thumb) + '" alt="" loading="lazy" decoding="async" width="320" height="180">' +
@@ -353,7 +370,10 @@
   document.addEventListener("click", function (e) {
     var a = e.target.closest("[data-reel]");
     if (!a) return;
-    var track = $("reelTrack");
+    /* Two strips on the page now, so the arrows have to find
+       their own track rather than a fixed id. */
+    var reel = a.closest(".reel");
+    var track = reel && reel.querySelector(".reel__track");
     if (!track) return;
     var step = Math.max(160, Math.round(track.clientWidth * 0.8));
     try {
@@ -805,7 +825,7 @@
      each time a section renders. */
   function sweep() {
     watch(document.querySelectorAll(".hero .specs, .hero .bio"));
-    watch(document.querySelectorAll(".row, .group, .embed"));
+    watch(document.querySelectorAll(".row, .group, .embed, .reel"));
   }
 
   /* --------------------------------------------------------- */

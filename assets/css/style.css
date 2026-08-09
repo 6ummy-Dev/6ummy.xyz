@@ -598,47 +598,40 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 
 
 /* ============================================================
-   CRATE ROWS — sleeve thumbnails from Discogs.
-   Desaturated like every other image, so the artwork sits
-   inside the palette instead of fighting it.
+   CRATE — the same strip as Portfolio, square. Sleeves are
+   1:1 and cropping them to 16:9 cuts the corners off the one
+   thing the section is about.
    ============================================================ */
 
-.rec {
-  grid-template-columns: 3.5rem 1fr auto;
-  align-items: start;
-  gap: .3rem 1rem;
-}
+.reel--sq .reel__item { width: clamp(8rem, 36vw, 10.5rem); }
 
-.rec img,
-.rec__blank {
-  width: 3.5rem;
-  height: 3.5rem;
+.reel--sq .reel__item img,
+.reel__blank {
+  aspect-ratio: 1;
+  width: 100%;
   object-fit: cover;
+  background: var(--well);
   filter: grayscale(1) contrast(1.06);
-  background: var(--rule);
-  grid-row: span 2;
+  transition: filter .35s ease;
 }
 
-.rec .row__main { padding-top: .1rem; }
+.reel__blank { display: block; }
 
-.rec .row__sub {
-  grid-column: 2 / -1;
-  display: block;
+/* A record with a note is a record with a story, so it gets the
+   extra line. Clamped, because the strip is scanned not read —
+   the full text is one tap away on Discogs. */
+.reel__note {
+  font-size: .6875rem;
+  line-height: 1.45;
+  color: var(--ink-64);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.rec__note {
-  display: block;
-  font-style: normal;
-  color: var(--ink);
-  margin-top: .3rem;
-  max-width: 40rem;
-}
-
-@media (max-width: 34rem) {
-  .rec { grid-template-columns: 2.75rem 1fr auto; }
-  .rec img,
-  .rec__blank { width: 2.75rem; height: 2.75rem; }
-  .rec .row__sub { grid-column: 2 / -1; }
+@media (prefers-reduced-motion: reduce) {
+  .reel--sq .reel__item img { transition: none; }
 }
 
 /* ============================================================
@@ -969,6 +962,7 @@ a.row:focus-visible {
 
 .reel__track {
   display: flex;
+  align-items: start;
   gap: .75rem;
   overflow-x: auto;
   overscroll-behavior-x: contain;
