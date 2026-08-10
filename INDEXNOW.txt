@@ -1,0 +1,76 @@
+6UMMY — IndexNow + sitemap + robots
+===================================
+
+Three files. All three go in the REPO ROOT, next to index.html.
+
+  ea15e9b9b127a04424cf7f4b0424d6fa.txt
+  sitemap.xml
+  robots.txt
+
+Nothing else changes. No edit to index.html, no build step.
+
+
+1. THE KEY
+----------
+Key:  ea15e9b9b127a04424cf7f4b0424d6fa
+
+Generated here, not by Bing. IndexNow lets you pick your own key —
+a-z A-Z 0-9 and dashes, 8 to 128 characters. Bing's "generate" button
+on the Get Started page is a convenience, not a requirement, and the
+key is not a secret: it is public by design, since verification works
+by anyone being able to fetch it.
+
+The file must contain the key and nothing else. It has no trailing
+newline — that is deliberate. Don't open it in an editor that adds one
+back, and don't let anything save it as UTF-8-with-BOM.
+
+Once it's live, this must return the key as plain text:
+
+  https://6ummy.xyz/ea15e9b9b127a04424cf7f4b0424d6fa.txt
+
+
+2. SUBMITTING A URL
+-------------------
+Verification happens on first submission — there is no "verify" button.
+After the file is live, ping once:
+
+  curl "https://api.indexnow.org/indexnow?url=https://6ummy.xyz/&key=ea15e9b9b127a04424cf7f4b0424d6fa"
+
+200 = received. 202 = received, key still being checked (normal on the
+first call). 403 = the key file isn't reachable at the URL above.
+
+One ping covers the site — it's one page. Repeat it after a real content
+change, not on a schedule. Submitting the same unchanged URL repeatedly
+is what earns a 429.
+
+Bing, Yandex, Naver, Seznam and Yep share the IndexNow network, so one
+submission reaches all of them. Google does not participate.
+
+
+3. SITEMAP AND ROBOTS
+---------------------
+sitemap.xml carries the single apex URL plus the en/es hreflang pair,
+mirroring the <link rel="alternate"> tags already in index.html, with
+x-default added pointing at the apex. Only https://6ummy.xyz/ is listed
+as a <loc>: ?lang=es is the same document with the same canonical, so
+listing it separately would contradict the canonical tag.
+
+<lastmod> says 2026-08-10. It's a hand-maintained line — bump it when
+the page actually changes, or leave it; a stale lastmod is worse than
+none, so if it won't get touched, delete the line.
+
+robots.txt allows everything and points at the sitemap. There is nothing
+on the site worth hiding, and the .well-known/ directory should stay
+crawlable for verification files.
+
+
+4. NOTES FOR THIS SITE
+----------------------
+- Host is the apex, 6ummy.xyz — that's what <link rel="canonical"> says.
+  Everything above uses the apex. If www ever becomes canonical instead,
+  the key file has to be reachable on that host too and the sitemap URLs
+  have to change with it.
+- GitHub Pages serves all three as-is. Jekyll only skips files starting
+  with "_" or "." — a hex-named .txt at the root is served fine.
+- Sitemap can also be handed to Bing Webmaster Tools and Google Search
+  Console directly; robots.txt discovery works but is slower.
