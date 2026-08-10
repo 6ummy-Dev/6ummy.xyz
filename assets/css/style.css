@@ -794,8 +794,30 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   .index__item:focus-visible .index__label { opacity: 1; transform: none; }
 }
 
+/* Below the hover breakpoint the tooltip has no way to be shown, so
+   it used to be display:none. That took it out of the accessibility
+   tree as well, and the label is the button's only text — the numeral
+   beside it is an aria-hidden SVG. The result was seven rail buttons
+   a screen reader announced as "button", and a malformed accessibility
+   tree. Hidden the same way .sr hides text everywhere else: off the
+   page, still named. The chrome (frame, background, padding) goes with
+   it, since nothing renders. */
 @media (max-width: 70rem) {
-  .index__label { display: none; }
+  .index__label {
+    right: auto;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    background: none;
+    border: 0;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .index__num { display: block; }

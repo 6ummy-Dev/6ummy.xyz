@@ -136,7 +136,12 @@
      Named here, all three start with the stylesheet.
 
      The font preload is what lets style.css use font-display:
-     optional without ever falling back in practice. -->
+     optional without ever falling back in practice.
+
+     The two script preloads stay useful now that the tags are
+     deferred: defer fixes when a script *runs*, the preload still
+     fixes when it starts downloading. Without them a deferred script
+     is discovered at the end of the body exactly as before. -->
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/silkscreen-latin-400-normal.woff2" crossorigin>
 <link rel="preload" as="script" href="assets/js/content.js">
 <link rel="preload" as="script" href="assets/js/app.js">
@@ -314,7 +319,15 @@
   </div>
 </footer>
 
-<script src="assets/js/content.js"></script>
-<script src="assets/js/app.js"></script>
+<!-- defer, not bare. Sitting last in the body already meant these ran
+     after the document was parsed, but a classic <script> still stops
+     the parser dead while it fetches and executes, and Lighthouse
+     charged content.js 470 ms and style.css 160 ms of render-blocking
+     for exactly that. defer keeps both properties that matter here:
+     execution order (app.js reads window.SITE, which content.js
+     defines) and running before DOMContentLoaded, so app.js can go on
+     touching the DOM directly the way it does today. -->
+<script src="assets/js/content.js" defer></script>
+<script src="assets/js/app.js" defer></script>
 </body>
 </html>

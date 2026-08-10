@@ -314,8 +314,21 @@
         var n = (S.crateNotes || {})[String(r.id)];
         var meta = [r.year, [r.label, r.cat].filter(Boolean).join(" / ")]
                      .filter(Boolean).join("  ·  ");
+        /* The 2x sleeve is held back rather than declared. Discogs
+           serves two sizes and nothing between: thumb at 150 and
+           cover_image at 600, on signed URLs we can't rewrite. In a
+           srcset the browser reads 600 as the answer for any phone
+           above 1x and fetches all twelve of them up front — 1,058 KiB
+           of artwork on a page whose entire document, styles and
+           scripts come to about 10.5 KB gzipped. loading="lazy" didn't
+           save us: these cards are offscreen horizontally, inside the
+           viewport vertically, which Chrome loads anyway.
+
+           So the thumb ships and upgradeArt() promotes a card to the
+           600 when it scrolls near the strip. Same picture when you
+           are looking at it, roughly 860 KiB less when you aren't. */
         var art = r.cover && r.cover !== r.thumb
-          ? ' srcset="' + esc(r.thumb) + ' 1x, ' + esc(r.cover) + ' 2x"'
+          ? ' data-cover="' + esc(r.cover) + '"'
           : "";
         return '<a class="reel__item" href="' + esc(r.url) + '" target="_blank" rel="noopener">' +
           (r.thumb
@@ -333,7 +346,54 @@
         '<button class="reel__arrow" type="button" data-reel="1" aria-label="' +
           es("Siguiente", "Next") + '">\u2192</button>' +
       "</div>";
+    upgradeArt(box);
     sweep();
+  }
+
+  /* Promote crate sleeves from the 150 to the 600 as they come
+     into the strip. Rooted on the track, so it answers the question
+     the reel actually asks — "is this card scrolled into view
+     sideways" — with 200px of margin so the swap lands before the
+     card arrives rather than in front of the reader.
+
+     srcset rather than src: the browser keeps painting the thumb
+     until the cover has decoded, so a card never blinks empty. And
+     with no IntersectionObserver, or no /crate response worth
+     upgrading, the thumbs simply stay — the strip is complete
+     either way, just softer. */
+  function upgradeArt(box) {
+    var imgs = [].slice.call(box.querySelectorAll("img[data-cover]"));
+    if (!imgs.length) return;
+
+    if (!("IntersectionObserver" in window)) {
+      imgs.forEach(promote);
+      return;
+    }
+
+    var track = box.querySelector(".reel__track");
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        promote(en.target);
+        io.unobserve(en.target);
+      });
+    }, { root: track, rootMargin: "0px 200px" });
+
+    imgs.forEach(function (img) { io.observe(img); });
+
+    function promote(img) {
+      var cover = img.getAttribute("data-cover");
+      if (!cover) return;
+      img.removeAttribute("data-cover");
+      var thumb = img.getAttribute("src") || "";
+      /* A comma inside either URL would split the srcset into
+         nonsense candidates. Discogs doesn't emit one, but the
+         fallback costs a line and fails visibly rather than
+         silently if it ever does. */
+      if (cover.indexOf(",") < 0 && thumb.indexOf(",") < 0) {
+        img.setAttribute("srcset", thumb + " 1x, " + cover + " 2x");
+      }
+    }
   }
 
   /* ---------------------------------------------------------
