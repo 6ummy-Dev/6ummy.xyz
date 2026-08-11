@@ -898,6 +898,16 @@
     Array.prototype.forEach.call(nodes, function (el, i) {
       if (el.dataset.revealed) return;
       el.dataset.revealed = "1";
+      /* Never hide what the reader can already see. The hero is
+         prerendered in index.html and this script is deferred, so by
+         the time we get here the bio has painted — and the bio is the
+         page's largest paint. Putting it back to opacity 0 to fade it
+         in again moved LCP from first paint to the end of the
+         transition: PSI charged it 2.9s of pure element render delay.
+         Anything inside the viewport right now settles where it
+         stands; the reveal remains for whatever scrolls in later. */
+      var r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) return;
       el.classList.add("reveal");
       el.style.setProperty("--i", Math.min(i, 8));
       observer.observe(el);
