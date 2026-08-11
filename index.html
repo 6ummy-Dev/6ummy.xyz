@@ -19,6 +19,13 @@
 <meta name="twitter:image" content="https://6ummy.xyz/assets/img/og.png">
 <meta name="twitter:site" content="@6ummy">
 
+<!-- Referrer policy, same deal as the CSP below: meta because GitHub
+     Pages can't set response headers. Header-only scanners (Radar,
+     Observatory) won't credit either one — browsers enforce them all
+     the same. Explicit rather than relying on the browser default,
+     so the policy survives default changes. -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
+
 <!-- Content-Security-Policy. GitHub Pages cannot set response headers,
      so this is the meta form — it covers everything except
      frame-ancestors, which meta cannot express.
