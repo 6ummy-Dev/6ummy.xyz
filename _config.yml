@@ -1,0 +1,14 @@
+# Publish the .well-known/ folder on GitHub Pages.
+#
+# GitHub Pages builds the site with Jekyll, and Jekyll drops every
+# dot-prefixed path from the output — which silently removes the whole
+# .well-known/ folder (api-catalog, README.txt, and any Brave or other
+# verification files you put there). That is why /.well-known/api-catalog
+# returns 404 even though the file is committed.
+#
+# This one directive adds the folder back to the built site. Nothing else
+# changes: plain HTML/CSS/JS files with no front matter are copied verbatim,
+# and index.html, 404.html and assets/ were checked for Liquid ({{ }} and
+# {% %}) syntax that Jekyll could mangle — there is none. Safe to add.
+include:
+  - ".well-known"
