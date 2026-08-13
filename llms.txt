@@ -17,6 +17,10 @@ and player), Dates (upcoming gigs, falling back to recent past dates), Sets
 projects), and Bookings & contact. Stream, Dates, Portfolio and Crate are filled
 in by the Worker at page load; the rest is in the HTML.
 
+No authentication is required for the site or the Worker API — no login, no
+sign-up, no credentials; an agent has the same open read-only access as a
+browser. See [auth.md](https://6ummy.xyz/auth.md).
+
 ## Site
 
 - [6ummy.xyz](https://6ummy.xyz/): the canonical page, and the whole site — everything below is a profile hosted elsewhere.
