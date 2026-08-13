@@ -1,0 +1,27 @@
+{
+  "linkset": [
+    {
+      "anchor": "https://6ummy-api.6ummy-xyz.workers.dev",
+      "service-desc": [
+        {
+          "href": "https://6ummy.xyz/openapi.json",
+          "type": "application/openapi+json",
+          "title": "6UMMY read-only data API — OpenAPI 3.1 description"
+        }
+      ],
+      "service-doc": [
+        {
+          "href": "https://6ummy.xyz/llms.txt",
+          "type": "text/markdown",
+          "title": "Site and API overview for agents"
+        }
+      ],
+      "status": [
+        {
+          "href": "https://6ummy-api.6ummy-xyz.workers.dev/",
+          "title": "Route index (lists the live endpoints)"
+        }
+      ]
+    }
+  ]
+}
