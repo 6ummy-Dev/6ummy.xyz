@@ -127,14 +127,20 @@
 <link rel="icon" type="image/png" sizes="80x80" href="assets/img/icon-80.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/img/icon-180.png">
 
-<!-- The two origins the page actually talks to. googleapis.com used to
+<!-- The origins the page talks to on load. googleapis.com used to
      sit here, left over from when the browser called the YouTube API
      directly — it hasn't since the Worker took that over, so it was a
      handshake spent on nothing. The Worker is hit on every load
      (/live, /dates, /crate, /youtube); i.ytimg.com serves the
-     portfolio thumbnails. -->
+     portfolio thumbnails; i.discogs.com serves the crate sleeves —
+     the largest images on the page, and the one origin PSI named as an
+     un-hinted preconnect candidate (~300 ms est. LCP). It is left
+     without crossorigin on purpose: the sleeves are plain <img> with
+     no CORS, so a crossorigin socket here would open and never be
+     reused. -->
 <link rel="preconnect" href="https://6ummy-api.6ummy-xyz.workers.dev" crossorigin>
 <link rel="preconnect" href="https://i.ytimg.com" crossorigin>
+<link rel="preconnect" href="https://i.discogs.com">
 
 <!-- Preloads. None of these change what loads — only when it's
      discovered. The font and both scripts are otherwise found late:

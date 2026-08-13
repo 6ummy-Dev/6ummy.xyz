@@ -541,8 +541,15 @@
       spec(L.format, id.formats) +
       spec(L.styles, id.styles);
 
-    $("bioEn").textContent = id.bio.en;
-    $("bioEs").textContent = id.bio.es;
+    /* The bio is prerendered in index.html and is the hero's largest
+       text block (PSI's mobile run named it the LCP element). content.js
+       normally holds the same string, so this write is usually a no-op
+       that still replaces the text node and repaints that element. Skip
+       it unless content.js has actually diverged — identical content
+       keeps the original first paint instead of repainting at render()
+       time. Same intent as the reveal guard below, other repaint path. */
+    if ($("bioEn").textContent !== id.bio.en) $("bioEn").textContent = id.bio.en;
+    if ($("bioEs").textContent !== id.bio.es) $("bioEs").textContent = id.bio.es;
 
     if (S.hero && S.hero.src) {
       var fig = $("heroImg");

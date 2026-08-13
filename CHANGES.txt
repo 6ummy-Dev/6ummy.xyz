@@ -1,3 +1,73 @@
+6ummy.xyz — PageSpeed follow-up                   13 Aug 2026
+
+TWO FILES  index.html
+           assets/js/app.js
+
+Upload and you're done. Worker untouched, nothing added or removed, no
+manual step.
+
+WHAT THE 13 AUG PSI RUN SAID  (mobile, https://6ummy.xyz)
+
+  Performance 94 · Accessibility 100 · Best Practices 100 · SEO 100
+  Agentic Browsing 3/3
+
+  FCP 0.9 s · LCP 2.7 s · TBT 0 ms · CLS 0 — all green. Speed Index
+  4.3 s. No field data yet: not enough real traffic for CrUX.
+
+  Two items were worth acting on. The rest were already handled in the
+  10 Aug pass or sit outside what a GitHub Pages repo controls — see
+  LEFT ALONE.
+
+1. PRECONNECT TO i.discogs.com  (index.html)
+
+The crate sleeves are the largest images on the page, but their origin
+was the only image host with no connection hint — the head preconnects
+the Worker and i.ytimg.com and stopped there. PSI listed i.discogs.com
+as an un-hinted preconnect candidate worth ~300 ms of estimated LCP.
+Added.
+
+No crossorigin on this one, unlike the other two. The sleeves are plain
+<img> with no CORS, so a crossorigin socket would be opened here and
+never reused. The Worker keeps its crossorigin — it is read by fetch(),
+which is a CORS request, so there the attribute matches.
+
+2. THE HERO BIO REPAINT  (assets/js/app.js)
+
+PSI's mobile run named p.bio the LCP element with ~2.4 s of "element
+render delay." The hero already ships drawn in index.html, and the
+reveal guard from 10 Aug stops the fade from re-hiding it — but render()
+still reassigned bioEn/bioEs textContent on every load. content.js holds
+the same strings, so that assignment is a no-op that still replaces the
+text node and repaints the element. render() now writes only when
+content.js has actually diverged from what shipped. Same intent as the
+reveal guard, the other repaint path.
+
+MEASURED  (Lighthouse 13.4.1, local, mobile, median of 3 runs)
+
+  Performance was 99 before and after. Observed LCP equalled observed
+  FCP in both — the hero was already painting in a single pass, so the
+  2.4 s render delay PSI reported is a throttling-simulation artifact,
+  not a real second paint. Treat change 2 as closing the last redundant
+  repaint path for the LCP element, not as a metric win. Change 1 can't
+  be measured on localhost — there is no handshake to save — so its
+  benefit only shows on the live TLS connection.
+
+LEFT ALONE  (unchanged reasoning from the 10 Aug notes)
+
+  Discogs image bytes, ~300 KiB. Signed URLs, only 150 and 600 exist,
+  DNS-only zone so no edge resize. Already shipping the 150 and
+  promoting to 600 on scroll — as good as this host allows.
+  Render-blocking style.css, ~150 ms. The only fix is inlining, and
+  style-src 'self' is deliberate. Not worth the trade.
+  Cache lifetimes, ~119 KiB. YouTube thumbnails plus the site's own
+  assets, all served by GitHub Pages, which cannot set response headers.
+  Worker preconnect flagged "unused." crossorigin is correct for a CORS
+  fetch; the flag is a timing heuristic, left as-is.
+
+---------------------------------------------------------------------
+PREVIOUS PASS BELOW
+---------------------------------------------------------------------
+
 6ummy.xyz — PageSpeed follow-up                   10 Aug 2026
 
 THREE FILES  index.html
