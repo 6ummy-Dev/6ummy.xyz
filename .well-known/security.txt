@@ -1,0 +1,12 @@
+# Security contact for 6ummy.xyz
+#
+# 6ummy.xyz is a one-page personal site for the DJ 6UMMY.
+# It is public and read-only: no accounts, no logins, no user data.
+# The live sections are filled in by a read-only data API
+# (https://6ummy-api.6ummy-xyz.workers.dev). If you find a security
+# issue in the site or that API, please get in touch.
+
+Contact: mailto:sync@6ummy.xyz
+Expires: 2027-08-01T00:00:00.000Z
+Preferred-Languages: en, es
+Canonical: https://6ummy.xyz/.well-known/security.txt
