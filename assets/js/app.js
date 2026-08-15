@@ -201,6 +201,36 @@
     } catch (e) { return ""; }
   }
 
+  /* The Worker sends at most 300 characters of the calendar
+     description and cuts wherever the 300th character lands —
+     mid-word, mid-name. Pull back to the last space so the text
+     ends on a whole word, and say it was cut with an ellipsis
+     rather than trailing a stray letter. Raising the cap means
+     redeploying the Worker, which is a Cloudflare-side job; this
+     costs nothing and fixes what the reader actually sees. */
+  var DESC_CAP = 300;
+
+  function tidyDesc(s) {
+    var raw = String(s == null ? "" : s);
+    /* Measure before collapsing whitespace, not after. The Worker
+       counts its 300 against the raw text, and a calendar entry
+       with blank lines in it normalises down to well under the cap
+       — check the tidy string and a truncated description looks
+       untouched. */
+    var clipped = raw.length >= DESC_CAP;
+    var text = raw.replace(/\s+/g, " ").trim();
+    if (!clipped) return text;
+
+    /* Whatever the cut left dangling is the last token. Only drop
+       it if there is a word break to fall back to that isn't near
+       the start — 300 characters without a space is a URL or a
+       hashtag wall, and cutting at its first space would throw
+       away most of the line. */
+    var space = text.lastIndexOf(" ");
+    if (space > text.length * 0.6) text = text.slice(0, space);
+    return text.replace(/[\s,;:.–—-]+$/, "") + "…";
+  }
+
   function loadDates() {
     api("/dates")
       .then(function (d) {
@@ -259,11 +289,76 @@
         '<span class="row__main">' + esc(ev.title) + "</span>" +
         '<span class="row__end">' + fmtTime(ev) + "</span>" +
         (ev.where ? '<span class="row__sub">' + esc(ev.where) + "</span>" : "") +
+        (ev.description
+          ? '<p class="row__desc">' + esc(tidyDesc(ev.description)) + "</p>"
+          : "") +
         "</div>";
     });
     box.innerHTML = html + "</div>";
+    clampDescs();
     sweep();
   }
+
+  /* ---------------------------------------------------------
+     DESCRIPTIONS — clamped to two lines, because one event with
+     a paragraph and three with a line each would make the list
+     unreadable. The toggle only exists where there is something
+     hidden behind it, and CSS can't ask that question, so the
+     overflow is measured here.
+
+     The toggle is a separate button rather than the paragraph
+     itself: a button's accessible name is its text, and 300
+     characters of Spanish prose is not a usable control name.
+     --------------------------------------------------------- */
+
+  function clampDescs() {
+    var box = $("dates");
+    if (!box) return;
+
+    Array.prototype.forEach.call(box.querySelectorAll(".row__desc"), function (p, i) {
+      /* An open one is unclamped by definition — measuring it
+         would just say "fits" and take its own toggle away. */
+      if (p.classList.contains("is-open")) return;
+
+      var next = p.nextElementSibling;
+      var btn = next && next.classList.contains("row__more") ? next : null;
+      var over = p.scrollHeight - p.clientHeight > 1;
+
+      if (over && !btn) {
+        p.id = "dateDesc" + i;
+        btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "row__more";
+        btn.setAttribute("aria-controls", p.id);
+        btn.setAttribute("aria-expanded", "false");
+        btn.textContent = es("Más", "More");
+        p.parentNode.insertBefore(btn, p.nextSibling);
+      } else if (!over && btn) {
+        btn.parentNode.removeChild(btn);
+      }
+    });
+  }
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".row__more");
+    if (!btn) return;
+    var p = document.getElementById(btn.getAttribute("aria-controls"));
+    if (!p) return;
+    var open = p.classList.toggle("is-open");
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.textContent = open ? es("Menos", "Less") : es("Más", "More");
+  });
+
+  /* A narrower column fits fewer words, so a description that
+     needed no toggle in landscape needs one in portrait. Without
+     this a rotated phone shows two clamped lines and no way to
+     reach the rest. Collapsed rows only — re-measuring an open
+     one would close nothing but would drop its toggle. */
+  var reflow;
+  window.addEventListener("resize", function () {
+    clearTimeout(reflow);
+    reflow = setTimeout(clampDescs, 200);
+  });
 
   /* ---------------------------------------------------------
      CRATE — from Discogs via the Worker. Newest additions

@@ -1,327 +1,111 @@
-6ummy.xyz — PageSpeed follow-up                   13 Aug 2026
+6ummy.xyz — dates show their description          15 Aug 2026
 
-TWO FILES  index.html
+TWO FILES  assets/css/style.css
            assets/js/app.js
 
-Upload and you're done. Worker untouched, nothing added or removed, no
-manual step.
+Upload and you're done. Worker untouched — no redeploy, so the secrets
+stay where they are. index.html unchanged.
 
-WHAT THE 13 AUG PSI RUN SAID  (mobile, https://6ummy.xyz)
+WHAT WAS WRONG
 
-  Performance 94 · Accessibility 100 · Best Practices 100 · SEO 100
-  Agentic Browsing 3/3
+A dates row showed the day, the title, the time and the venue. The
+calendar's description was fetched, carried all the way through the
+Worker and handed to the browser on every event — and then thrown away
+at the last step. /dates has always returned it:
 
-  FCP 0.9 s · LCP 2.7 s · TBT 0 ms · CLS 0 — all green. Speed Index
-  4.3 s. No field data yet: not enough real traffic for CrUX.
-
-  Two items were worth acting on. The rest were already handled in the
-  10 Aug pass or sit outside what a GitHub Pages repo controls — see
-  LEFT ALONE.
-
-1. PRECONNECT TO i.discogs.com  (index.html)
-
-The crate sleeves are the largest images on the page, but their origin
-was the only image host with no connection hint — the head preconnects
-the Worker and i.ytimg.com and stopped there. PSI listed i.discogs.com
-as an un-hinted preconnect candidate worth ~300 ms of estimated LCP.
-Added.
-
-No crossorigin on this one, unlike the other two. The sleeves are plain
-<img> with no CORS, so a crossorigin socket would be opened here and
-never reused. The Worker keeps its crossorigin — it is read by fetch(),
-which is a CORS request, so there the attribute matches.
-
-2. THE HERO BIO REPAINT  (assets/js/app.js)
-
-PSI's mobile run named p.bio the LCP element with ~2.4 s of "element
-render delay." The hero already ships drawn in index.html, and the
-reveal guard from 10 Aug stops the fade from re-hiding it — but render()
-still reassigned bioEn/bioEs textContent on every load. content.js holds
-the same strings, so that assignment is a no-op that still replaces the
-text node and repaints the element. render() now writes only when
-content.js has actually diverged from what shipped. Same intent as the
-reveal guard, the other repaint path.
-
-MEASURED  (Lighthouse 13.4.1, local, mobile, median of 3 runs)
-
-  Performance was 99 before and after. Observed LCP equalled observed
-  FCP in both — the hero was already painting in a single pass, so the
-  2.4 s render delay PSI reported is a throttling-simulation artifact,
-  not a real second paint. Treat change 2 as closing the last redundant
-  repaint path for the LCP element, not as a metric win. Change 1 can't
-  be measured on localhost — there is no handshake to save — so its
-  benefit only shows on the live TLS connection.
-
-LEFT ALONE  (unchanged reasoning from the 10 Aug notes)
-
-  Discogs image bytes, ~300 KiB. Signed URLs, only 150 and 600 exist,
-  DNS-only zone so no edge resize. Already shipping the 150 and
-  promoting to 600 on scroll — as good as this host allows.
-  Render-blocking style.css, ~150 ms. The only fix is inlining, and
-  style-src 'self' is deliberate. Not worth the trade.
-  Cache lifetimes, ~119 KiB. YouTube thumbnails plus the site's own
-  assets, all served by GitHub Pages, which cannot set response headers.
-  Worker preconnect flagged "unused." crossorigin is correct for a CORS
-  fetch; the flag is a timing heuristic, left as-is.
-
----------------------------------------------------------------------
-PREVIOUS PASS BELOW
----------------------------------------------------------------------
-
-6ummy.xyz — PageSpeed follow-up                   10 Aug 2026
-
-THREE FILES  index.html
-             assets/css/style.css
-             assets/js/app.js
-
-Upload and you're done. Nothing to redeploy — the Worker is untouched,
-no file is added or removed, and there is no manual step this time.
-
-WHAT THE 10 AUG PSI RUN SAID  (mobile, https://6ummy.xyz)
-
-  Performance 96 · Accessibility 95 · Best Practices 100 · SEO 100
-  Agentic Browsing 2/3
-
-  FCP 1.1 s · LCP 2.3 s · TBT 0 ms · CLS 0 — all green.
-  Speed Index 4.0 s — the only amber metric, and the only one worth
-  chasing. No field data yet: not enough real traffic for CrUX.
-
-  Three findings had fixes worth making. Two more did not; see the
-  bottom of this file for why they were left alone.
-
-MEASURED AFTER  (Lighthouse, local, same build)
-
-  Accessibility            95  ->  100
-  button-name audit        7 failures  ->  passes
-  Render-blocking          460 ms  ->  150 ms, stylesheet only
-  Crate artwork on load    1,058 KiB  ->  ~200 KiB
-
-1. THE RAIL BUTTONS HAD NO NAME  (assets/css/style.css)
-
-Every button in the section rail — seven of them — was announced by a
-screen reader as "button". This was the whole Accessibility deficit and
-also the failing Agentic Browsing check ("accessibility tree is not
-well-formed"); one fix cleared both.
-
-The cause was a one-liner. The rail button holds a text label and a
-numeral, the numeral is an aria-hidden SVG, and below 70rem the label
-was display:none because there is no hover on a phone to reveal it.
-display:none removes an element from the accessibility tree as well as
-from the page, so on a phone the button had nothing left to be called.
-
-It is now hidden the way .sr hides text everywhere else on this site:
-clipped to a pixel, off the page, still in the tree. The frame,
-background and padding go with it since nothing renders. Above 70rem
-nothing changed — the tooltip still appears on hover and focus.
-
-Worth knowing: the labels are cloned language spans, and the inactive
-language is hidden with its own display:none rule. That still holds, so
-the name reads "Stream", not "StreamEn vivo", and follows the language
-toggle for free. Verified against Chrome's real accessibility tree, not
-a text-content guess.
-
-2. THE SCRIPTS BLOCKED THE PARSER  (index.html)
-
-content.js was charged 470 ms of render-blocking and style.css 160 ms.
-Both scripts sit last in the body, so they already ran after the
-document was parsed — but a classic <script> still stops the parser
-while it fetches and executes, which is what PSI was counting.
-
-Both tags now carry defer. That keeps the two properties this page
-depends on: execution order, since app.js reads the window.SITE that
-content.js defines, and running before DOMContentLoaded, so app.js can
-go on touching the DOM directly the way it does today. The preloads in
-the head stay — defer changes when a script runs, a preload changes
-when it starts downloading, and without them a deferred script is still
-discovered only at the end of the body.
-
-The stylesheet is still counted as render-blocking, and stays that way.
-The only fix is inlining it, and the CSP is deliberately strict:
-style-src 'self', no inline style anywhere in the build. 150 ms is not
-worth trading that for.
-
-3. THE CRATE SHIPPED A MEGABYTE OF SLEEVES  (assets/js/app.js)
-
-959 KiB of the flagged 1,058 KiB was Discogs artwork: twelve 600x600
-covers for cards that render about 150 CSS px wide.
-
-Discogs serves two sizes and nothing between — thumb at 150, cover_image
-at 600 — on signed URLs whose dimensions cannot be rewritten. Resizing
-at the edge is not available either: the zone is DNS-only, so there is
-no Cloudflare proxy to do it. So the choice was which of the two to
-send, and when.
-
-In a srcset the browser reads the 600 as the answer for any screen above
-1x and fetches all twelve immediately. loading="lazy" did not help: the
-cards are offscreen horizontally but inside the viewport vertically,
-which Chrome loads anyway.
-
-Now the 150 ships and the 600 waits in data-cover. An IntersectionObserver
-rooted on the strip itself promotes a card as it scrolls into view, with
-200px of margin so the swap lands ahead of the reader. It sets srcset
-rather than src, so the thumb keeps painting until the cover has decoded
-and a card never blinks empty. With no IntersectionObserver, everything
-upgrades at once — the old behaviour. With no /crate response, nothing
-happens at all.
-
-Measured on an emulated Pixel-class phone: four covers on load instead
-of twelve, eight after scrolling the strip end to end. Same picture when
-you are looking at it, roughly 860 KiB less when you are not.
-
-LEFT ALONE, ON PURPOSE
-
-  Cache lifetimes, 125 KiB. Every entry is a YouTube thumbnail from
-  i.ytimg.com with a 2-hour TTL. Third-party, and GitHub Pages cannot
-  set response headers anyway. Nothing to fix.
-
-  Minification, 12 KiB. style.css 9.2 -> 4.7, app.js 10.6 -> 4.5,
-  content.js 2.8 -> 2.0. Real, and cheap in bytes only if you ignore
-  what it costs: content.js is the file you edit, both are served
-  compressed already, and this site's whole premise is no build step.
-  Buying 12 KiB with a toolchain is the wrong trade here.
-
-VERIFY
-
-  1. Phone or narrow window: the rail down the right edge still shows
-     numerals only, no labels, and the rail is still one numeral wide.
-  2. Wide window: hovering the rail still slides the labels out.
-  3. Crate: sleeves appear, scroll the strip sideways — they stay sharp
-     as they arrive.
-  4. Switch to ES and back. Rail behaviour and section names unchanged.
-  5. DevTools console: clean, no CSP violations.
-  6. Re-run PSI. Accessibility should read 100 and Agentic Browsing 3/3.
-
----------------------------------------------------------------------
-PREVIOUS PASS BELOW
----------------------------------------------------------------------
-
-6ummy.xyz — PageSpeed pass                        8 Aug 2026
-
-FIVE FILES  index.html
-            404.html
-            assets/css/style.css
-            assets/js/app.js
-            llms.txt
-
-Plus VERIFY.txt (checklist text only).
-
-Upload and you're done. Nothing to redeploy — the Worker is untouched.
-
-ONE MANUAL STEP: delete assets/fonts/silkscreen-latin-700-normal.woff2
-in the GitHub UI. A zip upload never deletes files already in the repo,
-and nothing references that font any more.
-
-MOBILE, BEFORE AND AFTER  (Lighthouse, throttled, measured locally)
-
-  Performance          81  ->  99
-  Cumulative Layout Shift   0.257  ->  0
-  Largest Contentful Paint  2.7 s  ->  1.7 s
-  Total Blocking Time       180 ms ->  60 ms
-
-  Accessibility, Best Practices and SEO were already 100 and stayed
-  there. The live PSI run scored 87 rather than 81 on a faster
-  connection; the shift was identical either way, and it is the shift
-  that was costing the points.
-
-WHAT AND WHY
-
-  1. THE HERO NOW SHIPS DRAWN.  This was the whole 0.26.
-
-     The hero was four empty elements — <h1>6UMMY</h1>, an empty
-     <dl>, two empty bio spans — that app.js filled in on load. It
-     could not fill them fast enough. The browser painted at 2051 ms;
-     app.js finished compiling and ran render() at 2089 ms. In that
-     38 ms gap the reader saw a hero of nothing, and then everything
-     below it dropped 297 px.
-
-     Preloading the script did not fix it and could not: 31 KB still
-     has to compile, and a frame gets out during that. The only fix
-     is for the first paint to already be the final layout.
-
-     So the drawn wordmark, the drawn status-bar mark, the five spec
-     rows and both bios are now in index.html. app.js still builds
-     all of it from content.js and still overwrites them on load —
-     content.js remains the one file you edit — but it now overwrites
-     them with the same thing, so nothing moves.
-
-     Two things came free. The wordmark is the LCP element, and it no
-     longer waits on a 31 KB script: LCP fell a full second. And with
-     JS off the page opens on a drawn mark, five facts and a bio
-     instead of the word "6UMMY" alone.
-
-     If the name ever changes, run this in the console and paste the
-     result back into index.html:
-
-       document.getElementById("wordmark").innerHTML
-       document.querySelector(".status__mark").innerHTML
-
-  2. FONT-DISPLAY: OPTIONAL, AND THE FONT IS PRELOADED.
-
-     Silkscreen was set to swap, so a late-arriving font re-flowed
-     every section title. PSI named it as a layout-shift culprit.
-     With optional the browser picks one face before first paint and
-     never re-lays-out. The preload is what keeps that face being
-     Silkscreen: it now starts downloading with the stylesheet
-     instead of after it, and at 9 KB it wins comfortably — verified
-     on a throttled 1.6 Mbps / 150 ms profile.
-
-  3. THE BOLD SILKSCREEN IS GONE.
-
-     Declared, never used. Every font-weight: 700 on the page is on
-     the mono. Hence the manual delete above.
-
-  4. PRELOADS AND PRECONNECTS.
-
-     content.js and app.js were discovered only when the parser
-     reached the end of the body. They are named in the head now, so
-     they start with the stylesheet. Nothing about what loads
-     changed, only when it is found.
-
-     The preconnect to googleapis.com went. The browser stopped
-     calling the YouTube API directly when the Worker took that over,
-     so it was a handshake spent on nothing. The Worker's own origin
-     and i.ytimg.com replaced it — both are hit on every load.
-
-  5. THE SCROLL SPY STOPPED MEASURING THE STATUS BAR.
-
-     barPx() was re-querying the DOM and reading a rect on every
-     scroll frame, right after that frame had written to the page —
-     which forces the browser to lay the whole page out again on the
-     spot. The bar is fixed and only changes height when the viewport
-     does, so it is measured once now and re-measured on resize.
-
-  6. LLMS.TXT REWRITTEN TO THE SPEC.
-
-     PSI flagged it: "File does not appear to contain any links."
-     llmstxt.org wants markdown hyperlinks — [Name](url): notes — and
-     the file had bare URLs, which are not links. Every entry is a
-     real link now, grouped Site / Profiles / Projects / Optional.
-     "Optional" is a defined section in the spec: it marks URLs a
-     model can skip when it needs a shorter context, so the two
-     collectibles profiles and the PayPal link went there.
+  { title, where, description, startMs, endMs, allDay, start }
+
+renderDates() read three of those seven fields.
+
+1. THE DESCRIPTION, UNDER THE VENUE  (app.js, style.css)
+
+New .row__desc, a third line in column 2 after .row__sub. Rendered
+only when the event has a description — an event without one looks
+exactly as it did before, no empty element, no extra gap.
+
+Colour is --ink-40 rather than the venue's --ink-64, so the row reads
+title -> place -> detail top to bottom instead of two lines of equal
+weight. --ink-40 measures 4.59:1 on --paper, which clears AA for body
+text at this size. Line length is capped at 62ch: on a wide monitor an
+uncapped paragraph would run the full width of the section and read
+worse than the same text in a narrower column.
+
+2. TWO LINES, THEN "MORE"  (app.js, style.css)
+
+These are Google Calendar descriptions and they run to a paragraph.
+The Feria del Libro entry is 300 characters; the Décimo Piso one is a
+single line. Shown in full, one event buries the three below it.
+
+.row__desc clamps to two lines. Where there is more behind the clamp,
+JS adds a MORE / MÁS toggle that unclamps it. Where there isn't, there
+is no toggle — CSS can't ask "did this overflow", so the JS measures
+scrollHeight against clientHeight after the rows are in the document
+and adds the button only where the answer is yes.
+
+The toggle is a separate <button>, not the paragraph itself. A button's
+accessible name is its text content, and 300 characters of Spanish
+prose is not a usable name for a control. It carries aria-controls and
+aria-expanded, so it works from the keyboard and announces its state.
+
+Padding on the button is a thumb target, not spacing: at .6875rem the
+label alone is a 13px-tall tap area. Negative margins pull the enlarged
+box back into line, so the target is 45x30 and the layout doesn't move.
+
+3. THE MID-WORD CUT  (app.js)
+
+The Worker does .slice(0, 300) on the description and cuts wherever the
+300th character lands. On the live feed that is mid-word:
+
+  ...en los edificios vacíos del Berlín recién reunificado, u
+
+tidyDesc() pulls back to the last word break and ends on an ellipsis:
+
+  ...en los edificios vacíos del Berlín recién reunificado…
+
+It measures the raw string before collapsing whitespace, not after. A
+calendar entry with blank lines in it normalises down to well under 300
+characters, so checking the tidied length would report a truncated
+description as untouched — which is exactly what the first pass did.
+
+If the 300 characters hold no word break at all — a URL, a wall of
+hashtags — nothing is dropped and the ellipsis is simply appended.
+
+4. RE-MEASURING ON RESIZE  (app.js)
+
+A narrower column fits fewer words, so a description that needed no
+toggle in landscape needs one in portrait. Without this a rotated phone
+shows two clamped lines and no way to reach the rest. A debounced
+resize re-runs the same measurement; open rows are skipped, since an
+unclamped paragraph always measures as fitting and re-measuring one
+would take its own toggle away.
+
+VERIFIED  (headless Chromium, desktop 1280 and mobile 390, en + es)
+
+  Long description   clamped to 2 lines, toggle present, opens and
+                     closes by mouse and by Enter, aria-expanded
+                     tracks the state
+  Short description  rendered in full, no toggle
+  No description     no element at all, row unchanged
+  Language switch    toggle re-labels MORE <-> MÁS
+  Resize 1280 -> 360 the mid-length row gains a toggle; back to 1280
+                     it loses it again, and a row left open stays open
+  Toggle target      45 x 30 px, label aligned with the venue above it
+  Console            no errors, no duplicate ids
 
 NOT DONE, AND WHY
 
-  CACHE LIFETIMES (est. 124 KiB).  GitHub Pages serves your assets
-  with a 10-minute cache and will not let you set a response header.
-  Same wall as HSTS and X-Frame-Options. It only unlocks by moving
-  the site to Cloudflare Pages.
+  RAISING THE 300-CHARACTER CAP.  It lives in the Worker, and the
+  Worker deploys from the Cloudflare dashboard — its secrets do not
+  survive a redeploy. The cut is now clean at the word, which is the
+  part a reader sees. Worth revisiting only alongside a Worker change
+  that has to happen anyway.
 
-  IMAGE DELIVERY (est. 65 KiB).  All of it is YouTube's own
-  mqdefault.jpg thumbnails. YouTube does serve WebP versions at
-  /vi_webp/<id>/mqdefault.webp, but <picture> does not fall back when
-  a source 404s — it shows a broken image — and an onerror handler
-  would need inline script, which the CSP forbids. The thumbnails are
-  already lazy-loaded and below the fold. Not worth a fragile
-  dependency on an undocumented URL for a site meant to be left
-  alone.
+  ANIMATING THE EXPAND.  A height transition on auto-height content
+  needs a measured max-height and a second reflow, and it would want a
+  prefers-reduced-motion branch on top. The clamp is a reading aid, not
+  a reveal.
 
-  MINIFYING CSS AND JS (est. 10 KiB).  Needs a build step, and the
-  site's whole premise is that it doesn't have one. The estimate is
-  measured uncompressed; GitHub Pages gzips both files, so the real
-  saving is a couple of KB, against never being able to edit
-  style.css in place again.
-
-  THE CRATE.  Still Discogs 429 — checked again during this pass,
-  96 used against a ceiling of 60. Unrelated to any of the above and
-  tracked separately.
+  LINKIFYING URLS IN THE DESCRIPTION.  The text is escaped through
+  esc() and stays escaped. Turning fetched calendar text into live
+  markup is the one change here that could hurt, and no current entry
+  needs it.

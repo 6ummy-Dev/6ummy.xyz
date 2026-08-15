@@ -423,12 +423,77 @@ body.is-live .wordmark__cursor { animation: none; }
   text-align: right;
 }
 
+/* The calendar description, under the venue. Two lines until
+   asked: these come from Google Calendar and run to a paragraph,
+   and one such event would otherwise bury the three dates below
+   it. Dimmer than .row__sub so the row still reads title →
+   place → detail top to bottom. Measured 4.59:1 on --paper,
+   which clears AA for body text at this size.
+
+   The line box is set explicitly — a clamped -webkit-box does not
+   inherit the page's line-height reliably across engines, and the
+   clamp is what the JS measures against. */
+.row__desc {
+  grid-column: 2;
+  margin: .1rem 0 0;
+  max-width: 62ch;
+  font-size: .75rem;
+  line-height: 1.55;
+  color: var(--ink-40);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.row__desc.is-open {
+  display: block;
+  -webkit-line-clamp: none;
+  line-clamp: none;
+  overflow: visible;
+}
+
+/* Added by JS only where the text actually overflows, so there is
+   never a toggle that reveals nothing. Stripped back to look like
+   the small labels around it rather than like .btn — it sits
+   inside a row, not at the end of a section.
+
+   The padding is a thumb target, not spacing: at .6875rem the text
+   alone is a 13px-tall tap area. The negative margins pull the
+   enlarged box back so the label still lines up with the venue
+   above it — the target grows, the layout doesn't move. */
+.row__more {
+  grid-column: 2;
+  justify-self: start;
+  margin: -.2rem 0 -.35rem -.5rem;
+  padding: .4rem .5rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: .6875rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+  cursor: pointer;
+  transition: color .2s ease;
+}
+
+.row__more:hover,
+.row__more:focus-visible { color: var(--live); }
+
 a.row:hover { background: var(--hover); }
 
 @media (max-width: 34rem) {
   .row { grid-template-columns: 1fr auto; }
   .row__key { grid-column: 1 / -1; }
   .row__sub { grid-column: 1 / -1; }
+  .row__desc { grid-column: 1 / -1; }
+  .row__more { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row__more { transition: none; }
 }
 
 /* ---------- empty state ---------- */
