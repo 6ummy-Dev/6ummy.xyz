@@ -282,9 +282,14 @@
       ? es("Recientes", "Recent")
       : es("Próximas", "Upcoming");
 
+    /* Only what's ahead is worth saving. A calendar file for a gig
+       that already happened is an entry in the past, which is what
+       the Recent list is for. */
+    var offerICS = CAN_ICS && datesState.mode === "upcoming";
+
     var html = '<div class="rows">';
-    items.forEach(function (ev) {
-      html += '<div class="row">' +
+    items.forEach(function (ev, i) {
+      html += '<div class="row row--date">' +
         '<span class="row__key">' + fmtDay(ev.startMs) + "</span>" +
         '<span class="row__main">' + esc(ev.title) + "</span>" +
         '<span class="row__end">' + fmtTime(ev) + "</span>" +
@@ -292,6 +297,21 @@
         (ev.description
           ? '<p class="row__desc">' + esc(tidyDesc(ev.description)) + "</p>"
           : "") +
+        /* The toggle is added here later, ahead of the calendar
+           button, so the strip reads MORE then ADD TO CALENDAR.
+           Empty strips are display:none, so a row with neither
+           control keeps the spacing it had before. */
+        '<div class="row__acts">' +
+          (offerICS
+            ? '<button class="row__cal" type="button" data-cal="' + i + '">' +
+                es("Agregar al calendario", "Add to calendar") +
+                /* Eight buttons all named "Add to calendar" are eight
+                   identical rows to anyone listening rather than
+                   looking. The title is appended out of sight. */
+                '<span class="sr"> — ' + esc(ev.title) + "</span>" +
+              "</button>"
+            : "") +
+        "</div>" +
         "</div>";
     });
     box.innerHTML = html + "</div>";
@@ -320,19 +340,28 @@
          would just say "fits" and take its own toggle away. */
       if (p.classList.contains("is-open")) return;
 
-      var next = p.nextElementSibling;
-      var btn = next && next.classList.contains("row__more") ? next : null;
+      var acts = p.parentNode.querySelector(".row__acts");
+      var btn = acts && acts.querySelector(".row__more");
       var over = p.scrollHeight - p.clientHeight > 1;
 
-      if (over && !btn) {
+      if (over && !btn && acts) {
         p.id = "dateDesc" + i;
         btn = document.createElement("button");
         btn.type = "button";
         btn.className = "row__more";
         btn.setAttribute("aria-controls", p.id);
         btn.setAttribute("aria-expanded", "false");
-        btn.textContent = es("Más", "More");
-        p.parentNode.insertBefore(btn, p.nextSibling);
+        /* A text node first, then the hidden title. The toggle
+           relabels itself by rewriting that node, so the title
+           survives every open and close — and the visible word
+           stays the start of the accessible name, which is what
+           voice control needs to match on. */
+        btn.appendChild(document.createTextNode(es("Más", "More")));
+        var sr = document.createElement("span");
+        sr.className = "sr";
+        sr.textContent = " — " + (p.parentNode.querySelector(".row__main") || {}).textContent;
+        btn.appendChild(sr);
+        acts.insertBefore(btn, acts.firstChild);
       } else if (!over && btn) {
         btn.parentNode.removeChild(btn);
       }
@@ -346,7 +375,8 @@
     if (!p) return;
     var open = p.classList.toggle("is-open");
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.textContent = open ? es("Menos", "Less") : es("Más", "More");
+    /* First child only — the .sr title after it stays put. */
+    btn.firstChild.nodeValue = open ? es("Menos", "Less") : es("Más", "More");
   });
 
   /* A narrower column fits fewer words, so a description that
@@ -358,6 +388,154 @@
   window.addEventListener("resize", function () {
     clearTimeout(reflow);
     reflow = setTimeout(clampDescs, 200);
+  });
+
+  /* ---------------------------------------------------------
+     ADD TO CALENDAR — an .ics built here, from the event data
+     already on the page. No second request, no third party, and
+     it lands in whatever the reader actually uses: Calendar,
+     Google, Outlook, Thunderbird. A calendar.google.com link
+     would have been one line, but it only serves Google and it
+     hands a visitor to a tracker on a site whose whole premise
+     is that it doesn't have one.
+
+     If Blob or createObjectURL is missing the button is never
+     rendered, rather than rendered and dead.
+     --------------------------------------------------------- */
+
+  var CAN_ICS = (function () {
+    try {
+      return !!(window.Blob && window.URL && URL.createObjectURL &&
+                "download" in document.createElement("a"));
+    } catch (e) { return false; }
+  })();
+
+  /* RFC 5545 §3.3.11: backslash, semicolon and comma are
+     delimiters inside a property value, and a real newline ends
+     the property. All four have to be escaped or the file is
+     rejected — "Denk y Sven von Thülen (Alpha Decay), es la
+     historia" would otherwise end the DESCRIPTION at the comma. */
+  function icsEsc(s) {
+    return String(s == null ? "" : s)
+      .replace(/\\/g, "\\\\")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,")
+      .replace(/\r?\n/g, "\\n");
+  }
+
+  function utf8Len(ch) {
+    var c = ch.codePointAt(0);
+    return c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4;
+  }
+
+  /* §3.1: lines fold at 75 octets — octets, not characters. Folding
+     on a character count splits "Berlín" through the middle of the
+     í, and an importer that gets half a code point rejects the file
+     rather than guessing. Continuations start with one space, which
+     spends an octet of the next line's budget. */
+  function icsFold(line) {
+    var out = "", len = 0, i, ch;
+    for (i = 0; i < line.length; i++) {
+      ch = line.charAt(i);
+      /* Keep a surrogate pair together: the emoji in a title is one
+         character to a reader and two units to a for-loop. */
+      if (ch >= "\uD800" && ch <= "\uDBFF" && i + 1 < line.length) {
+        ch += line.charAt(++i);
+      }
+      var size = utf8Len(ch);
+      if (len + size > 73) { out += "\r\n "; len = 1; }
+      out += ch;
+      len += size;
+    }
+    return out;
+  }
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+
+  function icsUTC(ms) {
+    var d = new Date(ms);
+    return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate()) +
+           "T" + pad2(d.getUTCHours()) + pad2(d.getUTCMinutes()) +
+           pad2(d.getUTCSeconds()) + "Z";
+  }
+
+  /* All-day events are anchored at UTC midday by the Worker, exactly
+     so a timezone shift can't move them off their own date. Reading
+     the UTC parts back out returns the day the calendar meant. */
+  function icsDay(ms) {
+    var d = new Date(ms);
+    return d.getUTCFullYear() + pad2(d.getUTCMonth() + 1) + pad2(d.getUTCDate());
+  }
+
+  function slug(s) {
+    var t = String(s || "");
+    /* Decompose, then drop the combining marks: "Décimo" becomes
+       "decimo" rather than "d-cimo". Escaped rather than literal —
+       a bare combining range in the source is invisible in an
+       editor and the next person to touch this line would lose it. */
+    try { t = t.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "date";
+  }
+
+  function buildICS(ev) {
+    var lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//6ummy//6ummy.xyz//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "BEGIN:VEVENT",
+      /* Stable across downloads: re-saving the same gig updates the
+         entry the reader already has instead of duplicating it. */
+      "UID:" + ev.startMs + "-" + slug(ev.title).slice(0, 40) + "@6ummy.xyz",
+      "DTSTAMP:" + icsUTC(Date.now())
+    ];
+
+    if (ev.allDay) {
+      lines.push("DTSTART;VALUE=DATE:" + icsDay(ev.startMs));
+      /* DTEND is exclusive for a date value — the day after, or the
+         event shows as ending the moment it starts. */
+      lines.push("DTEND;VALUE=DATE:" + icsDay(ev.startMs + 864e5));
+    } else {
+      lines.push("DTSTART:" + icsUTC(ev.startMs));
+      lines.push("DTEND:" + icsUTC(
+        ev.endMs > ev.startMs ? ev.endMs : ev.startMs + 2 * 3600e3));
+    }
+
+    lines.push("SUMMARY:" + icsEsc(ev.title || "TBA"));
+    if (ev.where) lines.push("LOCATION:" + icsEsc(ev.where));
+    /* The tidied text, so a saved event doesn't carry the Worker's
+       mid-word cut into the reader's calendar forever. */
+    if (ev.description) lines.push("DESCRIPTION:" + icsEsc(tidyDesc(ev.description)));
+    lines.push("URL:https://6ummy.xyz/");
+    lines.push("END:VEVENT", "END:VCALENDAR");
+
+    return lines.map(icsFold).join("\r\n") + "\r\n";
+  }
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest(".row__cal");
+    if (!btn) return;
+
+    var ev = datesState && datesState.items[Number(btn.getAttribute("data-cal"))];
+    if (!ev) return;
+
+    var url;
+    try {
+      url = URL.createObjectURL(
+        new Blob([buildICS(ev)], { type: "text/calendar;charset=utf-8" }));
+    } catch (err) { return; }
+
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "6ummy-" + slug(ev.title).slice(0, 48) + "-" + icsDay(ev.startMs) + ".ics";
+    document.body.appendChild(a);
+    a.click();
+    a.parentNode.removeChild(a);
+    /* Revoked on a timer, not immediately: Safari reads the blob
+       after the click returns, and pulling it out from under the
+       download gives an empty file. */
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   });
 
   /* ---------------------------------------------------------

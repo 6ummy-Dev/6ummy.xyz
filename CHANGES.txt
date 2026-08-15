@@ -1,10 +1,14 @@
-6ummy.xyz — dates show their description          15 Aug 2026
+6ummy.xyz — the Dates section                     15 Aug 2026
 
 TWO FILES  assets/css/style.css
            assets/js/app.js
 
 Upload and you're done. Worker untouched — no redeploy, so the secrets
 stay where they are. index.html unchanged.
+
+Supersedes the earlier note of the same date ("dates show their
+description"). This build contains that work as well; if the first zip
+was never uploaded, this one is complete on its own.
 
 WHAT WAS WRONG
 
@@ -15,7 +19,9 @@ at the last step. /dates has always returned it:
 
   { title, where, description, startMs, endMs, allDay, start }
 
-renderDates() read three of those seven fields.
+renderDates() read three of those seven fields. And there was no way to
+keep a date: a visitor who wanted to remember a gig had to type it into
+their own calendar by hand.
 
 1. THE DESCRIPTION, UNDER THE VENUE  (app.js, style.css)
 
@@ -47,10 +53,6 @@ accessible name is its text content, and 300 characters of Spanish
 prose is not a usable name for a control. It carries aria-controls and
 aria-expanded, so it works from the keyboard and announces its state.
 
-Padding on the button is a thumb target, not spacing: at .6875rem the
-label alone is a 13px-tall tap area. Negative margins pull the enlarged
-box back into line, so the target is 45x30 and the layout doesn't move.
-
 3. THE MID-WORD CUT  (app.js)
 
 The Worker does .slice(0, 300) on the description and cuts wherever the
@@ -79,6 +81,82 @@ resize re-runs the same measurement; open rows are skipped, since an
 unclamped paragraph always measures as fitting and re-measuring one
 would take its own toggle away.
 
+5. ADD TO CALENDAR  (app.js, style.css)
+
+Every upcoming date now has an ADD TO CALENDAR / AGREGAR AL CALENDARIO
+button that hands over a .ics file. Not a calendar.google.com link: that
+would have been one line, but it only serves Google users and it walks a
+visitor into a tracker from a site whose whole premise is that it hasn't
+got one. The .ics opens in Calendar, Google, Outlook, Thunderbird — and
+it is built here, in the browser, from event data already on the page.
+No second request, no third party, no key.
+
+Past dates get no button. A calendar file for a gig that already
+happened is an entry in the past, which is what the Recent list is for.
+
+The file is a real RFC 5545 VEVENT, which mostly means getting the dull
+parts right:
+
+  ESCAPING       Backslash, semicolon and comma are delimiters inside a
+                 property value. Unescaped, "Denk y Sven von Thülen
+                 (Alpha Decay), es la historia" ends the DESCRIPTION at
+                 the comma and the rest becomes a bad property name.
+
+  FOLDING        Lines fold at 75 OCTETS, not characters. Folding on a
+                 character count splits the í in "Berlín" down the
+                 middle, and an importer handed half a code point
+                 rejects the file rather than guessing. Surrogate pairs
+                 are kept together for the same reason — the disco ball
+                 in "DMF + CS + FoD" is one character to a reader and
+                 two units to a for-loop.
+
+  ALL-DAY        DTSTART;VALUE=DATE, and DTEND is the day AFTER: a date
+                 DTEND is exclusive, so the obvious version produces an
+                 event that ends the moment it begins. The Worker
+                 anchors all-day events at UTC midday precisely so a
+                 timezone shift can't move them off their own date, so
+                 the UTC parts are what to read back out.
+
+  UID            Stable: startMs + a slug of the title. Saving the same
+                 gig twice updates the entry the reader already has
+                 instead of leaving them two.
+
+The description written into the file is the tidied one, so a saved
+event doesn't carry the Worker's mid-word cut around in someone's
+calendar forever.
+
+If Blob or createObjectURL is missing the button is never rendered,
+rather than rendered and dead.
+
+6. YELLOW EVENT TITLES  (style.css)
+
+.row--date .row__main is now --live. Dates only. .row__main is also the
+record name in Crate and the link name in Elsewhere, and yellow already
+carries the section indices, the primary button, focus rings and the
+mark — spend it on every row and the page has no accent left. An event
+title is the one row value that names something happening, which is
+what the colour has meant since the live flood.
+
+12.74:1 on --paper. The venue and description below it are unchanged,
+so the row now reads yellow -> --ink-64 -> --ink-40, brightest first.
+
+7. THE CONTROL STRIP  (app.js, style.css)
+
+MORE and ADD TO CALENDAR share a .row__acts flex strip rather than
+stacking. A row with neither is display:none, so an event with a
+one-line description and no button keeps exactly the spacing it had
+before any of this existed.
+
+Padding on the buttons is a thumb target, not spacing: at .6875rem the
+label alone is a 13px-tall tap area. The negative margins sit on the
+strip and pull it back by that padding, so the first label still lines
+up with the venue above it — the targets grow, the layout doesn't move.
+
+Both buttons carry the event title in a visually-hidden span. Eight
+buttons all named "Add to calendar" are eight identical rows to someone
+listening rather than looking. The visible word stays first in the
+accessible name, so voice control still matches on what is on screen.
+
 VERIFIED  (headless Chromium, desktop 1280 and mobile 390, en + es)
 
   Long description   clamped to 2 lines, toggle present, opens and
@@ -86,10 +164,27 @@ VERIFIED  (headless Chromium, desktop 1280 and mobile 390, en + es)
                      tracks the state
   Short description  rendered in full, no toggle
   No description     no element at all, row unchanged
-  Language switch    toggle re-labels MORE <-> MÁS
+  Language switch    controls re-label MORE <-> MÁS, ADD TO CALENDAR
+                     <-> AGREGAR AL CALENDARIO
   Resize 1280 -> 360 the mid-length row gains a toggle; back to 1280
                      it loses it again, and a row left open stays open
-  Toggle target      45 x 30 px, label aligned with the venue above it
+  Empty strip        display:none, row height unchanged
+  Past mode          no calendar buttons
+  Colour             event title #FFEA00; Elsewhere link name still
+                     --ink; venue --ink-64; description --ink-40
+  Tap targets        45 x 30 px, first label aligned with the venue
+
+  .ics               four files downloaded through the page's own meta
+                     CSP and re-parsed with ical.js. All four parse.
+                     Longest line 73 octets, CRLF only, no continuation
+                     over 75. Round-tripped intact: accents (Décimo,
+                     Camacuá), emoji, and a deliberately hostile
+                     "Dj RuLo; Dj 6ummy, MIN8 art\drinks" — semicolon,
+                     comma and backslash all survive. All-day event
+                     came back as a date-only DTSTART with DTEND the
+                     following day. Filenames slug down to ASCII:
+                     6ummy-decimo-piso-all-dayer-20260919.ics
+
   Console            no errors, no duplicate ids
 
 NOT DONE, AND WHY
@@ -99,6 +194,12 @@ NOT DONE, AND WHY
   survive a redeploy. The cut is now clean at the word, which is the
   part a reader sees. Worth revisiting only alongside a Worker change
   that has to happen anyway.
+
+  A "SUBSCRIBE TO ALL DATES" LINK.  The natural companion to the per-
+  event .ics, and it needs the calendar's own feed URL — which means
+  CALENDAR_ID, which is a Worker secret and deliberately not sent to
+  the browser. Doing it properly means a Worker route that proxies the
+  .ics, so: same redeploy question. Parked, not rejected.
 
   ANIMATING THE EXPAND.  A height transition on auto-height content
   needs a measured max-height and a second reflow, and it would want a

@@ -454,19 +454,30 @@ body.is-live .wordmark__cursor { animation: none; }
   overflow: visible;
 }
 
-/* Added by JS only where the text actually overflows, so there is
-   never a toggle that reveals nothing. Stripped back to look like
-   the small labels around it rather than like .btn — it sits
-   inside a row, not at the end of a section.
+/* The controls under a dates row: MORE, added by JS only where the
+   description actually overflows, and ADD TO CALENDAR. A row with
+   neither is display:none here, so an event with a one-line
+   description keeps exactly the spacing it had before either
+   control existed.
 
-   The padding is a thumb target, not spacing: at .6875rem the text
-   alone is a 13px-tall tap area. The negative margins pull the
-   enlarged box back so the label still lines up with the venue
-   above it — the target grows, the layout doesn't move. */
-.row__more {
+   The negative margins live on the strip rather than the buttons.
+   Each button's padding is a thumb target, not spacing — at
+   .6875rem the label alone is a 13px-tall tap area — and pulling
+   the strip back by that padding keeps the first label in line with
+   the venue and description above it. The targets grow, the layout
+   doesn't move. */
+.row__acts {
   grid-column: 2;
-  justify-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
   margin: -.2rem 0 -.35rem -.5rem;
+}
+
+.row__acts:empty { display: none; }
+
+.row__more,
+.row__cal {
   padding: .4rem .5rem;
   border: 0;
   background: none;
@@ -480,7 +491,16 @@ body.is-live .wordmark__cursor { animation: none; }
 }
 
 .row__more:hover,
-.row__more:focus-visible { color: var(--live); }
+.row__more:focus-visible,
+.row__cal:hover,
+.row__cal:focus-visible { color: var(--live); }
+
+/* Dates only. Yellow already carries the section indices, the
+   primary button and the mark; spending it on every .row__main
+   would put it on record names and link names too, and a page
+   where most of the text is yellow has no accent left. An event
+   title is the one row value that names something happening. */
+.row--date .row__main { color: var(--live); }
 
 a.row:hover { background: var(--hover); }
 
@@ -489,11 +509,12 @@ a.row:hover { background: var(--hover); }
   .row__key { grid-column: 1 / -1; }
   .row__sub { grid-column: 1 / -1; }
   .row__desc { grid-column: 1 / -1; }
-  .row__more { grid-column: 1 / -1; }
+  .row__acts { grid-column: 1 / -1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .row__more { transition: none; }
+  .row__more,
+  .row__cal { transition: none; }
 }
 
 /* ---------- empty state ---------- */
