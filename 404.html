@@ -13,10 +13,11 @@
   default-src 'self';
   base-uri 'none';
   object-src 'none';
-  script-src 'self';
+  script-src 'self' https://static.cloudflareinsights.com;
   style-src 'self';
   font-src 'self';
   img-src 'self' data:;
+  connect-src 'self' https://cloudflareinsights.com;
 ">
 
 <!-- Absolute paths, not relative. This page is served for ANY unmatched
@@ -54,5 +55,7 @@
   </p>
 </main>
 
+<!-- Cloudflare Web Analytics: 404s are worth counting too. -->
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "82e036900d854744925108836df4c57c"}'></script>
 </body>
 </html>

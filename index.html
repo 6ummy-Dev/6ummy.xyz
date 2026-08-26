@@ -40,11 +40,11 @@
   default-src 'self';
   base-uri 'none';
   object-src 'none';
-  script-src 'self';
+  script-src 'self' https://static.cloudflareinsights.com;
   style-src 'self';
   font-src 'self';
   img-src 'self' data: https://i.ytimg.com https://i.discogs.com https://img.discogs.com;
-  connect-src 'self' https://6ummy-api.6ummy-xyz.workers.dev;
+  connect-src 'self' https://6ummy-api.6ummy-xyz.workers.dev https://cloudflareinsights.com;
   frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://w.soundcloud.com;
   form-action 'self' https://formspree.io https://api.web3forms.com;
 ">
@@ -342,5 +342,11 @@
      touching the DOM directly the way it does today. -->
 <script src="assets/js/content.js" defer></script>
 <script src="assets/js/app.js" defer></script>
+<!-- Cloudflare Web Analytics. Cookieless, no fingerprinting, runs as an
+     ES module after parse. The static host serves the script and the
+     beacon POSTs to cloudflareinsights.com — both are whitelisted in
+     the CSP above. Token is public by design (it only identifies the
+     site, it can't read the data). -->
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "82e036900d854744925108836df4c57c"}'></script>
 </body>
 </html>
