@@ -342,11 +342,10 @@
      touching the DOM directly the way it does today. -->
 <script src="assets/js/content.js" defer></script>
 <script src="assets/js/app.js" defer></script>
-<!-- Cloudflare Web Analytics. Cookieless, no fingerprinting, runs as an
-     ES module after parse. The static host serves the script and the
-     beacon POSTs to cloudflareinsights.com — both are whitelisted in
-     the CSP above. Token is public by design (it only identifies the
-     site, it can't read the data). -->
-<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "82e036900d854744925108836df4c57c"}'></script>
+<!-- Cloudflare Web Analytics is no longer a tag here. app.js adds the
+     beacon script after the first frame (token in content.js): as a
+     tag it started with the document, so its handshake to a third
+     origin sat in Lighthouse's largest-paint model even though it
+     paints nothing. Its script and POST hosts stay in the CSP above. -->
 </body>
 </html>

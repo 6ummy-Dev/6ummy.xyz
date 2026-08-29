@@ -1,212 +1,133 @@
-6ummy.xyz — the Dates section                     15 Aug 2026
+6ummy.xyz — mobile PSI: 94 → the largest paint         29 Aug 2026
 
-TWO FILES  assets/css/style.css
-           assets/js/app.js
+THREE FILES  index.html
+             assets/js/app.js
+             assets/js/content.js
 
-Upload and you're done. Worker untouched — no redeploy, so the secrets
-stay where they are. index.html unchanged.
-
-Supersedes the earlier note of the same date ("dates show their
-description"). This build contains that work as well; if the first zip
-was never uploaded, this one is complete on its own.
+Upload and you're done. Worker untouched — no redeploy. style.css
+unchanged.
 
 WHAT WAS WRONG
 
-A dates row showed the day, the title, the time and the venue. The
-calendar's description was fetched, carried all the way through the
-Worker and handed to the browser on every event — and then thrown away
-at the last step. /dates has always returned it:
+Desktop scored 100, mobile 94 (92 on a second run). Everything on the
+mobile report was green except two numbers: Largest Contentful Paint
+2.7–2.9 s against a First Contentful Paint of 1.5 s, and Speed Index
+4.2 s. The LCP element is the bio paragraph in the hero, and PSI put
+its whole time down as "element render delay" — 2.4 s — with nothing
+to load. The bio is prerendered in index.html; it needs no script, no
+font, no fetch. So where did 2.4 s go?
 
-  { title, where, description, startMs, endMs, allDay, start }
+Not into painting it. The bio paints in the first frame, and it did
+before this change too. What moved was everything around that frame.
 
-renderDates() read three of those seven fields. And there was no way to
-keep a date: a visitor who wanted to remember a gig had to type it into
-their own calendar by hand.
+app.js is deferred. Deferred scripts run as soon as the parser is done
+and the stylesheet is in — and on a real connection that is routinely
+BEFORE the browser has produced its first frame. Reproduced locally
+with 80 ms of latency on every asset: in about half the loads, app.js
+had run, hit the Worker for /live, /dates, /crate and /youtube, and
+rewritten the section heads, all before the first paint. The paint
+came ~50 ms after the scripts.
 
-1. THE DESCRIPTION, UNDER THE VENUE  (app.js, style.css)
+PageSpeed's mobile score is not a measurement of that load. It is a
+model: Lighthouse takes the unthrottled run and re-simulates it on a
+slow 4G connection (150 ms round trips, 1.6 Mbps) with a 4× slower
+CPU. For the largest paint, the model takes every request that had
+STARTED before that paint and every script that had run before it, and
+treats all of it as if the paint had waited for it. Four Worker
+fetches to a fresh origin (three round trips of handshake before the
+first byte), the Cloudflare beacon to another fresh origin, app.js's
+execution at 4× — simulated on slow 4G, that is the 2.4 s. On desktop
+the simulation uses 40 ms round trips and no CPU slowdown, so the same
+graph adds a few hundred milliseconds and the score stays at 100.
 
-New .row__desc, a third line in column 2 after .row__sub. Rendered
-only when the event has a description — an event without one looks
-exactly as it did before, no empty element, no extra gap.
+That is also why the earlier reveal guard ("never hide what the reader
+can already see") didn't close the gap: it stopped app.js from
+repainting the bio, but the bio's timing was never the problem — the
+requests in front of it were.
 
-Colour is --ink-40 rather than the venue's --ink-64, so the row reads
-title -> place -> detail top to bottom instead of two lines of equal
-weight. --ink-40 measures 4.59:1 on --paper, which clears AA for body
-text at this size. Line length is capped at 62ch: on a wide monitor an
-uncapped paragraph would run the full width of the section and read
-worse than the same text in a narrower column.
+1. BOOT AFTER THE FIRST FRAME  (app.js)
 
-2. TWO LINES, THEN "MORE"  (app.js, style.css)
+Everything app.js does now runs from main(), and main() is scheduled
+from afterFirstPaint():
 
-These are Google Calendar descriptions and they run to a paragraph.
-The Feria del Libro entry is 300 characters; the Décimo Piso one is a
-single line. Shown in full, one event buries the three below it.
+  requestAnimationFrame → requestAnimationFrame → setTimeout(0)
 
-.row__desc clamps to two lines. Where there is more behind the clamp,
-JS adds a MORE / MÁS toggle that unclamps it. Where there isn't, there
-is no toggle — CSS can't ask "did this overflow", so the JS measures
-scrollHeight against clientHeight after the rows are in the document
-and adds the button only where the answer is yes.
+The first rAF fires just before a frame is produced; a second one from
+inside it cannot be scheduled until that frame has been presented; a
+timeout from there runs after the second frame goes out. So main()
+starts roughly two frames (~30 ms) after the first paint, and every
+fetch, every layout read and every DOM write lands after the largest
+paint, where the model no longer counts it. One rAF was not enough:
+its timeout ran a few ms before the compositor stamped the paint, and
+the /live fetch landed just inside the window.
 
-The toggle is a separate <button>, not the paragraph itself. A button's
-accessible name is its text content, and 300 characters of Spanish
-prose is not a usable name for a control. It carries aria-controls and
-aria-expanded, so it works from the keyboard and announces its state.
+A hidden tab never gets a frame, so there the boot goes straight to a
+timeout, and a 1.5 s fallback covers anything else that could keep rAF
+from firing. Whichever fires first wins; the others are no-ops.
 
-3. THE MID-WORD CUT  (app.js)
+Nothing visible moves. The hero was already on screen; the rail, the
+section numbers and the clock arrive two frames later than they used
+to, which is under the threshold of a blink.
 
-The Worker does .slice(0, 300) on the description and cuts wherever the
-300th character lands. On the live feed that is mid-word:
+Local Lighthouse, mobile preset, 80 ms latency on every asset, three
+runs each:
 
-  ...en los edificios vacíos del Berlín recién reunificado, u
+                    FCP      LCP      SI
+  before           2.0 s    2.5 s    2.7 s     (when the race lost)
+                   1.7 s    2.0 s    1.7 s     (when it won)
+  after            1.6 s    1.9 s    1.6 s     (every run)
 
-tidyDesc() pulls back to the last word break and ends on an ellipsis:
+The remaining FCP→LCP gap is the two preloaded scripts and the font,
+which start with the stylesheet and are therefore in the model no
+matter what. It costs nothing on the score.
 
-  ...en los edificios vacíos del Berlín recién reunificado…
+2. FORCED REFLOW  (app.js, watch())
 
-It measures the raw string before collapsing whitespace, not after. A
-calendar entry with blank lines in it normalises down to well under 300
-characters, so checking the tidied length would report a truncated
-description as untouched — which is exactly what the first pass did.
+PSI flagged 94 ms of forced synchronous layout at app.js:1189 — the
+getBoundingClientRect() in watch(). The loop set an attribute, then
+measured, then added a class, then measured the next node; every
+measurement after the first forced a full layout, and the loop ran
+again after each section rendered. watch() now filters, measures every
+node, then writes: one layout per sweep, however many rows.
 
-If the 300 characters hold no word break at all — a URL, a wall of
-hashtags — nothing is dropped and the ellipsis is simply appended.
+3. THE CLOUDFLARE BEACON  (index.html, app.js, content.js)
 
-4. RE-MEASURING ON RESIZE  (app.js)
+Cloudflare Web Analytics was a <script type="module"> at the end of
+the body. A module script is deferred by default, so it did not block
+anything — but it starts downloading with the document, from a third
+origin, which is a full handshake in the model, and Lighthouse listed
+it in the critical request chain. app.js now appends the same script
+(defer, same data-cf-beacon attribute) at the end of main(), two
+frames after the first paint. The token moved to content.js as
+config.cfBeacon, next to the other public IDs; "" loads nothing. Both
+hosts stay in the CSP exactly as before.
 
-A narrower column fits fewer words, so a description that needed no
-toggle in landscape needs one in portrait. Without this a rotated phone
-shows two clamped lines and no way to reach the rest. A debounced
-resize re-runs the same measurement; open rows are skipped, since an
-unclamped paragraph always measures as fitting and re-measuring one
-would take its own toggle away.
+NOT CHANGED, AND WHY
 
-5. ADD TO CALENDAR  (app.js, style.css)
+Minify CSS/JS (PSI: ~16 KiB). Would need a build step, and the point of
+this repo is that there isn't one. GitHub Pages gzips everything and
+the comments compress to almost nothing; the modelled cost is under
+100 ms. Left as is.
 
-Every upcoming date now has an ADD TO CALENDAR / AGREGAR AL CALENDARIO
-button that hands over a .ics file. Not a calendar.google.com link: that
-would have been one line, but it only serves Google users and it walks a
-visitor into a tracker from a site whose whole premise is that it hasn't
-got one. The .ics opens in Calendar, Google, Outlook, Thunderbird — and
-it is built here, in the browser, from event data already on the page.
-No second request, no third party, no key.
+Improve image delivery (PSI: 308 KiB, Discogs sleeves). Discogs serves
+exactly two sizes on signed URLs — 150 and 600 — and a card is 260 CSS
+px at 1.75× device pixels, i.e. 455 px. 150 is blurry at that density
+and 600 is the only other option; there is nothing in between to ask
+for. The sleeves are loaded as 150 first and upgraded on demand, which
+is as far as it goes without an image proxy.
 
-Past dates get no button. A calendar file for a gig that already
-happened is an entry in the past, which is what the Recent list is for.
+Cache lifetimes (PSI: 127 KiB). YouTube's thumbnails, 2 h TTL. Not
+ours.
 
-The file is a real RFC 5545 VEVENT, which mostly means getting the dull
-parts right:
+"Unused preconnect" on workers.dev and i.discogs.com. Diagnostic only,
+no score weight, and both origins are used within the first second.
+Left in place.
 
-  ESCAPING       Backslash, semicolon and comma are delimiters inside a
-                 property value. Unescaped, "Denk y Sven von Thülen
-                 (Alpha Decay), es la historia" ends the DESCRIPTION at
-                 the comma and the rest becomes a bad property name.
+CHECK AFTER UPLOAD
 
-  FOLDING        Lines fold at 75 OCTETS, not characters. Folding on a
-                 character count splits the í in "Berlín" down the
-                 middle, and an importer handed half a code point
-                 rejects the file rather than guessing. Surrogate pairs
-                 are kept together for the same reason — the disco ball
-                 in "DMF + CS + FoD" is one character to a reader and
-                 two units to a for-loop.
-
-  ALL-DAY        DTSTART;VALUE=DATE, and DTEND is the day AFTER: a date
-                 DTEND is exclusive, so the obvious version produces an
-                 event that ends the moment it begins. The Worker
-                 anchors all-day events at UTC midday precisely so a
-                 timezone shift can't move them off their own date, so
-                 the UTC parts are what to read back out.
-
-  UID            Stable: startMs + a slug of the title. Saving the same
-                 gig twice updates the entry the reader already has
-                 instead of leaving them two.
-
-The description written into the file is the tidied one, so a saved
-event doesn't carry the Worker's mid-word cut around in someone's
-calendar forever.
-
-If Blob or createObjectURL is missing the button is never rendered,
-rather than rendered and dead.
-
-6. YELLOW EVENT TITLES  (style.css)
-
-.row--date .row__main is now --live. Dates only. .row__main is also the
-record name in Crate and the link name in Elsewhere, and yellow already
-carries the section indices, the primary button, focus rings and the
-mark — spend it on every row and the page has no accent left. An event
-title is the one row value that names something happening, which is
-what the colour has meant since the live flood.
-
-12.74:1 on --paper. The venue and description below it are unchanged,
-so the row now reads yellow -> --ink-64 -> --ink-40, brightest first.
-
-7. THE CONTROL STRIP  (app.js, style.css)
-
-MORE and ADD TO CALENDAR share a .row__acts flex strip rather than
-stacking. A row with neither is display:none, so an event with a
-one-line description and no button keeps exactly the spacing it had
-before any of this existed.
-
-Padding on the buttons is a thumb target, not spacing: at .6875rem the
-label alone is a 13px-tall tap area. The negative margins sit on the
-strip and pull it back by that padding, so the first label still lines
-up with the venue above it — the targets grow, the layout doesn't move.
-
-Both buttons carry the event title in a visually-hidden span. Eight
-buttons all named "Add to calendar" are eight identical rows to someone
-listening rather than looking. The visible word stays first in the
-accessible name, so voice control still matches on what is on screen.
-
-VERIFIED  (headless Chromium, desktop 1280 and mobile 390, en + es)
-
-  Long description   clamped to 2 lines, toggle present, opens and
-                     closes by mouse and by Enter, aria-expanded
-                     tracks the state
-  Short description  rendered in full, no toggle
-  No description     no element at all, row unchanged
-  Language switch    controls re-label MORE <-> MÁS, ADD TO CALENDAR
-                     <-> AGREGAR AL CALENDARIO
-  Resize 1280 -> 360 the mid-length row gains a toggle; back to 1280
-                     it loses it again, and a row left open stays open
-  Empty strip        display:none, row height unchanged
-  Past mode          no calendar buttons
-  Colour             event title #FFEA00; Elsewhere link name still
-                     --ink; venue --ink-64; description --ink-40
-  Tap targets        45 x 30 px, first label aligned with the venue
-
-  .ics               four files downloaded through the page's own meta
-                     CSP and re-parsed with ical.js. All four parse.
-                     Longest line 73 octets, CRLF only, no continuation
-                     over 75. Round-tripped intact: accents (Décimo,
-                     Camacuá), emoji, and a deliberately hostile
-                     "Dj RuLo; Dj 6ummy, MIN8 art\drinks" — semicolon,
-                     comma and backslash all survive. All-day event
-                     came back as a date-only DTSTART with DTEND the
-                     following day. Filenames slug down to ASCII:
-                     6ummy-decimo-piso-all-dayer-20260919.ics
-
-  Console            no errors, no duplicate ids
-
-NOT DONE, AND WHY
-
-  RAISING THE 300-CHARACTER CAP.  It lives in the Worker, and the
-  Worker deploys from the Cloudflare dashboard — its secrets do not
-  survive a redeploy. The cut is now clean at the word, which is the
-  part a reader sees. Worth revisiting only alongside a Worker change
-  that has to happen anyway.
-
-  A "SUBSCRIBE TO ALL DATES" LINK.  The natural companion to the per-
-  event .ics, and it needs the calendar's own feed URL — which means
-  CALENDAR_ID, which is a Worker secret and deliberately not sent to
-  the browser. Doing it properly means a Worker route that proxies the
-  .ics, so: same redeploy question. Parked, not rejected.
-
-  ANIMATING THE EXPAND.  A height transition on auto-height content
-  needs a measured max-height and a second reflow, and it would want a
-  prefers-reduced-motion branch on top. The clamp is a reading aid, not
-  a reveal.
-
-  LINKIFYING URLS IN THE DESCRIPTION.  The text is escaped through
-  esc() and stays escaped. Turning fetched calendar text into live
-  markup is the one change here that could hurt, and no current entry
-  needs it.
+Run PSI on mobile. LCP should now sit within ~0.3 s of FCP, Speed
+Index near FCP, and the "element render delay" line on the bio should
+be a few hundred ms rather than 2,400. The report's forced-reflow row
+should be gone. If anything on the page behaves differently — the
+language button, ?live=1, the section toggles — say so; all three were
+exercised on the patched build and pass.

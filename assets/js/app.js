@@ -7,6 +7,56 @@
 (function () {
   "use strict";
 
+  /* ---------------------------------------------------------
+     BOOT — after the first frame, not before it.
+
+     Everything below runs from main(). The hero is prerendered in
+     index.html, so the page has nothing to wait for: the first
+     frame can go out the moment the stylesheet lands. But this
+     script is deferred, and on a real connection deferred scripts
+     routinely run *before* that first frame (Chrome also holds the
+     first paint for the preloaded optional font). When that
+     happens the Worker fetches, the layout reads and all the DOM
+     work below land in front of the first paint — and Lighthouse
+     models the largest paint (the bio) as if it had waited for all
+     of it. PSI mobile charged the bio 2.4 s of "render delay" for
+     work that had nothing to do with painting it, and scored LCP
+     2.9 s against an FCP of 1.5 s.
+
+     rAF fires just before a frame is produced, and a second rAF
+     from inside the first fires just before the frame after that —
+     which cannot be scheduled until the first has been presented.
+     A timeout queued from there runs after the second frame goes
+     out. So main() starts about two frames after the first paint,
+     and every fetch and every layout read here is measured after
+     LCP, where it belongs. (One rAF is not enough: the timeout
+     could run a few ms before the compositor stamped the paint, and
+     the first fetch landed just inside the window.) Nothing the
+     reader sees moves: the hero was already on screen, the rest
+     fills in two frames later than it used to.
+
+     Hidden tabs never get a frame, so a timeout stands in for the
+     rAF there, and a long fallback covers anything else that
+     could keep rAF from firing. Whichever comes first wins; the
+     rest are no-ops. */
+
+  function afterFirstPaint(fn) {
+    var done = false;
+    function go() { if (done) return; done = true; fn(); }
+    if (document.visibilityState === "hidden" || !window.requestAnimationFrame) {
+      setTimeout(go, 0);
+      return;
+    }
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { setTimeout(go, 0); });
+    });
+    setTimeout(go, 1500);
+  }
+
+  afterFirstPaint(main);
+
+  function main() {
+
   var S = window.SITE;
   var C = S.config;
   var $ = function (id) { return document.getElementById(id); };
@@ -1175,19 +1225,34 @@
 
   function watch(nodes) {
     if (reduced || !observer) return;
-    Array.prototype.forEach.call(nodes, function (el, i) {
-      if (el.dataset.revealed) return;
-      el.dataset.revealed = "1";
-      /* Never hide what the reader can already see. The hero is
-         prerendered in index.html and this script is deferred, so by
-         the time we get here the bio has painted — and the bio is the
-         page's largest paint. Putting it back to opacity 0 to fade it
-         in again moved LCP from first paint to the end of the
-         transition: PSI charged it 2.9s of pure element render delay.
-         Anything inside the viewport right now settles where it
-         stands; the reveal remains for whatever scrolls in later. */
+    var fresh = Array.prototype.filter.call(nodes, function (el) {
+      return !el.dataset.revealed;
+    });
+    if (!fresh.length) return;
+
+    /* Never hide what the reader can already see. The hero is
+       prerendered in index.html, so by the time we get here the bio
+       has painted — and the bio is the page's largest paint. Putting
+       it back to opacity 0 to fade it in again moved LCP from first
+       paint to the end of the transition: PSI charged it 2.9s of pure
+       element render delay. Anything inside the viewport right now
+       settles where it stands; the reveal remains for whatever
+       scrolls in later.
+
+       All the reads happen before any write. The old loop set an
+       attribute, then measured, then added a class, then measured
+       the next node — every measurement after the first was a forced
+       synchronous layout, and this ran again after each section
+       rendered. PSI put it at 94 ms of forced reflow. One layout per
+       sweep now, whatever the row count. */
+    var h = window.innerHeight;
+    var below = fresh.filter(function (el) {
       var r = el.getBoundingClientRect();
-      if (r.top < window.innerHeight && r.bottom > 0) return;
+      return !(r.top < h && r.bottom > 0);
+    });
+
+    fresh.forEach(function (el) { el.dataset.revealed = "1"; });
+    below.forEach(function (el, i) {
       el.classList.add("reveal");
       el.style.setProperty("--i", Math.min(i, 8));
       observer.observe(el);
@@ -1223,5 +1288,21 @@
   loadDates();
   loadCrate();
   loadVideos();
+
+  /* Cloudflare Web Analytics. Cookieless, no fingerprinting. It used
+     to be a <script type="module"> in index.html, which starts
+     downloading with the document: a new connection to a third
+     origin, in front of the first paint, that Lighthouse then counted
+     against the largest paint. Added here it starts one frame after
+     that paint instead. Hosts are whitelisted in the CSP. */
+  if (C.cfBeacon) {
+    var cf = document.createElement("script");
+    cf.src = "https://static.cloudflareinsights.com/beacon.min.js";
+    cf.defer = true;
+    cf.setAttribute("data-cf-beacon", JSON.stringify({ token: C.cfBeacon }));
+    document.body.appendChild(cf);
+  }
+
+  } /* main */
 
 })();

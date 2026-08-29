@@ -17,6 +17,11 @@ window.SITE = {
     // Leave "" and all three degrade quietly instead of breaking.
     workerUrl: "https://6ummy-api.6ummy-xyz.workers.dev",
 
+    // Cloudflare Web Analytics token. Public by design — it only
+    // identifies the site, it can't read the data. app.js loads the
+    // beacon with it after the first frame; "" loads nothing.
+    cfBeacon: "82e036900d854744925108836df4c57c",
+
     // Contact form. Formspree / Web3Forms / your own Worker.
     // Not a secret — safe to keep here.
     formEndpoint: "",
