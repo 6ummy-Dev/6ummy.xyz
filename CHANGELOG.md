@@ -1,0 +1,4674 @@
+# Changelog
+
+All notable changes to Night Watcher are recorded here.
+
+Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+loosely — the headings are its, the entries are essays in the owner's voice,
+and there is no `[Unreleased]` section because nothing ships unreleased.
+Versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+Entries before 4.0.0 are in `CHANGELOG-archive.md`.
+
+**The version here, `BUILD` in `docs/index.html` and `VERSION` in `docs/sw.js`
+must all be the same string.** `qa/guards.js` fails the build if they drift, and
+also fails if the newest version in this file has no `## [x.y.z]` section. That
+is the whole point of this file: a shipped change that nobody wrote down is a
+change that gets undone by the next person who touches the line.
+
+## [6.1.5] — 2026-09-24
+
+**Nothing on the shelf.** An independent audit of 6.1.4 read every function
+in the script and came back with two defects in what the screen says and
+nine smaller things. This cut takes all of them, plus the four calls the
+audit left to the owner. A PATCH by README's rule: no entry moves, and
+nothing saved changes shape or meaning. The counts stay at 137 films, 71
+seasons and 44 continuities. **No reinstall is needed.**
+
+### Fixed
+
+- **A universe with nothing on the shelf no longer reads as finished.** In
+  Movies scope, The DCU holds only Clayface, which is parked until 23
+  October. So its size was 0, and 0 + 0 = 0 drew the Home card full and
+  counted it complete on Progress on a fresh device ("1 of 33 complete",
+  beside a skyline saying nothing was topped out). A group now needs a shelf
+  before it can be finished. It still counts in the denominators. (Audit
+  F-1.)
+- **A JSON restore no longer brings in activity for titles it did not mark
+  watched.** The tab door already filtered the log to watched titles, and
+  the JSON door did not. A hand-edited or spliced file could put a phantom
+  row in Recent activity, where its tick did the opposite of its label, and
+  the row fed the nights and the pace. The JSON door filters now. The boot
+  also sweeps any such row out of a store that already carries one, so the
+  log only ever holds watched titles. (Audit F-2.)
+
+### Changed
+
+- **The Batman Day line is retired.** It was dated, and five days after
+  the day it read as a date gone by. It was due out with the Clayface cut;
+  this is the first cut, so it goes now.
+- **The share card closes a universe the way Progress does.** Watched plus
+  skipped covers it: the same rule as Progress's "complete" and the
+  skyline's "topped out". The card used to count watches only, so one state
+  could print two numbers. (Audit F-5.)
+- **A code on screen is not a backup.** *Create backup code* no longer
+  quiets the backup reminder. *Copy code* and *Copy link* do, once the
+  clipboard confirms the copy, as the code file and the JSON file already
+  did. (Audit C-4.)
+- **Batman Beyond's blurbs.** Inque, Curaré and the Royal Flush Gang all
+  debut in Season 1, so they move to Season 1's row, and Season 2's blurb
+  describes Season 2. *Return of the Joker* no longer calls itself the end
+  of Bruce's story (JLU's "Epilogue" is). The uncut disc came in 2002, not
+  "two years later". (Audit F-3, F-4.)
+
+### Under the hood
+
+- *Copy code* goes through `putClipboard()`, like every other copy.
+  `document.execCommand("copy")` is gone. (F-6.)
+- The bare block in `emptyBlock()` is gone. (F-7.)
+- The last presentational inline styles moved into classes:
+  `.bkbtn.solo`, the tier rows' `.trow.e/.k/.o`, and `.danger.armed`. The
+  dead-rule sweep and the contrast table can see them now. (F-8.)
+- The catalogue's one trailing comma and its 28 explicit `b:[]` (the
+  default) are gone. (F-9.)
+- The header peek is a native `<button>`. The hand-written Enter/Space
+  handler is gone. (F-10.)
+
+### QA
+
+- **Smoke 511 → 520.** A synthetic parked-only group on Home and Progress,
+  the share card's closed count against the shelf, the JSON door's log, the
+  boot sweep and its write, and the three backup stamps. The two day-line
+  checks now hold its retirement. The dead-rule sweep visits the empty
+  states and the armed reset. (F-11.)
+- **negtest740**: 12 fixtures, one behind each new check. Seven older
+  fixtures were retargeted where the code they anchored on changed
+  (negtest360, 530, 700, 720). Census 1,432 → 1,444 across 83 suites. The CI
+  shards were repacked.
+- **Guards** retargeted: 128 (a native peek, one door), 131 (the day line
+  stays out), 142 (stamps only on a landed copy), 143, 148 (tier colours in
+  the row classes) and 152.
+- **Re-blessed**: the CSP hash and `qa/script-bytes.json`. README's weight
+  line is now 245 KiB.
+
+## [6.1.4] — 2026-09-23
+
+**Knightquest.** Batman Day brought the Part Two trailer, and a pre-order
+went up with it. Warner's digital listing gives the title, the date and the
+rating, so the parked row takes the first two. A PATCH by README's rule: a
+copy fix on a parked row. No entry moves, and nothing saved changes shape or
+meaning. The counts stay at 137 films, 71 seasons and 44 continuities, because
+a parked row is already on the shelf. **No reinstall is needed.**
+
+### Changed
+
+- **Batman: Knightfall — Part Two: Knightquest.** The title follows Part
+  One's house styling. Warner's listing styles it *Batman: Knightfall Part
+  2: Knightquest*. `when:` moves from "Late 2026" to **"8 December 2026"**,
+  the digital date on the Movies Anywhere pre-order page (© Warner Bros.).
+  The blurb stays undated (section 154, 2.8). The row stays parked, and its
+  R goes in when it unparks. The seed seats, the ItemList row and three
+  lines of the catalogue export follow the title.
+
+### QA
+
+- **Re-blessed**: the CSP hash and `qa/script-bytes.json`.
+- **The ARIA corpus** re-recorded for the one line a reader hears change: the
+  parked row on The Path, now with its title and date.
+- **negtest650** retargeted. Its "a parked entry loses its date" fixture
+  pinned `when:"Late 2026"`, which no row carries now, so it stripped the
+  date from Dynamic Duo (30 June 2028) instead: the parked row furthest from
+  its own date. The census is unchanged.
+
+## [6.1.3] — 2026-09-16
+
+**Clean frame.** 6.1.2 took the blur off the top: the owner's phone showed a
+flat black bar and a sharp header at 09:07, matching 6.0.4's 09:15 shot
+pixel row for pixel row. This cut does two things. It takes out the scripts
+that 15–16 September added for the rotation, and it makes the installed
+footer a design rule. A PATCH by README's rule: no entry moves, and nothing
+saved changes shape or meaning. **No reinstall is needed**, since the tag
+and the header are unchanged. Close the app and reopen it so the new shell
+takes.
+
+### What the 6.1.2 screenshots measured (16 Sept, 09:07)
+
+| | 6.1.2 | 6.0.4 (09:15) |
+|---|---|---|
+| status bar | flat black, 0–62pt | the same |
+| header | 62–132pt | the same |
+| tab bar | starts at 781pt, **93pt** tall (59 + 34 inset) | starts at 815pt, **59pt** |
+
+After one turn to landscape and back, 6.1.2 still sat 62pt high with black
+below it. The rotation script moved nothing.
+
+### Changed
+
+- **The installed footer is one CSS rule.**
+  `@media (display-mode: standalone) and (orientation: portrait)` takes the
+  bottom inset off the tab bar and the toast. It is placed after the two
+  rules it overrides. On an iPhone this is 6.0.4's 59pt bar, which is the
+  owner's call. 6.0.3/6.0.4 reached it through the 4.0.9 script, which
+  subtracted the status bar from the pad; now it is a rule with no
+  measuring. Browser tabs and landscape keep the inset. It applies to iPads
+  too.
+
+### Removed
+
+- **6.1.2's rotation reseat** (`seatWatch()`, `reseat()` and their state).
+  The installed frame has no script.
+
+### The flip, recorded
+
+It is iOS 27's, not the app's:
+
+- it arrived with the blur fix (6.0.4 is 6.0.3 with only the tag changed);
+- it was reported under `black-translucent` too;
+- no CSS value moves across it;
+- iOS ignores a manifest orientation lock;
+- it matches WebKit bug 301994, the Home Screen web app's status-bar space,
+  which was fixed in iOS 26.2 and reopened for 26.5.2 and iOS 27.
+
+Reopening the app resets it. NOTES has the record.
+
+### QA
+
+- **Section 64** keeps the browser pad as the plain inset and requires the
+  installed portrait rule, word for word, after the rules it overrides.
+- **Section 162** is now "The installed frame has no script". It refuses
+  the rotation script and its state, the 6.1.1 readout, any listener for
+  the phone turning, and anything watching the visual viewport. The section
+  count stays at 162.
+- **The browser check** drops the four reseat checks and adds two. With a
+  34px bottom inset set through CDP, a browser tab keeps it. With the rule's
+  display-mode condition lifted through CSSOM, the bar's pad is 0 and the
+  toast sits 34px lower upright, and landscape gets both back. Five mutants
+  (no rule, the rule above the base rules, the tab's pad zeroed, no toast
+  half, the rule matching every orientation) each turned a check red. WebKit prints a skip line: it has no
+  CDP door. Checks: 129 → 127.
+- **Fixtures**: negtest478 grows from 3 to 7 (the rule, its portrait
+  condition, its toast half, its place). negtest730 goes from 11 to 9 (the
+  script and the readout staying out, and four kinds of turn and viewport
+  listener). The census moves from 1,430 to 1,432.
+
+### Documentation
+
+- **NOTES**: "Open" is empty. `THEMEBAR`, `#tabs` (new), "The installed
+  flip" (new, replacing the reseat entry) and the header entry are updated.
+- **ARCHITECTURE**, **README** (weight 246 KiB, counts) and **`qa.yml`**
+  are updated.
+- **6.1.2's entry** dated its readout "16 Sept, 22:45". It was 15 Sept,
+  22:45 in Montevideo, and the heading is corrected.
+
+## [6.1.2] — 2026-09-16
+
+**Put it back.** 6.1.1's readout did its one job on the owner's phone, and
+two of its numbers decide this cut. A PATCH by README's rule — fixes and QA.
+No entry moves and nothing saved changes shape or meaning. **No reinstall:**
+the tag stays `default`; close the app and reopen it so the new shell takes.
+
+### What the readout and the screenshots measured (15 Sept, 22:45–22:46 Montevideo)
+
+- **Across a flip, the page's viewport does not change** — view 812, dvh 812,
+  insets 0/34, before and after. **The header's top does: 0 → −71**, one
+  header-height above the page's own viewport. On screen the whole frame
+  still sits 62pt high with black below.
+- **`default` alone does not stop the glass.** Before any flip the wordmark's
+  edge sharpness is **0.37** and the status band is grained, where 6.0.4 —
+  `default` too — read **0.89** under a flat black bar. The difference that
+  matters is the header: 6.0.4's was sticky at `top:0`, and Safari 26+ paints
+  the status bar from sticky or fixed elements at the top edge, falling back
+  to Liquid Glass without one. 6.1.0 removed the sticky on a reading 6.1.1
+  already showed was wrong; that is what brought the glass back. 6.1.1's own
+  hidden probe was a fixed element at the top edge as well.
+
+### Fixed
+
+- **The header is sticky at `top:0` again** — 6.0.4's top, the one the owner
+  measured good: a flat bar and a sharp wordmark. With the plain 34pt inset
+  kept, the tab labels stay clear of the home indicator, which 6.0.4 did not.
+- **After a rotation, the installed header is put back.** The page can see the
+  flip only as its header's top going negative, so that is the trigger: an
+  `IntersectionObserver` delivers the header's top (installed only), and when
+  it is above the viewport, `reseat()` scrolls the header back with
+  `scrollIntoView({block:"start", inline:"nearest"})` — the browser's own
+  arithmetic over whichever ancestor moved, never the deck's horizontal snap.
+  Never while a text field has focus (the keyboard scrolls the page on
+  purpose); re-checked on `focusout`; three tries per displacement, so a move
+  the page cannot undo does not loop. **Unproven on a phone** — Chromium does
+  not reproduce the flip. If it survives this, it is out of the page's reach.
+- **The frame readout is gone** — the line under Progress's Build line and its
+  hidden `#fprobe`. It measured what it was for.
+
+### QA
+
+- **Section 128 Q5** now requires the sticky header at `top:0`, with the
+  measurement above it. **Section 162** is now the reseat: the standalone
+  gate, the delivered top and its twenty-one thresholds, the focusout
+  re-check, the guard and its three tries, the text-field skip,
+  `scrollIntoView` back, the boot start, the state declared above the boot,
+  and the readout staying gone.
+- **The browser check** stages the displacement the readout measured (the
+  root scrolled 71) in an installed boot: the header comes back; a focused
+  field is left alone and the header comes back on blur; a browser tab is
+  never touched; the installed boot throws nothing. Each shown to bite with
+  its half of the fix removed. The rotation line expects sticky. 130 → 129
+  checks (the readout's five out, the reseat's four in).
+- negtest730 reshaped for the reseat (12 → 11); negtest720's Q5 pair re-aimed
+  at sticky. Census **1431 → 1430**.
+
+### Documentation
+
+- NOTES — "Open", the header entry and the readout entry (now the reseat)
+  say what 16 September measured. README (weight 247 KiB, 252 in decimal kB;
+  counts), ARCHITECTURE, `qa.yml`.
+
+## [6.1.1] — 2026-09-16
+
+**Measure the flip, and the tag that is really opaque.** The owner's
+screenshots of the installed 6.1.0 took two of that release's claims apart,
+and this cut says so before it changes anything. A PATCH by README's rule —
+a fix, a diagnostic line, QA. No entry moves and nothing saved changes shape
+or meaning. **Reinstall once:** the status-bar tag is read when the app is
+added to the Home Screen.
+
+### What the screenshots measured (1206×2622, pt = px ÷ 3)
+
+- **After a flip to landscape and back, the whole frame sits 62.0pt higher**
+  — the belt peek, the card, the tab bar and its labels all moved by the same
+  62.0pt — and the page ends at 811.7pt with flat black to the screen bottom.
+  "Blur on top", "margin below" and "the flip" are that one displacement.
+- **6.0.8's and 6.1.0's reading of the flip is wrong.** A sticky header as a
+  compositor node cannot move an in-flow tab bar, and 6.1.0 had no sticky
+  header. The release notes for 6.1.0 said the header no longer drifts; it
+  does.
+- **`black` is not opaque on iOS 27.** The owner reinstalled after 6.0.9 and
+  after 6.1.0; with `black` installed, page content is drawn behind the
+  clock after the flip, and before any flip the wordmark's edges measure
+  0.38 (edge step ÷ contrast) against 0.80 for the same face in the card
+  below — the glass reaches over the header. The owner's 6.0.4 screenshot
+  under `default` measures a flat `(0,0,0)` bar from 0 to 62pt, the header
+  from 62 to 132 and the wordmark at 0.89.
+
+### Fixed
+
+- **`apple-mobile-web-app-status-bar-style`: `black` → `default`.** The one
+  value measured opaque on the owner's phone. 6.0.4's two costs under it do
+  not come back: the tab bar keeps the plain 34pt inset (6.0.4's 59pt bar was
+  `--vpdead`, retired in 6.0.9), and the top reads as the owner's 09:15
+  reference — a black bar over the header.
+- **The installed header keeps its theme.** 6.1.0 painted `--hdr` black under
+  `display-mode: standalone` (NightWatcherQA6.0.9 P3-2). The owner's call:
+  navy in Dark Deco, black in Darker, the step under the bar accepted. The
+  override is gone and guard 128 now refuses it.
+
+### Added
+
+- **A frame readout in the installed app.** One line under the Build line on
+  Progress, only when installed: `Frame at launch … — now …`, each reading
+  the screen size, the orientation, the layout viewport's height, `100dvh`,
+  the two safe-area insets and the header's top. Two mechanisms draw the
+  flip's pixels exactly — a document scrolled by 62, or a viewport shrunk to
+  812 that also lost its top inset — and these numbers tell them apart, so
+  the next change to the frame is chosen by them. The page is **told** the
+  numbers rather than reading them: `#fprobe`, a fixed hidden full-height box
+  with children sized to each inset and to `100dvh`, reports through a
+  `ResizeObserver`, and the header's top comes from an
+  `IntersectionObserver` — nothing section 120 refuses, no forced layout.
+  Observers attach only when installed.
+
+### QA
+
+- **Section 162, new** — the probe's markup and CSS, the standalone gate,
+  observers instead of reads, the line on Progress only when installed, the
+  boot start, both readings kept.
+- Section 153 requires `default`. Section 128: Q4 back to two declarations;
+  Q5's comment records the falsification and keeps the pin for the reason
+  that was always true on its own; Q6 reversed — no installed `--hdr`
+  override. Section 64's comments follow the tag.
+- **The browser check** boots the page as an installed app
+  (`navigator.standalone`) and reads the line: both readings fill, at launch
+  they equal this viewport (390×844 portrait, view and dvh 844, insets 0/0,
+  head 0), a turn to landscape reaches "now" and leaves "at launch", the
+  installed boot throws nothing, and a tab never shows the line. **The boot
+  check caught a real defect before it shipped:** `FRAME` was declared below
+  the boot render, so an installed boot threw on Progress — red, fixed,
+  re-run green, and shown to bite again with the declaration moved back.
+  125 → 130 checks.
+- **negtest730**, new: 12 fixtures (§162 ×11, §153 ×1). negtest720 reshaped
+  for Q4/Q6 (−2). negtest610's tag anchor follows. **The wall caught one:**
+  negtest131's "the build line leaves Progress" renamed every
+  `<span class="buildline">` and missed the new
+  `<span class="buildline" id="frameline">`, so the guard still found the
+  word and stayed quiet — re-aimed on the class attribute's prefix. Census **1421 → 1431**
+  (1325 guards / 106 smoke), 81 → 82 suites; 161 → 162 sections.
+
+### Documentation
+
+- NOTES — "Open" carries the measurement and what the readout is for; the
+  header entry and `THEMEBAR` say what 16 September measured. README (the
+  weight — 248 KiB, 254 in decimal kB — and the counts), ARCHITECTURE (the
+  three functions), `qa.yml` (counts; negtest730 in shard 2).
+
+## [6.1.0] — 2026-09-15
+
+**The front door, and the six things 6.0.9 left open.** The install dialog
+now shows the app before you install it — two screenshots in the manifest,
+drawn by the app itself — and that is what makes this a MINOR by README's
+rule: a new feature. Everything else is the 6.0.9 deep QA taken whole (one
+P1, two P2, two P3, nothing deferred), the ARIA-snapshot corpus the
+reference notes had carried as "left out for now" since 2 September, and the
+focus defect that corpus found on its first run. No entry moves and nothing
+saved changes shape or meaning. **No reinstall** beyond the one 6.0.9
+already asked for: the status-bar tag is untouched. Tagged, because minors
+are.
+
+### Added
+
+- **Two install screenshots.** `docs/manifest.json` declares
+  `docs/shot-narrow.png` (Home on a first visit, 780×1688, with Animated +
+  Live and Movies + Series chosen so the hero reads the whole shelf — 137
+  films, 71 seasons) and `docs/shot-wide.png` (The Path in Bruce's life
+  order, 1280×720), each with a form factor, a size and a label. That is
+  what turns Chrome's minimal install prompt — the one the 3 September device
+  pass saw — into the richer dialog on Android and the desktop. iOS reads
+  none of it. `qa/make-screenshots.mjs` draws both from the served tree on
+  `share.png`'s pattern: storage seeded before the first paint, nothing
+  clicked (a click fires a toast, and a stable hash of a toast blesses the
+  bug), a settle predicate read off the DOM rather than a clock, motion
+  reduced, the service worker blocked, then the same Pillow quantize the card
+  gets (42,267 and 19,578 bytes). Three runs, byte-identical. Neither view
+  carries the Batman Day line, so neither file goes stale on 23 October.
+  `qa/screenshots.json` records the catalogue the shots were drawn from and
+  each file's form factor, size, label and hash. Both files stay out of the
+  offline shell (install-dialog chrome, rendered by no view) and take a day
+  in `_headers`, like the card.
+- **The ARIA-snapshot corpus, `qa/aria/`.** Eight states — Home before and
+  after a path is chosen, Next up, The Path, the belt dropped, a row open,
+  Progress, and a toast showing — each recorded as the header, the live panel
+  and the tab bar: what a screen reader can reach, not the inert panels
+  behind the wall. Every state is a fresh page from seeded storage and a real
+  door (a hash route, a click, a key). The Batman Day line is cut out (so
+  the record already reads the way the 23 October cut will leave Next up),
+  and `BUILD` and `BUILT` are normalised, so the corpus goes stale on a real
+  change and never on the calendar; the install offer is held back because it arrives
+  on Chromium's timing, not on a state. Written and diffed by
+  `qa/browser-check.mjs` (`npm run browser -- --bless`) in Chromium; the
+  WebKit job runs the two assertions and says it did not diff. It is
+  Playwright's computed tree, blessed against the 3 September VoiceOver read
+  — not VoiceOver.
+
+### Fixed
+
+- **The live SHA was red (P1-1).** 6.0.9 said the served files went back to
+  6.0.3, and `docs/vp-rotate.html` did not go: the README row and the guard
+  13 exclusion that made it legal were the half that reverted, so guards 13
+  and 45 failed on `main` and every negative shard in CI #482 printed
+  PRISTINE RED. **The probe is deleted.** The question it measured was the
+  sticky header, which this cut removes (below), and a probe of a withdrawn
+  mechanism is not a reason to keep a file on the origin. Guard 13's comment
+  now carries both probes' history and the rule that one comes back only
+  with its own rows.
+- **The header is not sticky (P2-1).** `header{position:sticky;top:0}` →
+  `position:relative`, as 6.0.8 had it and for 6.0.8's reason: the header's
+  scroll container is `#app`, which never scrolls, so the sticky has been a
+  layout no-op since 4.0.0 — and a WebKit scrolling-tree node the compositor
+  can move while every `scrollTop` in the document reads 0, which is the
+  installed app's 62.7pt rotation. The bug reproduced under both status-bar
+  tags, so `black` does not retire it; 6.0.9 put the sticky back only because
+  "revert to 6.0.3" included it. `z-index:30` still applies. The blur stays,
+  `black` stays, and there is no heal, no clamp and no probe. Chromium turns
+  the phone round clean and always has, so the browser check's new rotation
+  line is evidence, not a close — the installed rotation is the owner's.
+- **High Contrast: a fill is a shape again (P2-2).** 6.0.4's two fixes,
+  withdrawn with it, re-land as their own item rather than riding a
+  status-bar cut: Begin the path / Mark watched, the primary backup buttons,
+  Install and Restore take a `1px solid ButtonText` border under
+  `forced-colors`, the toast a `CanvasText` one, and the open belt's pressed
+  switches get a state rule at the specificity that wins, so they paint
+  `Highlight` instead of `#B8941A` with forcing off. Guard 159 gets its three
+  clauses and the allowlist entry back, negtest700 its three fixtures, and
+  the browser check reads the pressed switches' computed colour against a
+  `Highlight` probe again.
+- **The installed Dark Deco app has no step at the top (P3-2).** Under the
+  `black` bar the first thing on screen is the header, and Dark Deco's
+  `--hdr` is navy. Installed, `--hdr` is now Darker's own black in both
+  themes (`@media (display-mode: standalone)`), which is what the status bar,
+  Android's bar and the desktop title bar already are — `theme-color` has
+  answered `#000000` when standalone since 4.0.5. A browser tab is untouched.
+  Going back to `default` to paint the bar instead is 6.0.4's 62pt band and
+  was not considered.
+- **Focus no longer falls to the page when the belt drops or closes.** Found
+  by the ARIA corpus on its first run, not by the QA. Enter (or a tap) on the
+  peek drops the belt, the peek hides, and the focus it held fell to
+  `<body>`; Escape on a dropped belt over a parked strip did the same with the
+  control that had focus. Tab recovered only because Chromium remembers
+  where focus was lost — a screen reader's cursor has no such luck. The peek's
+  two doors now call `dropFocus()`, which lands on the pressed path inside
+  the dropped belt, and Escape schedules `beltFocus()` after the close, which
+  hands a *lost* focus back to the peek (or the strip's pressed path) and
+  leaves a reader who has already moved on where they are. Both go through
+  `focusBack`, so neither moves the viewport, and neither shows a ring to a
+  mouse or a finger.
+
+### QA
+
+- **Section 128** — Q4 counts three `--hdr` declarations with one alpha; Q5
+  (not sticky, positioned) is back; Q6 pins the installed header to Darker's
+  black; Q7 pins both peek doors, `dropFocus()`, `beltFocus()`'s
+  lost-focus-only rule and the Escape schedule.
+- **Section 159** — 6.0.4's three clauses and the includes state's
+  allowlist entry, back.
+- **Section 160, new** — the install screenshots as the dialog reads them
+  (PNG, 320–3840 a side, long side ≤ 2.3× short, a known form factor that
+  matches the orientation, one aspect per form factor, `sizes` equal to the
+  pixels, a label), the record against the files, the manifest and the
+  catalogue, a 150,000-byte ceiling, and both files out of the shell.
+- **Section 161, new** — the ARIA corpus's shape: every state the browser
+  check names has a record holding the banner, the live region and the Views
+  navigation; no orphan; no day line, `BUILD` or `BUILT` in any record; the
+  diff and the two assertions still in the check.
+- Section 13 lists the screenshots as not shelled; section 104 holds their
+  day-long cache rule.
+- **The browser check** gains the rotation line, the belt's forced-colors
+  read, two focus assertions (Enter lands on the pressed path; Escape from a
+  parked drop hands focus to the peek, driven on a cold page where the loss
+  is deterministic) and the corpus's three lines. Both focus assertions were
+  run against the tree without the fix: red three times in three, green
+  three in three with it.
+- **negtest720**, new: 44 fixtures across sections 13, 104, 128, 160 and
+  161, and one green case. negtest610 +5 — one per new README row, where
+  every row's delete-and-assert-red lives (the wall's first pass caught the
+  sweep's completeness check at 74 rows against 69 fixtures). negtest700 +3
+  (159). negtest360 re-aimed: its "the peek goes mouse-only" fixture
+  anchored on the keyboard door's old body.
+- Census **1368 → 1421** (1315 guards / 106 smoke), 80 → 81 suites; 159 →
+  161 sections.
+
+### Documentation
+
+- **RELEASING.md** — step 7 says the tagging rule again (6.0.4 wrote it,
+  6.0.9's revert took it: `x.y.0` minors and majors are tagged, patches are
+  not); step 2 regenerates the screenshots with the card; step 5 names the
+  corpus bless.
+- **NOTES.md** — "Open" holds the one question no session can close (the
+  installed rotation, until a device survives it); the two forced-colors
+  lessons; the header, the installed header and the focus hand-offs; the
+  screenshots and the corpus.
+- README (the file table, the weight — 246 KiB, 252 in decimal kB — and the
+  counts), ARCHITECTURE (`dropFocus`, `beltFocus`), CONTRIBUTING, and
+  `qa.yml` (the counts and the shard for negtest720).
+
+## [6.0.9] — 2026-09-15
+
+**Back to 6.0.3, with the one fix the glass needed.** 6.0.4 through 6.0.8 are
+withdrawn: every change they made to the served files, the harness and the
+documents is reverted to 6.0.3, and their entries below stay as the record of
+what shipped and why it was taken back. What goes on top is the fix every
+public report of this bug converges on. A PATCH by README's rule — no entry
+moves, no surface is added, and nothing saved changes shape or meaning.
+**Reinstall once:** the status-bar tag is read when the app is added to the
+Home Screen.
+
+### Fixed
+
+- **`apple-mobile-web-app-status-bar-style`: `black-translucent` → `black`.**
+  On iOS 26 and later a translucent status bar over an edge-to-edge installed
+  app has two known faults: iPadOS/iOS 27 fills the top inset with
+  higher-contrast Liquid Glass (the blur band the owner reported — the same
+  fix as subflux PR #960), and WebKit bug 301108 miscomputes the webview's
+  height by one status-bar height. `black` is an opaque bar with a white
+  clock that does not follow light or dark mode, so it sits on the app's own
+  black. `default` was what 6.0.4 tried; `black` is the dark-theme choice.
+- **The 301108 workaround is retired with the tag.** `vpGap`, `vpShrunk`,
+  `vpSync`, `vpHeal`, `vpTick` and `--vpdead` (4.0.8, 4.0.9) existed to find
+  and pay back the dead band `black-translucent` leaves under the app. Under
+  an opaque bar the gap they measure is the status bar itself, so the reclaim
+  would strip the tab bar's clearance above the home indicator — the 6.0.4
+  regression — and the heal would toggle `#app` for nothing. The tab bar and
+  the toast go back to the plain `env(safe-area-inset-bottom)`.
+
+### QA
+
+- Section 64 pins the plain inset and refuses the workaround's return;
+  section 120 moves `innerWidth` and `innerHeight` to refused and
+  `offsetHeight` to one read; section 153 requires `black`. `negtest478` and
+  `negtest610` follow.
+
+## [6.0.8] — 2026-09-15
+
+**The header was never sticky in any way that mattered, and that is the bug.**
+The rotation defect has survived four cuts of viewport-unit and scroll-offset
+work, and the reason is that none of it was looking at the right object. This
+one has a mechanism rather than a theory. Fixes — a PATCH by README's rule.
+No entry moves, no surface is added, and nothing saved changes shape or
+meaning. **No reinstall:** the status-bar tag is untouched.
+
+### Fixed
+
+- **`header` goes `position:sticky` → `position:relative`.** The header's
+  scroll container is `#app`, which is `overflow:hidden` and never scrolls —
+  3.9.7 moved scroll onto `#app` and 4.0.0 made the panels the scrollports, so
+  `main` and `.panel` are the header's *siblings* and the only things that
+  scroll. The sticky has therefore been a no-op for layout since 4.0.0, and it
+  has never done anything a reader could see. It is not a no-op for the engine:
+  a sticky element gets a node in WebKit's scrolling tree and is positioned by
+  the compositor rather than by layout, which makes it the one thing in this
+  frame that can move while every scroll offset in the document reads zero.
+  That is precisely the report — flip the installed app to landscape and back
+  and the header is off the top by 62.7pt, permanently, with the document,
+  `#app` and the active panel all at `scrollTop` 0. `position:relative` keeps
+  `z-index:30` applicable (a static element cannot take one, and the tab bar at
+  40 and the dropped belt at 20 are stacked against it) and costs nothing else:
+  same box, same paint, no scrolling-tree node. Section 128 gains Q5 and two
+  fixtures.
+- **`max-height:100dvh` comes off `#app`, and `vpRotate()` comes out.** Both
+  were built for the rotation on readings that are now falsified. 6.0.6 read it
+  as a document overflow; if that were the mechanism the clamp would have
+  caught it. 6.0.7 read it as a stale standalone grant that a re-armed
+  `vpHeal()` could re-measure; it did not move. And the owner's 6.0.7
+  screenshot showed the installed app still running `black-translucent` —
+  the tag is read at install time, so 6.0.6's and 6.0.7's tag change had never
+  run on the device at all, and the bug reproduces under **both** tags. The
+  frame goes back to `#app{height:100%}` alone, and `vpHeal()` keeps exactly
+  the triggers 4.0.8 and 4.0.9 gave it. Unmotivated machinery on the frame is
+  one more thing the next reader has to explain.
+
+### QA
+
+- Section 128 gains **Q5** — the header is not sticky, and is positioned —
+  with the whole argument above it, including why the two remaining
+  `position:sticky` rules (`.ghead`, `.pathseg`) are correct: they sit inside
+  panels that really do scroll.
+- Section 64's standalone-height clause pins `height:100%` alone again and
+  records why the clamp came out; its three 6.0.7 rotation clauses are gone
+  with the code.
+- negtest360 +2, negtest470 −1, negtest478 −3.
+- **`docs/vp-rotate.html` stays.** Its guard comment says it leaves when the
+  question closes. The question is not closed until a rotation on a real device
+  survives this.
+
+## [6.0.7] — 2026-09-15
+
+**The rotation, and an honest admission that it is not yet diagnosed.** 6.0.6
+closed the glass band, the black band and the tab bar's clearance, and left one
+thing standing: flip the installed app to landscape and back and the sticky
+header is off the top of the screen for good. Two attempts at it have now been
+reasoned rather than measured, and both were wrong. This cut ships the
+mechanism the tree already has — re-armed on the trigger it was never given —
+and, beside it, the probe that will say whether that is the mechanism at all.
+Fixes and QA tooling — a PATCH by README's rule. No entry moves, no surface is
+added, and nothing saved changes shape or meaning.
+
+### Fixed
+
+- **`vpRotate()`: the heal, re-armed on a rotation.** 4.0.8 built `vpHeal()`
+  because a standalone app whose document never scrolls never asks WebKit to
+  re-resolve a stale viewport grant, and 4.0.9 gave it a give-up — one
+  unchanged re-measure and it stops, because the short render turned out to be
+  real. That give-up is per session, and a rotation is a new question. An
+  `orientationchange` listener now resets `vpTries` and runs the heal past the
+  shrink gate (a new `vpForce` flag on `vpShrunk()`, cleared in a `finally`,
+  because after a stale rotation the gate's own window reads may themselves be
+  stale). Two delays, 260ms and 900ms, because iOS settles the frame after the
+  event. **This is the tree's own re-measure on a trigger it did not have, not
+  a new mechanism, and it is not verified on a device.**
+
+### QA
+
+- **`docs/vp-rotate.html`, temporary.** A standalone probe that copies the
+  app's frame shape-for-shape — the same `#app` flex column, the same sticky
+  header, the same standalone height override — and prints, for portrait at
+  load, landscape, and portrait after coming back: `screen`, `innerWidth`/
+  `innerHeight`, the visual viewport and its offset, `documentElement.clientHeight`,
+  the four resolved vh units, both safe-area insets, and the top and height of
+  `#app`, the header and the tab bar. It marks every reading that fails to
+  return to its starting value. It is added to the Home Screen on its own, so
+  it costs no reinstall of the app and touches no saved progress.
+  This is the second probe of its kind; `vp.html` answered the 4.0.7–4.0.9
+  question the same way, sat in guard 13's not-cached list for two minor
+  versions, and left when the question closed. This one leaves the same way.
+- **Why a probe rather than a test.** A scripted rotation (390×844 → 844×390 →
+  back, from two different tabs) is clean in Chromium: header top 0, `#app`
+  height correct, every scroll offset zero, the deck re-snapped. WebKit cannot
+  be installed here — `cdn.playwright.dev` and the Microsoft mirror both answer
+  403 through the sandbox proxy. So no engine this project can run reproduces
+  it, and the only honest next step is the device.
+- Section 64 gains three clauses for the re-arm — the force flag, `vpRotate()`'s
+  shape, and the two-delay trigger — with fixtures in negtest478.
+
+## [6.0.6] — 2026-09-15
+
+**The tag is the switch.** 6.0.5 tried to close the iOS 27 glass band the
+elegant way — a solid header with nothing left for the OS to read as a request
+for glass — and the owner's screenshot of the installed build says it did not
+work. So `apple-mobile-web-app-status-bar-style` goes back to `default`, which
+demonstrably does close it, and the three things that cost in 6.0.4 are fixed
+where each of them lives instead of being traded away again. Fixes and the
+harness around them — a PATCH by README's rule. No entry moves, no surface is
+added, and nothing saved changes shape or meaning.
+
+### Fixed
+
+- **The glass band, for good, by the one lever that reaches it.** Measured off
+  the installed 6.0.5 against the installed 6.0.4, same screen regions: the
+  NIGHT WATCHER wordmark kept **0.50** of its edge energy and the bat mark
+  **0.60**, while the TITANS title (1.01) and the card's body copy (1.00) were
+  pixel-identical. Only the top band was softened, over a `header` that was
+  already fully opaque with no `backdrop-filter` on it. The published sampling
+  behaviour is real but it is not what decides this inset:
+  `black-translucent` is, exactly as subflux PR #960 said, and nothing in this
+  file reaches it. The tag is `default`.
+- **The band is painted now, instead of being a black gap.** Under `default`
+  the OS draws an opaque bar in 62pt the page cannot reach, and fills it from
+  the page's own colours. 6.0.4 gave it pure black twice over — `body` was
+  `#000` since 4.0.9, so the phantom band *below* the tab bar would read as
+  bezel, and `applyTheme()` answered the meta with `#000000` when installed for
+  the same era's reasons. `default` produces no band below the bar, so both now
+  say the header's colour: `body{background:var(--hdr)}` and a new `APPBAR`
+  map (`#0A0C11` / `#000000`) beside `THEMEBAR`. Section 28 pins `APPBAR`'s
+  values to `--hdr`'s, so the two darks cannot drift back into a tonal step.
+- **The tab bar's clearance under the home indicator.** `--vpdead` measured the
+  gap between screen and granted viewport and subtracted it from `#tabs`'s
+  bottom pad — correct while that gap sat *below* the bar as space the webview
+  could not reach (4.0.9), and wrong the moment `default` moved it above the
+  header. 6.0.4 shipped `max(0px, 34 − 62)` = 0: a 58pt bar ending at the
+  physical screen edge with the indicator across its labels. The pad is the
+  plain `env(safe-area-inset-bottom)` again, the toast's offset with it, and
+  `vpSync()`/`--vpdead` are **retired** rather than left unused, so nothing can
+  wire a second consumer to a subtraction that is only ever right under one
+  tag. `vpHeal()` stays — the keyboard bug it also cures is not a
+  standalone-chrome question.
+- **The rotation that took the header off the top of the screen.** Under
+  `default`, a rotation left `#app{height:100%}` resolving against the full
+  874pt inside an 812pt grant, so the document overflowed for the first time
+  since 3.9.7 moved scroll onto `#app`, iOS scrolled it, and the sticky header
+  went with it — `header`'s scrollport is `#app`, not the document, and
+  `html,body` are `overflow:hidden`, so there was no way back. `#app` gains
+  `max-height:100dvh` beside `height:100%`. The ICB stays authoritative, both
+  16 August reports stand, and the clamp only ever shrinks: if `dvh` overshoots
+  it does nothing, and if the ICB goes stale-tall it catches it. The failure
+  direction is a gap at the bottom, never a lost header.
+
+### QA
+
+- Section 28 gains `APPBAR`, its agreement with `--hdr`, and the `body`
+  background; its standalone-branch pin now names `APPBAR` instead of a
+  literal `#000000`. Section 64's tab-pad clause is inverted to the plain
+  inset, the `--vpdead` clause is inverted to refuse the var entirely, and the
+  standalone height override pins the clamp.
+- Section 128's Q4 keeps its pins and loses its argument. A solid `--hdr` with
+  no filter on the header is no longer *the* fix for the band; it stays because
+  the blur was compositing 4% of a backdrop, which is nothing anyone can name,
+  and putting it back re-arms 4.0.4's full-width seam and 4.0.7's repaint
+  glitch. A filter that buys no pixels and costs two known failures does not
+  come back by accident.
+- negtest470 +2, negtest475 +4, negtest478 +2; five rewritten where their
+  guards inverted. Census **1378 → 1386** (1280 guards / 106 smoke) in
+  `README.md` and `qa.yml`; `NO_SECT_PINNED` 749 → 747.
+
+## [6.0.5] — 2026-09-15
+
+**The other option, taken.** 6.0.4 closed the iOS 27 glass band by handing the
+status bar to the OS, and the owner's installed app showed within the day what
+that cost: a 62pt black band across the top where the app used to run
+edge-to-edge, a tab bar with the home indicator sitting on its labels, and a
+header that rode off the top of the screen on the first rotation and did not
+come back. All three are the same change. This is option B, which the 14
+September reading ranked second on blast radius alone and which the screenshots
+have now re-ranked: an opaque header the OS can sample, and the tag put back.
+Fixes and one QA section rewritten — a PATCH by README's rule. No entry moves,
+no surface is added, and nothing saved changes shape or meaning.
+
+### Fixed
+
+- **The 62pt band above the header (installed app).** Under
+  `apple-mobile-web-app-status-bar-style: default` iOS grants the app a
+  viewport that begins below an opaque status bar — on the owner's phone 812pt
+  of 874 — so `env(safe-area-inset-top)` reports 0, the header is exactly its
+  own 70pt, and the 62pt above it belongs to the OS and no rule in this file
+  can paint a pixel of it. It reads black because iOS falls back to the root
+  background for that inset and `body{background:#000}` (4.0.9). The tag goes
+  `default` → `black-translucent` and the content is edge-to-edge again.
+- **The glass band it was closing stays closed — by option B this time.**
+  `--hdr` goes solid in both themes (`rgba(10,12,17,.96)` → `#0A0C11`,
+  `rgba(0,0,0,.96)` → `#000000`) and the `backdrop-filter` comes off the
+  sticky `header`. iOS 26+ tints its chrome by sampling the background *and*
+  the `backdrop-filter` of elements at the viewport edges; a 96%-opaque bar at
+  `top:0` carrying a 14px blur is the exact pair it reads as a request for
+  glass. Four per cent of a backdrop showing through a blur is not a visual
+  anyone can name, so the header looks the same and the OS now has a colour to
+  sample. Section 128's Q4 stops pinning the two alphas to each other and pins
+  the opacity and the absent filter instead.
+- **The tab bar lost its clearance under the home indicator.** `--vpdead` is
+  the measured gap between screen and granted viewport (62pt), and
+  `#tabs`'s `max(0px, calc(env(safe-area-inset-bottom) - var(--vpdead, 0px)))`
+  pays back an `env(bottom)` of 34 that 4.0.9 proved was reserving space for
+  hardware the installed webview could not reach. Under `default` that
+  remainder moved from the bottom of the frame to the top, the bottom became
+  real, and the reclaim went on collapsing a pad that was now owed — 58pt of
+  bar ending at the physical screen edge with the indicator across the labels.
+  Restoring the tag puts the remainder back at the bottom; the reclaim is
+  correct arithmetic again and is untouched.
+- **The header rode off the top after a rotation and stayed there.**
+  `@media (display-mode: standalone){#app{height:100%;}}` is the ICB, the one
+  measure of the WebView that cannot overshoot it (4.0.7, 16 Aug). Under
+  `default` a rotation left `#app` resolving against the full 874 inside a
+  granted 812, the document overflowed by 62pt for the first time since 3.9.7
+  moved scroll onto `#app`, and iOS scrolled it — taking the sticky header with
+  it, because `header`'s scrollport is `#app` and not the document, and leaving
+  no way back because `html,body` are `overflow:hidden`. The owner's
+  screenshots measure the shift at 62.7pt with a 7pt sliver of header still
+  showing, which is that arithmetic exactly. Reverting the tag removes the
+  overflow; no new listener is added, because there is now nothing for one to
+  heal.
+
+## [6.0.4] — 2026-09-15
+
+**The reader's colours, all the way down.** A forced-colors sweep of every
+state on 11 September found two things the 3 September pass on real Windows
+themes had not reached, and both are here. Beside them: the narrow fix for the
+glass band iOS 27 put across the top of the installed app, one sentence of
+release procedure that two outside readers have now filed as missing, and
+three words on the end of the Batman Day line. Fixes, QA tooling, copy and
+documents — a PATCH by README's rule. No entry moves, no surface is added, and
+nothing saved changes shape or meaning.
+
+### Fixed
+
+- **A fill is not a shape.** Under `forced-colors: active` an author
+  background becomes `Canvas`, so a control drawn as a fill with `border:0`
+  does not flatten — it stops reading as a control at all and leaves bare text
+  on the page ground. Five were built that way: Begin the path and Mark
+  watched (`.heroacts .go`); Share the night, Create backup code, Search
+  everything and Add optional (`.bkbtn.primary`); Install
+  (`.bkbtn.installbtn`); Restore on an incoming shared link (`.viewing
+  button`); and every toast. The four button families take a `1px solid
+  ButtonText` border inside the forced-colors block, the toast a `1px solid
+  CanvasText` one. `.ghead` and the belt's `.buckle` lose a fill too and are
+  deliberately left alone — each sits inside a bordered container forced
+  colors keep.
+- **The open belt's pressed switches painted brand gold under High
+  Contrast.** `.includes .scope button[aria-pressed="true"]` (0,3,1) outranks
+  the forced-colors block's own `.scope button[aria-pressed="true"]` (0,2,1)
+  on `background` and `color`, while the block's `forced-color-adjust: none`
+  went on applying — so with the belt open, Animated + Live, Movies and +
+  Optional rendered `--signaldim` `#B8941A` on `--ink` with forcing switched
+  off, which is exactly what 5.3.1's rule forbids. A state rule at the winning
+  specificity repaints them in `Highlight`/`HighlightText`. Section 159 reads
+  the block as text and could not see a cascade lost outside it; the browser
+  check now observes the computed colour instead.
+- **The glass band on the installed app (iOS/iPadOS 27).** Safari stopped
+  honouring `theme-color` in iOS 26 and now tints its own chrome by sampling
+  the background and `backdrop-filter` of fixed and sticky elements at the
+  viewport edges; where it finds no solid colour in the top inset it fills
+  that inset with Liquid Glass, and 27 raised the contrast of that glass
+  enough to make the band obvious. `apple-mobile-web-app-status-bar-style`
+  goes `black-translucent` → `default`, so the status bar is opaque and the
+  content insets below it. One value, chosen over the more elegant fix (an
+  opaque `header`, the blur moved or dropped) because the tag is inert outside
+  standalone mode and so cannot reach a visitor in a browser tab, while the
+  `header` rule renders for everyone. Under `default`,
+  `env(safe-area-inset-top)` reports 0, so `--hdrh` becomes `71px` and the
+  header's top padding `12px`; the dropped belt's
+  `top:calc(var(--hdrh) + var(--beltH) - 4px)` moves with it and the two stay
+  in step. **The tag is read at install time** — an installed copy keeps the
+  old behaviour until it is deleted and re-added, and an installed app's
+  storage container is separate from Safari's, so export a backup code from
+  Progress before deleting it.
+
+### Changed
+
+- **The Batman Day line ends on the day's own three words.** `dayLine()`
+  gains `Rule the night.` after `Start anywhere.`, so the page and the day's
+  post close the same way. Copy only: the counted clause is untouched, the
+  counts still render off `FILMS`/`PATH`, and section 131's day clause still
+  refuses a typed count. It leaves with the rest of the line in the Clayface
+  patch.
+
+### QA
+
+- **Section 159 gains three clauses** — the button set's `ButtonText` border,
+  the toast's `CanvasText` border, and the includes state's Highlight map —
+  and `.includes .scope button[aria-pressed="true"]` joins `PAINTED`, so the
+  allowlist admits the one new opt-out after a look rather than by inference.
+  The section's comment carries both 6.0.4 readings.
+- **negtest700 gains three fixtures**, one per clause: 1,373 → **1,376**
+  (guards 1,267 → 1,270), in `README.md` and `qa.yml`.
+- **The browser check reads the belt state under forced colors** — with the
+  belt dropped, every pressed include switch must compute to the colour a
+  `Highlight` probe computes to. 117 → **118**. This is the assertion a text
+  pin cannot be.
+- **Two re-aims**, the copy-lock tax: `negtest610`'s status-bar fixture
+  asserts the new `content="default"` string before deleting it, and smoke's
+  "the day has a name" expects the new tail.
+
+### Documentation
+
+- **RELEASING.md, step 7, says the tagging rule.** `x.y.0` minors and majors
+  are tagged and get a GitHub Release; patches are not, so Releases trails
+  `origin` between minors by design. Two external reads (5.3.1, 6.0.3) filed
+  the gap as a finding because no document in the tree said it.
+- **NOTES.md** records both forced-colors lessons in its
+  `@media (forced-colors: active)` section, and the iOS status-bar reading
+  under `THEMEBAR`.
+- **The stale comment at section 28** said the status bar is painted from
+  `<meta name="theme-color">`. Not true on iOS since 26; the comment now says
+  so and says why `THEMEBAR` still has to be kept in step for the browsers
+  that do read it.
+
+## [6.0.3] — 2026-09-04
+
+**A variant is not the control.** One guard fix, in the family that exists
+because silence used to read as success. Nothing ships to a reader — QA
+tooling, a PATCH by README's rule.
+
+### Fixed
+
+- **Section 75 measured the wrong button.** The touch-target section asks
+  first whether a control declares a height at all: a control the CSS never
+  sizes cannot be measured, so the 44px floor is switched off for it and the
+  section says nothing — the failure 4.9.1 promoted the missing-height check
+  to catch. It answered that question from *any* rule whose subject carried
+  the class, variants included. Yesterday's 6.0.2 gave `.bkbtn.installbtn` a
+  48px height of its own, and that one variant was enough to answer for
+  every plain `.bkbtn` on the page: the bare rule could have lost its
+  `min-height` and section 75 would have gone on reporting a measured
+  control.
+
+  The floor still reads every rule — the tick is 30px at rest and 24px in a
+  row, and both have to be seen. Only the *is it measured* question is now
+  asked of the bare class. A variant measures the variant.
+
+  It was the negative test that said so, not a reading: `negtest176`'s
+  missing-height fixture strips the height from `.bkbtn` and
+  `.bkbtn.primary` and expects section 75 to fire, and since 6.0.2 it went
+  red on section 157's line instead — the fixture had stopped proving its
+  own claim the moment the third rule arrived. It passes again unchanged,
+  and it now names section 75, so the phrase has to land on that section's
+  line and not another's. The no-sect pin moves 751 → 750.
+
+## [6.0.2] — 2026-09-04
+
+**One more type pass, and the button you press once.** Three readings off
+the tree, all of them about weight rather than size: the control that gets
+one chance to be seen, a description set at a label token, and a subtitle
+riding inside the title it qualifies. No feature, no catalogue change,
+nothing that touches a saved mark — a PATCH by README's rule.
+
+### Changed
+
+- **The install button takes the signal fill.** 3.7.0 gave it the quiet
+  outline and wrote the reasoning into guard 131: *install is tapped once
+  ever, so it cannot hold primary weight.* The same fact reads the other
+  way round. A control tapped once ever has exactly one chance to be seen,
+  and it was sitting in Progress as the fifth outline in a column of
+  outlines, below a crimson one. It is signal now — the ink-on-yellow
+  lockup at **13.44:1**, `--signalpress` on hold at 11.02:1, the primary
+  clip and 48px of height.
+
+  It is not `.primary`. That tier is the suit fill, and Progress spends it
+  on the backup code; install is a tier of its own and **the only signal
+  fill in the view**, which is what keeps this a hierarchy instead of a
+  second shout.
+
+### Changed — type
+
+- **The chosen path's description moves off a label token.** `.gridnote` —
+  the path blurb that sits under THE ERAS on Home — was `--t-note` (12px)
+  in `--dim`. It is prose, and it is the *same sentence* the path view sets
+  at `--t-desc` (14px) in `--dust`. Two treatments of one sentence is the
+  drift guard 121 keeps catching; it now matches `.modenote` exactly.
+- **The row subtitle gets its own line.** `.favsub` / `.qsub` was inline
+  inside the row title, separated by a word space — measured at **6–7px,
+  identical to the word gaps inside the title itself**, so *TEEN TITANS GO!
+  All seasons* read as one five-word string. It is a block now, under the
+  title and left-aligned with it: one column down the rows, and the same
+  title-over-meta shape the film rows have used since 4.0.0. Long subs wrap
+  instead of stretching the row, and the parked badge moved ahead of the
+  sub in the markup so it stays on the title's line.
+
+### Guarded
+
+- **Section 131's install clause is reversed, not deleted.** The old rule
+  refused a fill; the new one refuses the *absence* of one — and still
+  refuses `.primary` on the install seat, because the suit tier is spoken
+  for. The comment carries both readings of "tapped once ever" so the next
+  pass does not rediscover the first one and think it found a regression.
+- **Three fixtures re-aimed, one added.** negtest131's fill fixture now
+  expects the suit message instead of the outline one; negtest680 and
+  negtest164 both anchored on `' <span class="qsub">'` **with the word
+  space**, which this cut deleted — a pattern sweep of changed strings would
+  have found them, and did. The added fixture covers the clause section 131
+  gained (a seat with no signal fill) and names its section, so
+  `NO_SECT_PINNED` stays 751. Fixture count 1,372 → 1,373 in README and
+  `qa.yml`, and the guards-vs-smoke split with it.
+
+### Notes
+
+- No release notes: a PATCH.
+
+## [6.0.1] — 2026-09-03
+
+**The front door.** Everything a stranger meets before they meet the app:
+the card that renders when the URL is pasted, the page a wrong address
+lands on, and the colour of every control you press. No feature, no
+catalogue change, nothing that touches a saved mark — a PATCH by README's
+rule, and a large-looking one.
+
+### Changed
+
+- **The share card's background is a city.** It was a ghosted bat. The app
+  has drawn a skyline since 4.5.0, so the card now speaks the product's own
+  visual vocabulary instead of a second one: symmetric stepped setbacks,
+  ziggurat caps, tallest tower at centre, outlined in `--line2`, windows lit
+  in signal, under a graded scrim. It is atmosphere and not a figure —
+  nothing on it is filled to a percentage — and there is no beacon, because
+  4.5.0 took beacons out of the app and the card and at this size the mast
+  would land inside the numerals.
+
+  The three counts still come from `PATH` at generation time and still can
+  not drift from the catalogue. The lockup is larger throughout and the URL
+  is a plaque — signal fill, ink mono — the treatment the off-site cards
+  have used since August. **20,363 bytes against roughly 20,000 before.**
+
+  Every centred label carries `text-indent` equal to its own tracking.
+  Tracked uppercase puts a trailing letter-space inside the box, so a
+  centred label sits half a space left of centre: measured at **3.0px** on
+  the three stat labels before this was added. The same artefact was
+  measured in the app and left alone — the worst case there is 0.66px, and
+  eleven declarations to move something under a pixel is not a trade.
+
+- **The 404 is an alley.** The copy has said *nothing down this alley* since
+  3.1.0 and the picture behind it was a bat. It is a corridor now: two walls
+  in perspective, each face wearing a form from the app's own `ROOFS` table —
+  `setback`, `zig2`, `block`, `zig3`, `twin`, `spire` — with its crown carried
+  along the perspective slope, so a ziggurat still steps like one from
+  underneath. One wall is drawn and the other is `<use>` of it, which is why
+  the alley is symmetric by construction rather than by care. The bat stays,
+  at the vanishing point, dim, with the walls closing over its edges.
+
+  The link is square now. It carried `border-radius:10px` and was **the only
+  rounded corner in the product** — `index.html` holds 41 declarations of
+  `border-radius:0`.
+
+- **Every surface you press is the suit, not bone.** `--bone` was doing two
+  jobs: ink on dark, and the fill of anything pressed. The second was wrong —
+  the suit is grey. New `--suit:#A6ADBA`, one value in both themes, on the
+  primary buttons, pressed chips, scope and theme buttons, both ticks and the
+  toast. Text keeps `--bone`. Ink on the suit reads 8.81:1 in Dark Deco and
+  9.31:1 in Darker, so no text colour moved.
+
+### Changed — type
+
+- **Nine tokens, down from eleven.** `--t-row` (16.5) folded into `--t-body`
+  (16) — rendered before and after, **0.00% of pixels changed** and Progress
+  came out byte-identical. `--t-row-lg` (19.5) folded into `--t-heading`'s
+  clamp, which makes row titles responsive (17.6px at 320, 20px at 390) and
+  ends a size relation that flipped with the viewport: at 320 a row title was
+  1.9px *larger* than the group heading above it, at 390 it was 0.5px smaller.
+- **Two tracking values back into the button band.** `.herorow .lnk` .04em →
+  .08em and `.pathseg button` .04em → .09em; both were sitting in the data
+  band while being buttons. Measured at 320/360/390 first: neither overflows,
+  though the hero link fits at 390 with no margin at all, which is why it took
+  .08 and not the .10 of its own parent rule.
+- **NOTES records the rule the tracking actually follows.** The stated one —
+  "tracking widens as size shrinks" — is violated on nearly every line: at 9px
+  alone the tree spans .04em to .22em. Sorted by role it is orderly, and that
+  is the rule: tracking is set by role, and widens as size shrinks *within* a
+  band.
+
+### Changed — documentation
+
+- **The weight figures say KiB, because that is what is measured.** Guard 29
+  divides by 1024; the same file read in decimal kB is 252 and looks like an
+  overshoot it is not. The 6.0.0 audit made exactly that reading, and 5.4.0
+  corrected the same confusion once already.
+- **`security.txt`'s `Expires`** renewed to 2027-09-01.
+
+### Guarded
+
+- **Section 118 measures the alley instead of the bat.** Same claim, same
+  arithmetic, new subject: it reads `--wall-b` and `--scrim` from the page's
+  own tokens, blends them, and holds the heading and the sentence to AA
+  (16.21:1 and 7.45:1). It also refuses a page that drops the scrim or stops
+  hiding the alley under `prefers-contrast:more`.
+- **Section 101's ceiling is 9,000 bytes, raised from 4,096** — the owner's
+  call, recorded like every weight raise. The principle it protects did not
+  move: still one file, no fetches, no `url()`, no font, no script. The alley
+  is 8,433 bytes raw and 2,976 on the wire.
+- **Section 17's table is nine tokens** and its wording follows.
+- **Section 49 reads `--suit`.** It asserts the activity tick is *filled* —
+  that claim is unchanged, the token under it moved.
+- **Section 46 and section 29 speak KiB**, with the three negative fixtures
+  that quote their wording re-aimed.
+- **negtest210's three 404 fixtures were aimed at the bat** — they anchored on
+  `opacity:.09` and the old `body` rule, strings the alley deleted rather than
+  changed, so a pattern sweep of *changed* strings missed them and CI caught
+  them. Re-aimed at the alley, and a fourth added for the clause section 118
+  gained: a page that stops hiding the alley under `prefers-contrast:more`.
+  All four now name the section they aim at, which retired three of the
+  corpus's blind fixtures — **`NO_SECT_PINNED` 754 → 751**, a number that only
+  ever goes down. Fixture count 1,371 → 1,372 in README and `qa.yml`.
+
+### Notes
+
+- `docs/404.html` is generated once and committed; it carries no data, so it
+  never regenerates. The generator that drew it is in the release-prep record,
+  deliberately not in the tree — there is no defect behind keeping it there.
+- The sub-pixel centring artefact in the app is recorded as declined, so the
+  next type pass does not rediscover it and think it found something.
+
+## [6.0.0] — 2026-09-02
+
+**Two keys, three seasons.** The first MAJOR since 5.0.0, and it crosses
+both of README's lines at once, on purpose: the saved state changes
+shape — settings leave the progress blob for a key of their own — and a
+saved tick changes meaning — the one on the 51-episode Batwoman bundle
+now means three season rows. Those were the two items NOTES.md's "Open"
+section had carried since 5.3.1 as "MAJOR only", the last two things
+pending anywhere in the tree, and the owner's ask was that nothing stay
+pending. Nothing does: "Open" is empty. Neither change loses a reader
+anything. Progress stays under the key it has always had, in the shape it
+has always had; the settings are read off the old blob once and written
+to their own key on the first boot; and a tick, skip, rating, clock or
+night saved against the bundle lands on all three seasons at every door a
+mark can arrive through. The seasons count moves with it: 69 → 71, in the
+head, the FAQ, the share card, README and `llms.txt` — every copy of the
+number is read off the data or guarded against it.
+
+### Changed
+
+- **Settings have a key of their own: `batwatch-settings`.** The path,
+  theme, scope, format, tier, the fold states and the install dismissal
+  serialise under it; `batwatch-v3` keeps the marks, the clocks, the log
+  and the three stamps, and its shape does not change — a 5.x reader
+  still finds every mark where it was. `persistNow()` serialises each
+  side of `SCHEMA` (the settings rows carry `s:1`) and writes a key only
+  when that side moved since this tab last wrote it, so a tick reaches
+  the progress key and never the settings key, and a theme change the
+  reverse — smoke counts the writes per key. This is the door 5.3.0 could
+  only patch: the merge adopted five settings out of the other tab's
+  progress blob so a tick would not revert the theme the other tab had
+  just saved, but as long as one serialisation held both, every tick was
+  a settings write and the fix was a race won. The adoption moves to the
+  settings key's own `storage` event (`adoptSettings()`: every settings
+  row through its reader, last write wins, no write back), the merge
+  adopts nothing (a setting arriving on the progress key is a 5.x tab in
+  the deploy window, read for its marks only), and guard 158 pins the two
+  bodies, that `adoptSettings()` leaves on `!r.s`, and that no mark row
+  sits on the settings side. Migration is one write: a pre-6.0.0 save is
+  read for its settings once, the settings key is written on that boot,
+  and the stale settings inside the progress blob leave with the next
+  progress write. A settings key that does not parse is a failed read
+  like a progress key that does not parse (guard 127). Guard 21 freezes
+  the new key the way it froze the old one and pins the per-side write.
+- **Batwoman is three seasons, and Crisis is filed where it falls.**
+  `batwoman-complete-series-2019` (51 episodes, one row) retires into
+  `batwoman-season-1-2019` (20), `batwoman-season-2-2021` (18) and
+  `batwoman-season-3-2021` (13), with *Crisis on Infinite Earths* between
+  the first and the second — inside Season 1's ninth hour, which is where
+  it happens, instead of after the whole series. The overlap 5.3.1
+  accepted is still accepted, and still said in the row: Season 1's ninth
+  hour is one of Crisis's five, so that hour is on the shelf twice, on
+  purpose (2,011 episodes the sum of sittings, 2,010 unique; the owner's
+  call over a Season 1 that says 19). The retirement goes through a third
+  ledger, `qa/split-ids.json`, beside the retired and renamed ones — the
+  one exit that keeps the old key's meaning. The app carries the same
+  table as `SPLIT`, held equal to the ledger by guard 2, and
+  `splitPayload()` runs on every payload before it is read: the progress
+  blob at boot, another tab's blob in the merge, a pasted code (the
+  bundle's hash is still mapped, so a 5.x code is three found, not one
+  unknown), a JSON file. Watched and rated copy to every season; a skip
+  only to a season not already watched; a clock only where the season's
+  is older; a night only where the season has none; then the bundle
+  leaves every container, and the first boot writes the split to disk.
+  It never runs on `S`: the fan-out enters state through the doors guard
+  158 already lists. Guard 2 requires all four doors to call it; guard 3
+  counts the bundle's hash in the collision space, since it is still
+  read. Era 11 re-positioned (Gotham Knights 5 → 7); guard 92: TV-14
+  10 → 12, no value moved.
+- **Documents.** README: the storage line, the three ledgers under the
+  frozen-slug rule, `qa/split-ids.json` in the file table, 71 seasons,
+  the weight. RELEASING: the bless refusal names all three ledgers, and
+  the rollback runbook says what a rollback across a MAJOR costs (settings
+  on defaults, Batwoman's three season ticks under slugs a 5.x tree
+  cannot render — progress kept, not shown). DATA-MODEL: §1 is two
+  payloads, the migration, the merge without settings and the settings
+  event beside it, the split at each of the three transports. NOTES:
+  "Open" is empty and says why; `SKEY`/`payloadOf()`/`wrote` and
+  `SPLIT`/`splitPayload()` have entries; `mergeTab()`'s entry says where
+  the adoption went. ARCHITECTURE names the three new functions and
+  splits the persisted state by key.
+
+### Records
+
+Harness: guard sections 159 → 159 (clauses on §2, §3, §21, §127, §158;
+§92's count), smoke 488 → 511, negative suites 79 → 80 (negtest710, 33
+fixtures, every new clause and every new smoke check shown to fail),
+fixtures 1,337 → 1,371, browser checks 117 → 117, the wall
+≈61 CPU-minutes under `time` (32 min on two shared cores; eight older
+suites touched where this cut moved their anchors — 172, 195, 350, 600,
+610, 670, 690, and the three smoke reboots the migration write was
+masking). Weight:
+246 KB raw / 68 KB gzip against 250/80.
+
+## [5.4.0] — 2026-09-02
+
+**The day has a name.** Batman Day is 19 September, and the page says
+so: one dated sentence, first in Next up's closing note, with the
+shelf's own counts — the one thing on the shelf that was not a fix,
+and what makes this a MINOR (the owner's call, from the Batman Day
+plan; a fixes-only cut is a PATCH by README's rule, and this cut is
+everything else). Everything else is the 5.3.1 audit closed whole — 2
+P2 · 18 P3 (6 P2 · 14 P3 by the report's own count; four of its P2s
+were residuals of 5.3.0 findings and are counted with them here) — and
+every item the backlog and the open list still carried that a tree can
+hold: nothing deferred, nothing parked, the two MAJOR-only items in
+NOTES.md's "Open" section exactly as they were. The line is dated and
+the Clayface trigger patch (23 October) removes it; that patch was
+already on the calendar.
+
+### Added
+
+- **Batman Day, 19 September.** "Eighty-seven years, 137 films, 69
+  seasons, 44 continuities — and one map through all of it. Start
+  anywhere." opens Next up's closing note, in the same paragraph as the
+  two watching truths: one flow, one diamond, no banner, no new surface
+  (the plan's season-shaped line, which reads fine either side of the
+  day, over a day-of line with a removal patch of its own). The counts
+  are read off the shelf at render time, the way the intro's are, so the
+  line cannot disagree with the head; guard 131 refuses a typed one, and
+  the smoke check reads the rendered sentence against its own count.
+  Not in the crawler seed: the page's crawlable answer to the count is
+  the FAQ it has carried since 5.2.x, and this line is for the person on
+  the page.
+
+### Fixed
+
+- **The Robot Chicken specials are TV-MA, and JLU is TV-Y7.** 5.3.1
+  filed the two DC specials TV-14 "off Adult Swim's own rating archive";
+  the audit found that archive to be a fan-maintained Google Site, while
+  the one source the release had chosen for every other show — the
+  current HBO Max listing — files "Robot Chicken: DC Comics" TV-MA with
+  all three specials under it (Prime Video agrees), so the R / TV-MA
+  chip was passing two specials the streamer flags TV-MA. All three are
+  TV-MA off the same page as The Batman, Justice League and Batwheels.
+  And *Justice League Unlimited*, whose TV-Y7-FV had no source named, is
+  TV-Y7 ×3 off its own HBO Max listing — the FV descriptor is a
+  broadcast artefact the badge never rendered, and it leaves the
+  distribution (guard 92: TV-MA 12 → 15, TV-14 13 → 10, TV-Y7 20 → 23,
+  TV-Y7-FV 3 → 0). Six certificates, one source each.
+- **A row re-inserted under a live search kept its place, not its
+  `hidden`.** Arm *Watched up to here*, type a query the row does not
+  match, let the four-second disarm fire: `rowUpdate()` rebuilt the row
+  through `filmRow(f)` alone and the non-matching row was back on the
+  shelf until the next full render (the audit's reproduction). Both
+  re-insert sites — `rowUpdate()` and the tick's `patchRow()` — hand the
+  row's own `hidden` through; guard 103 reads the argument; a smoke
+  check arms, searches and disarms.
+- **A JSON file whose log was all refused left its watched titles with
+  no night.** When the file carried a log, `mergeLog()` was the only
+  path, so a title whose every entry was refused (`ts:0`, since 5.3.1's
+  tightening) arrived watched and Progress printed no night for it. The
+  fresh-timestamp fallback runs for whatever the merge did not take, as
+  it always had for a file with no log.
+- **Three rows, said right.** *Legion of Super-Heroes*: 5.3.1 replaced
+  "No Batman in it" with "Batman sees her off", and Superman is the one
+  who takes Kara to the 31st century — Batman is in the opening rescue
+  and the S.T.A.R. Labs raid and not at the departure; it says so now.
+  *Knightfall* Part 1 is "Part One: Knightfall", in words like every
+  other split title in the file (the official subtitle stays; the slugs,
+  as ever, do not move, and NOTES says why the arc names survive in
+  them). Part Two's blurb states its premise and no longer Part One's
+  turn — the reason the arc names left the titles in 5.3.1.
+- **The two running seasons carry no clock.** 4.9.0 retired "and
+  counting" from the catalogue; 5.3.0 and 5.3.1 each put one back (Teen
+  Titans Go!, Batwheels Season 3) without recording the reversal. Both
+  rows are clockless again; a running season's `ep` is the count that
+  had aired at the cut that last touched the row and moves with the next
+  cut that touches the catalogue — a catalogue fact, never a dated
+  obligation of the tree's. Guard 140's `Expires` stays the only clock.
+- **The hero's separator is on the token.** `.hero .dsep` was `.45em`
+  of a 10px kick — 4.5px by arithmetic where every other small diamond
+  is `--dia-s` by name, the one size left that a font-size could move
+  (the item the backlog had parked as "equal today, left alone"). Same
+  pixels, one size system; guard 146 reads the token.
+
+### Changed
+
+- **The harness certifies every shape it runs.** `_lib.sh` held a
+  fixture's expected text against a pristine signature of the unscoped
+  guards run only — the 93 smoke fixtures and the 15 `--bless` fixtures
+  were held against nothing, so on a tree whose smoke was already red a
+  no-mutation smoke fixture passed (the audit planted one). Every run
+  shape has a signature now: `guards`, `guards --bless`, each smoke phase
+  and the full run, captured lazily on the healed tree before the
+  mutation, red ones printed as `PRISTINE RED (<shape>)` and counted;
+  `run-all.sh` captures the smoke shapes the picked suites use once for
+  the whole wall (four parallel runs on one unmutated tree, which
+  `census.js --phases` names) and hands them to every suite, so the wall
+  pays four captures and not forty-two. The heal restores shape as well
+  as content — a directory a mutation created, an executable bit it
+  flipped. negtest560 reads `security.txt` under `$SRC`, as every other
+  path is read, so a run from any directory but the root no longer falls
+  back to the live clock.
+- **Guard 158 reads every reference, and the gate must dominate.** Two
+  door shapes still walked past 5.3.1's census — a write through a
+  computed key (`S[kind][id] = 1`, the shape `stampMark()` uses for
+  clocks) was dropped instead of sent to the opaque list, and an alias
+  was read only off a bare `= S.<mark>`, so `var box = {m:S.rated};
+  box.m[id] = 5` was invisible — and the gate test was presence, so
+  `if(isParkedId(id)) log(); S.watched[id] = 1;` counted as gated. Every
+  reference to a mark object is classified by the node that holds it, a
+  computed key in a write or an alias position is opaque (only
+  `restore()` and `mergeTab()` may hold one; the payload serializer and
+  `stampOut()` for reads), and the gate must sit in the test of the
+  branch that holds the write or in an earlier `if(…) return|continue`
+  of the same block. Two more planted doors, two reds; a seat written
+  `else if(!isParkedId(id))` stays green. The 5.3.1 spelling pins beside
+  it — the three sweeps, `favList()`'s gate — are shape predicates, as
+  the Records line had claimed.
+- **Guard 159's brand rule is an allowlist.** Twelve named selectors
+  could not be painted under forced colors; a thirteenth (`.wordmark
+  span`) could. A rule inside the forced-colors block may carry
+  `forced-color-adjust:none` only if every selector in it is a painted
+  state the section lists; the five state pins read the block at the
+  declaration level, so a reordered selector or declaration stays green
+  and a missing one goes red.
+- **Smaller harness truths.** Guard 67 requires `qa/llms-txt.json` to
+  match the file, not only to choose a date off it (bless, then edit
+  `llms.txt` again in the same cut, and the tree was green with a stale
+  record until the next release went red for the wrong reason). Guard
+  138's note counts the fixtures it credits blind — a pinned fixture
+  whose phrase is in no section's text — and names the sections covered
+  only that way. The smoke check that poisons `clocksOf()` counts the
+  calls the stub took. `census.js` is required inside a readable
+  `fail()` and its three readers skip when it is broken, instead of the
+  run crashing at §65. Guard 155 holds the seven bag notes to README's
+  suffix and refuses it on an ordered universe (until now only
+  `cardBlurb()`'s stripper was tested — 5.3.1 fixed a note by hand).
+  Guard 31 counts the no-Batman exception off a list, so README's
+  "eight entries qualify" cannot be typed again while the set moves.
+  Guard 145 requires ARCHITECTURE.md to name every top-level function,
+  and it names all 197. The last spelling pins the audit listed —
+  `tickUpdate()`'s inert patch and keep option, the two dirty marks,
+  `searchApply()`'s two `hidden` writes — read the tree. negtest700, one
+  fixture per new clause, every one shown to fail; older fixtures
+  re-aimed where this cut moved their anchors.
+- **Documents.** `docs/fonts/OFL.txt` declares the Limelight subset as
+  a Modified Version renamed NW Deco, in the paragraph the Plex files
+  already had. README: "Eight entries qualify"; the negative-suites row
+  says what CONTRIBUTING's naming rule says; the weight line. NOTES:
+  the running-season convention, the certificate sources as they are
+  now, the premiere-year convention without the clause that contradicted
+  four rows (Batman Beyond S3, The Batman S5, Young Justice S4 and TAS S2
+  straddle and carry the earlier year), `groupCache`'s second mention
+  keyed on tier, `yearSpan()`'s animated floor (1991 at the default
+  tier, 1993 with Optional off — where no animated series is left at
+  all), the day line, the two fixes, and what the harness proved about
+  itself in 5.4.0. DATA-MODEL: the "§4" pointer (§3), the `backlog.md`
+  pointer (the storage listener's entry in NOTES), the JSON import's
+  night rule. ARCHITECTURE names every function, `dayLine()` included.
+  The sitemap's comment and `llms.txt`'s last line describe both URLs'
+  date rules. Six counts in the 5.3.1 entry corrected in place, below.
+
+### Records
+
+Six ledger corrections in place, all in the 5.3.1 entry, from the
+5.3.1 audit: "Twelve certificates" is fourteen rows (guard 92's
+comment said twelve too); "the 245 KB document" was decimal kB of the
+5.3.0 file beside "243 KB raw" in KiB — 240 KB in the file's own
+convention; "twenty-one older suites touched" is twenty-four;
+"negtest610's 113 guards fixtures" is 114; "§156 reads the floor
+constants" is §157; "Two ledger corrections in place" was one in-tree
+edit and one correction of the audit's attribution; and "two green
+cases" cover two of the three predicates (the adopt set has none).
+Harness: guard sections 159 → 159 (every change is a clause, or a
+predicate replacing a pin), smoke 481 → 488, negative suites
+78 → 79 (negtest700, 35 fixtures, every new clause shown to fail),
+fixtures 1,302 → 1,337, browser checks 117 → 117, the wall
+≈84 CPU-minutes under `time` (44 min on two shared cores; the four
+shared pristine smoke signatures are three minutes of it; six older
+suites touched where this cut moved their anchors — 195, 250, 300, 530,
+560, 690). Weight: 243 KB raw / 68 KB gzip against
+250/80.
+
+## [5.3.1] — 2026-09-02
+
+**The two 5.3.0 QAs, whole.** A PATCH, because nothing here adds an
+entry, a feature or a surface: fixes, corrections, QA tooling and
+documents, from the owner's whole-repository audit of 5.3.0 (1 P1 ·
+22 P2 · 17 P3) and an external read of the live tag (all twelve of
+5.3.0's claims held on glass; two residuals and a record drift). Every
+finding in both is taken or declined on the record — none deferred —
+and the two items a MINOR cannot hold (the settings key split, the
+Batwoman season split) are parked in NOTES.md's new "Open" section for
+the MAJOR that hosts them both.
+
+### Fixed
+
+- **The rating was the mark 5.3.0 did not gate.** "Every door" was
+  true of ticks and skips; a rating on a parked title survived every
+  seat — `rate()` itself, a pasted code or JSON, another tab, and the
+  wholesale restore — landed in Your five stars as "★ Dynamic Duo
+  (2028)" and rode the backup code as an orphan. A rating is a mark
+  (`rate()` marks the title watched; a star is a verdict on something
+  seen, and a parked title cannot have been): the three rated seats are
+  gated on `isParkedId`, `dropParkedRated()` runs beside the other two
+  sweeps (delete, stamp, persist), and `favList()` refuses a parked
+  title as belt-and-braces. Guard 158 counts nine seats now, not six.
+- **Guard 158's census read spelling.** `S.watched[id] = S.watched[id]
+  || 1`, `Object.assign(S.watched, m)`, a helper handed the object — the
+  audit planted two of these beside `isParkedId()` and the note went on
+  printing "each gated". The census is an AST walk: every assignment
+  into the three mark objects (any operator), every wholesale write,
+  every call handed one, every alias; each member write must be a
+  listed door with `isParkedId(<its own index>)` in the innermost loop
+  or function that holds it. Five planted shapes, five reds. The three
+  spelling pins beside it (the sweep calls, the listener's `try`, the
+  adopt set) are predicates, so a reindent stays green — two green
+  cases say so for two of the three.
+- **An adopted path left the mode behind.** The 5.3.0 settings adopt set
+  `S.path` and not `S.mode`, so The Path wore the shared-link banner
+  ("Viewing Bruce's life. Your path is Release order.") for a screen;
+  the 5.3.0 check had sent the tab the path it already had. The `path`
+  row's `put` carries `S.mode`, and the check sends a changed path,
+  plus scope and tier, which nothing sent either.
+- **The epoch is not a night.** `validTs()` required only `isFinite`
+  where its two siblings require `> 0`: a hand-edited backup with
+  `ts:0` printed "1 night on patrol" dated 1970 and pinned the pace
+  forecast's span at ~20,000 days for good. Finite and greater than
+  zero, like `stampOf()` and `clocksOf()`.
+- **A skip counted as two changes** in the backup nudge — its own clock
+  plus the watched tombstone `unmarkWatched()` stamps (the merge's
+  "skip beats a stale tick" signal, which stays). `marksSince()` counts
+  titles, not clocks.
+- **The deck is built before the first render.** `render()` opens with
+  a scroll read that lays out the document as it stands, and at boot
+  that was the crawler seed — 431 elements the app never shows — laid
+  out and thrown away before `buildDeck()` replaced it (the audit
+  measured 55 ms of first Layout at 4× throttle, on the path to first
+  paint). The boot block builds the deck first; the first layout is four
+  empty panels. Guard 120 gained the boot clause its order clause could
+  not see.
+- **Fourteen certificates, each with a source.** Harley Quinn's
+  Valentine's special is TV-MA, not TV-14 — the R / TV-MA chip was
+  letting it through. *Teen Titans: The Judas Contract* and *Reign of
+  the Supermen* carry MPA certificates (PG-13; NR means none was ever
+  issued, and both were). *Batman & Mr. Freeze: SubZero* is NR — no
+  certificate anyone can cite. And one source per show for the four
+  shows whose seasons disagreed with nothing named: The Batman (TV-Y7
+  ×5), Justice League (TV-Y7 ×2), Batwheels S3 (TV-Y — the show is
+  TV-Y) off the current HBO Max listing; the two Robot Chicken DC
+  specials TV-14 off Adult Swim's own rating archive. Guard 92's
+  distribution names every move.
+- **Blurbs and notes that argued with their rows.** *Legion of
+  Super-Heroes* said "No Batman in it" — Jensen Ackles voices him; it
+  says he sees her off now, and *Suicide Squad: Hell to Pay* says what
+  README's exception requires it to (no Batman, no Gotham, a link in
+  the chain), so "eight entries qualify" is seven. The DKR Deluxe
+  Edition blurb called itself R-rated beside its own PG-13. The Music
+  Meister is Season 1, not Season 2. Six facts corrected — Gotham
+  Knight's four studios, Return of the Joker's original 2000 release
+  (not a theatrical edit), Gotham Girls' 2000–02, the half-hour
+  Batgirl prologue, Young Justice's nearly six years off the air, a
+  minute and a half of Terry McGinnis — and two counts dropped (young
+  Bruce in *Joker* is in two scenes, and the second is the turn).
+  *Dynamic Duo*'s blurb states the premise, not an outcome. *Knightfall*
+  Parts 2 and 3 are "Part Two" and "Part Three" until Warner names them:
+  the comics' arc names were never announced titles and double as
+  spoilers for the trilogy's shape. Universe 04's note says what closes
+  the weave (the row it names), universe 05's "only one pair" no longer
+  contradicts its own pairs, universe 35's bag suffix ends its note as
+  the rule says, the LEGO shorts' quotes match every other title, and
+  the Valentine's special stopped naming a streamer (guard 32: the app
+  names no services; the bare "Max" was the tell).
+- **The Batwoman overlap, said plainly.** Crisis Part Two *is* Batwoman
+  S1E09 — the hour with Conroy's Bruce Wayne — so the 51-episode bundle
+  already holds the reason the Crisis row exists, that hour is on the
+  shelf twice, and the group files the event after the series it falls
+  inside. The row says so now; the overlap is recorded as accepted
+  (2,011 episodes is the sum of sittings, 2,010 unique; `ep:5` stays);
+  the honest structural fix is a MAJOR, parked with the key split.
+- **High Contrast paints state, never the palette.** 5.3.0 repainted the
+  ornaments and left every state a background alone carried — the
+  pressed chip, the pressed belt, scope and theme buttons, the done
+  tick, the lit belt-peek and essentials segments, the skyline crown,
+  the group bar's fill, the here-group's corners — to wash out under
+  the UA's palette, and the current tab was signal ink only. Those
+  repaint in system colours (`Highlight`/`HighlightText`, `CanvasText`,
+  `GrayText`, an underline, an outline); the wordmark, the path title,
+  the belt, the group heads and the prose take the colours the reader
+  chose. Guard 159 pins each rule and refuses a brand override; the
+  browser check reads the repaint under emulation.
+- **`sw.js` skips a rewrite when nothing moved.** Every load deleted
+  and re-put the 240 KB document and ~65 KB of fonts out of a
+  304-refreshed HTTP-cache entry; the cached entry's ETag is compared
+  first. Guard 132 drives both branches.
+
+### Changed
+
+- **The quiet deck.** A search keystroke, a peek, a fold, a new code,
+  the backup nag's "later" and the reset arm each touch exactly one
+  view, and each rebuilt The Path (~2,700 elements) at idle — a 221–292
+  ms task once a reader had scrolled it (measured at 4× throttle with
+  the scroll kept at 2,500; the audit's 175–225). `render({quiet:true})`
+  dirties nobody for those; a tick from another panel patches the
+  inert Path row-level (`patchRow`, the surgery the visible panel has
+  had since 2.5.0, extracted to take a panel) instead of dirtying it —
+  none, or 50 ms; and a search keystroke never renders: `searchApply()`
+  toggles `hidden` on the rows the query hides and the groups that
+  empties, keeps the count line and the empty block in step, and the
+  caret never moves (26–38 ms plus a 108–146 ms long task per keystroke
+  before; 4–8 ms in place, no long task, after). A full render produces
+  the same DOM, so the identity drive holds both paths byte-for-byte
+  and a spy on `fillPanel()` proves no neighbour is rebuilt.
+- **Limelight is subset and renamed NW Deco** — 23,080 → 12,784 bytes,
+  the largest face, on the critical path; the saving is TrueType
+  hinting, not glyphs. It is the reserved-name answer 4.5.3 gave the
+  Plex faces, applied to the one face it skipped; the file keeps its
+  name as the Plex files keep theirs.
+- **The JSON-LD sits after the stylesheet** — the same bytes, 68 → 67 KB
+  gzip: it repeats the seed's FAQ and curated list, and from line 43
+  they were 69 KB apart with the stylesheet between. Found on the way:
+  the two JSON-LD blessers pushed their node last, so the `@graph`
+  order depended on what had changed — and FAQPage-first cost the same
+  1.3 KB back. Both write one order now, FAQPage last.
+- **Weight nits:** `.homefoot a` (no anchor there) leaves its selector
+  lists; the below-floor prefixes go (`-webkit-backdrop-filter`,
+  `-webkit-overflow-scrolling`, `-webkit-appearance`); `#splash`'s two
+  rules are one; `apple-touch-icon.png` 6,174 → 3,592 B and the tile
+  6,884 → 2,413 B as palette PNGs (the icon within 1/255 of its RGB
+  render).
+- **`upNext()` is a pure read** — the pick's expiry was a write hidden
+  in a getter every render path called; it is `expirePick()` at the
+  three entry points now, `pickStands()` the test. `doneBy()`'s two
+  factors that cancelled are one; `nightsLine()`'s unread argument is
+  gone; `groupBlock()` and `viewHome()` compute their tallies once
+  (noise, measured; taken because they are two-line edits with the
+  identity drive as proof).
+- **The harness certifies what it proves.** `_lib.sh` prints
+  `PRISTINE RED` and counts a failure on a tree already red before any
+  mutation (an unblessed CSP hash is the everyday case — every fixture
+  aimed at that section used to pass without proving anything), runs
+  the pristine-signature check on every fixture, and heals by content
+  (`cmp -s`), not by clock. Guard 138 credits one section per fixture:
+  the honest map exposed §33 (never a fixture; credited on "does not
+  carry", a substring shared with §116), §38, §46, §48, §61 and §117 —
+  three new fixtures, six old ones retrofitted their `sect`, four exact
+  duplicates struck (`NO_SECT_PINNED` 764 → 754). Three smoke checks
+  that could not fail (the tier partition, the scoreboard, the
+  filtered-view fallback) recount independently, each with a fixture
+  that breaks it. negtest560's clock pin is derived from `security.txt`'s
+  own Expires, so guard 140's 2027 renewal cannot turn the suite red
+  for the wrong reason. Four censuses of "which fixtures are smoke"
+  (guards 65, 113, 138, `run-all.sh`) are one module,
+  `qa/negative/census.js`, and the wall dispatches by real weight
+  (negtest610's 114 guards fixtures sorted at `000` behind every
+  one-smoke suite). The byte-identity drive is its own phase
+  (`SMOKE_ONLY=identity`; 71 main-scoped fixtures each paid its 22 s);
+  the css sweep runs its staged states before the tab walk (57 → 35 s).
+  Four more axe states — Darker Home, Progress with the restore box and
+  folds open, The Path with the belt dropped, Next up on a bag with a
+  rated night — and the forced-colors repaint observed under emulation.
+  Guard 67 dates the sitemap's second URL by the bless pattern
+  (`qa/llms-txt.json`). `until()` deleted; the "seven"/"two"/"four"
+  strings corrected; §157 reads the floor constants off the tree; the
+  Playwright cache keyed on its version.
+- **Documents.** README deploys with the pinned script (`npm run deploy`;
+  a `rollback` script joins it) and gains rows for `_lib.sh`,
+  `run-all.sh`, `census.js` and `qa/llms-txt.json` (`qa/.shots/` is named
+  in the browser check's row — a table row for a directory that exists
+  only after a browser run made a fresh checkout red on this release's
+  first CI run, caught the same morning: guard 45's ghost rule was right
+  and the row was wrong); its bless list names `qa/contrast.md`; the
+  MINOR clause says what the entries do, and a removal has a clause; its
+  status line leads with what is live and keeps the seal as the record
+  it is. NOTES.md gains an "Open"
+  section (the key split, the Batwoman split), retires the `wrangler`
+  section that had argued for a dependency 4.9.0 removed, moves five
+  sections that called themselves history to NOTES-history.md, retitles
+  fifteen headings that quoted the next symbol's comment, and corrects
+  eight present-tense lines (`groupCache`'s key, seven bags, eight
+  chips, `--hdrh`, 1943/1966, the cold-start pointer, `.modenote +
+  .drule`, the backup-code limitation the code no longer has).
+  DATA-MODEL.md catches up three releases: the merge's `try` and
+  settings adoption, the watched and rated sweeps, `mergeLog()`'s
+  refusal, the clocked loops' one exception. ARCHITECTURE.md names the
+  67 functions its table had skipped. RELEASING.md states the wall once.
+  `security.txt` and SECURITY.md agree on the Worker; SECURITY.md names
+  all five headers; three history pointers say NOTES-history.md and
+  guard 65 reads their carriers.
+
+### Records
+
+One ledger correction in place: the 5.1.1 entry's "refuses
+`routeText()` coming back by any name" now says "by its shipped
+names" — 5.3.0 softened the census to what it can see and the older
+line went on claiming more; and the 5.3.0 audit's own "≈ −20 s off
+every `npm test`" for the identity phase is mis-attributed (`npm test`
+runs unscoped; the phase saves the wall, the css reorder saves the run
+— both taken, stated apart). Harness: guard sections 159 → 159 (no new
+section; every change is a clause or a predicate replacing a pin), smoke
+462 → 481, negative suites 77 → 78 (negtest690, 47 fixtures, every
+guard shown to fail), fixtures 1,258 → 1,302, browser checks 108 → 117,
+the wall ≈63 CPU-minutes (~32 min on two idle cores; twenty-four older
+suites touched where this cut moved their anchors). Weight: 243 KB
+raw / 67 KB gzip against 250/80.
+
+## [5.3.0] — 2026-09-01
+
+**Two QAs, one cut.** The owner's deep audit of 5.2.4 and an external
+whole-tree read landed the same day, converging on the storage layer and
+splitting the rest between them. Everything both reports found ships
+here in one MINOR. What makes it a MINOR: a catalogue addition — the
+Arrowverse **Crisis on Infinite Earths** (2019), the one crossover with
+Kevin Conroy's only live-action Bruce Wayne, until now a deliberate-
+looking hole beside Elseworlds. The shelf is 206 entries: 137 films and
+69 seasons, 2,011 episodes — "1,950+" becomes "2,000+" everywhere it
+appears.
+
+### Added
+
+- **Crisis on Infinite Earths — Arrowverse crossover (2019)**, third
+  entry in the Batwoman continuity, after the series it falls inside.
+  Optional, TV-14 by the rule Elseworlds set (a crossover wears its
+  strictest hour's broadcast rating). Share card, orders.txt, seed,
+  JSON-LD and every count surface move together; the ItemList's 74
+  curated titles do not (it enters optional).
+- **The drawn marks survive Windows High Contrast.** One
+  `@media (forced-colors: active)` block repaints the stars, the skip
+  bar, the drule and dsep diamonds and the footer diamonds in the
+  system's own ink (`CanvasText`, selected stars `Highlight`) —
+  forced-colors strips the `currentColor` backgrounds they are drawn
+  with, so for exactly the users the contrast work serves, 5.2.0's
+  ornament rewrite had erased them. The pre-5.2.0 glyphs survived
+  forced colors; now the geometry does too.
+- **The row-meta rating speaks again.** `.strun` carries `role="img"`
+  and "Rated N of 5" over its aria-hidden geometry — the ★ characters
+  were readable before 5.2.0; the drawn stars were silent.
+- **Guard 159** pins all of the above plus the 5.2.4 star-wrap fix
+  (zero `qa/` references meant it could regress without a sound), §158
+  grew the restore door, the widened census, the merge's `try` and the
+  settings adopt, §153 grew content pins on the title and description
+  ("Batman watch order" can no longer silently revert — 5.2.1's
+  headline deliverable, pinned the way §78 pins the seed), §116 refuses
+  numeric character references in served files (the third escape
+  spelling its font scan cannot read), and CI's fast job now runs
+  Node 22 **and** 24 (engines advertised what CI never ran). Twenty
+  fixtures across negtest530/670, six older fixtures across four
+  suites re-aimed at the lines the catalogue and the head moved
+  (negtest170's episode floor, negtest172's terminal-era position,
+  negtest176's JSON-LD description, negtest610's three head-tag
+  spellings); 1,238 → 1,258.
+
+### Fixed
+
+- **Restore was a door.** A tick placed on a parked title under ≤5.1.0
+  sat in localStorage forever: swept from counts since 5.1.1 but
+  re-adopted wholesale by `restore()` on every load — riding every
+  backup `exportCode()` wrote, feeding the pace forecast through its
+  log nights, and overdrawing its group's bar on the share card.
+  `dropParkedWatched()` now runs beside the skip sweep: mark deleted,
+  parked log nights with it, clock stamped, persisted. And guard 158's
+  census was spelling-bound — an impolite `S["watched"][id]=1` or a
+  bare alias walked past the canonical regex; the census reads loose
+  spellings now and an alias fails outright.
+- **Another tab can no longer revert your settings.** The storage
+  listener merged marks only, so tab A's next tick persisted A's whole
+  payload and flipped back the theme, path, format, scope or tier tab B
+  had just saved. The listener adopts the incoming five (SCHEMA's own
+  readers validating, last write wins) — and the whole merge now runs
+  inside a `try` (`mergeTab()`), so a throw between the `resetAt` wipe
+  and the closing persist can no longer leave an erase in RAM only.
+  The real fix — a second storage key — is a saved-shape change, MAJOR
+  by README's own rule, parked in NOTES.md until one happens.
+- **The diamond rule sits where it was asked for.** 5.2.4 read the ask
+  wrong and put it inside every group card; it belongs once, after the
+  path view's description, and that is where it is.
+- **Four one-liners from the external read:** a second import of the
+  same backup filename is no longer a silent no-op (the file input
+  clears after reading); `modeNote()` and the rating badge interpolate
+  through `esc()` (the hole closed for titles in 4.x was still open for
+  the two trusted-catalogue strings — safe today, one catalogue edit
+  from not); and a Home-card jump wears the `.settling` frame the
+  restore path already knew about, so it stops landing against 64px
+  `content-visibility` placeholders.
+- **Blurbs, re-read as the premise rule demands:** `injustice-2021`
+  no longer names the Joker's trick — premise, not the turn. Caped
+  Crusader S2's blurb stops being a pre-release character roster a
+  month after the season landed. Teen Titans Go! ticks 447 → 454 (aired
+  through 29 Aug; the words moved with the number). The Batman ’66 note
+  now matches its own group's order — the order runs by the age Gotham
+  wears, not the year of broadcast (the eras cannot un-age; §51 was
+  right and the note was wrong) — and "final performance" became "final
+  voice performance", which is what it was.
+- **The head finishes 5.2.1's sweep.** The JSON-LD WebApplication
+  description, `manifest.json`'s description and `llms.txt`'s lead now
+  carry the query phrasing the title moved to; the meta description no
+  longer says the ordering twice ("in order … in watch orders", the
+  merge's double). **`og:title` keeps the social-card branding on
+  purpose** — that split is a choice, recorded here.
+- **The actor FAQ stops contradicting the catalogue's own footnote:**
+  Keaton suits up once more in the DCEU's *The Flash*, and the FAQ now
+  says so; "137 films have been made" became "made and announced" —
+  five of them are not out.
+- **QA margins:** negtest670's watchdog fixture arms the timer before
+  the spin (it passed only on machines slow enough — a fast runner
+  flipped it to a false FAIL) and its "two toast fixtures" comment says
+  three; §17's banner names what the section now is (the whole type
+  scale, not one hero size) and its belt exemption narrowed to the
+  lettering that is really there — the caret's dead glyph-era
+  `font-size` is deleted (with `.arow .stars button`'s), so the
+  exemption shelters nothing; §156's comment stops claiming "by any
+  name" for a census that refuses shipped names.
+
+### Records
+
+The 5.3.0 audit corrected four ledger entries in place: 5.2.3's
+"~450 bytes" token-block figure matched no measurement (212 B of
+definitions; +916 B raw / +42 B gz for the patch); 5.2.3's "nothing
+else moves down" missed `.modenote` 15 → 14; 5.2.0 and 5.2.1
+double-counted one fixture between "seven added" and "one added";
+5.1.1 never recorded its own negtest650 42 → 41. The Knightfall
+parts 2–3 slug prefix stays as shipped — frozen means frozen — with
+the reasoning in NOTES.md. Weight: 240 KB raw / 68 KB gzip against
+250/80.
+
+## [5.2.4] — 2026-09-01
+
+**The soak answers.** 5.2.3 shipped the scale and the owner read it on
+glass the same day. Four sizes came back too small and every one of
+them is fixed by moving a surface to a different role — the token
+block is untouched, which is the scale doing exactly what it was built
+for. Plus one bug the same screenshots caught: a four-star rating could
+wrap its fifth star onto a line of its own.
+
+### Changed
+
+- **Section heads step up a role.** "Then", the grid name and the
+  Progress folds (`.qhead.big`) wear `--t-desc` (14) instead of
+  `--t-note` — the 5.2.3 fold to 12 read too small on device.
+- **The skyline title steps up two.** `.pietitle` ("The universes")
+  wears `--t-note` (12) instead of `--t-fine` — at 9 the chart's own
+  name was fine print.
+- **The chooser titles are landmarks.** `.pick.big b` (Bruce's Life /
+  By Universe / Release Order) wears `--t-title` (24) instead of the
+  heading clamp — the one choice the Home screen exists to ask was
+  quieter than the group titles inside The Path.
+- **The Path's group cards close their description with the diamond
+  rule.** The same `.drule` ornament the hero card carries, after
+  `.gnote`, before the rows (`.gbody .drule` margins 2/15).
+
+### Fixed
+
+- **The star run no longer breaks.** Ratings in a row's meta rendered
+  as five separate glyph spans inside an inline-styled wrapper; a long
+  meta line could take four stars and orphan the fifth onto the next
+  line. The wrapper is now `.strun` — `white-space:nowrap`, color in
+  the stylesheet — so the run wraps as one word or not at all, and the
+  last inline color on a type run went with it.
+
+## [5.2.3] — 2026-09-01
+
+**One scale.** 5.2.2 closed the seams; the owner looked at what was left
+and said the quiet part: 24 distinct font-sizes is not a system, it is a
+history. This patch makes the pattern the file: eleven named roles on
+`:root` — display, title, heading, numeral, two row tiers, body,
+description, footnote, label, fine print — nine fixed sizes and two
+clamps, and every rule in the stylesheet now references a role instead of
+owning a number. The belt buckle's micro lettering (8/7/6.5 with its
+375px step) is furniture, not typography, and keeps its literals on the
+record.
+
+### Changed
+
+- **The ladder, collapsed 24→9+2.** The folds, each recorded: the home
+  intro title joins the display clamp (and its line-height tightens to
+  the display tier's .94); the empty state joins the wordmark at 24; the
+  mode picker joins the group-title clamp; secondary prose (group notes,
+  viewing box, backup prose, picker subtitle, star buttons) rises 13→14
+  into description; the mono section heads drop 13→12 into footnote
+  beside the hero year and `.udesc` (11.5→12); the 11px button tier
+  (hero actions, backup primary, ring label) joins the 10px label
+  workhorse — `.bkbtn.primary`'s emphasis is the bone fill, not a
+  private pixel, and its guard re-pins at the label role; the toast
+  gives up its 10.5; the 9.5 chrome tier (tabs, wordmark subtitle,
+  timeline labels, intro kicker and stats) settles at 9 with the
+  footers; badges and pie labels come up from 8/8.5 to 9. Larger or
+  equal almost everywhere — the two half-pixel descents are the 9.5
+  chrome and nothing else moves down — except `.modenote`, 15 → 14 in
+  the fold to `--t-desc`, unrecorded on the day (corrected by the 5.3.0
+  audit).
+- **Section 17 grew its other half.** 5.2.2 outlawed inline type in
+  markup; now the stylesheet itself has one source — a raw `font-size`
+  outside `:root` fails the build (belt exempt by name), the token set
+  is pinned at exactly the recorded eleven, and a role's value cannot
+  drift without failing against the scale. `negtest681`, three
+  fixtures: the toast taking back its 10.5, a twelfth token appearing
+  unannounced, fine print drifting to 9.5. Guards that read a size off
+  a rule (wordmark, ring floor, input zoom floor, include labels, hero
+  link, bone recipe) now resolve the token instead of matching a px
+  that no longer exists there.
+
+No features, no catalogue change, nothing ticked moves. The token
+definitions are 212 bytes; the whole patch measured +916 B raw / +42 B
+gzipped against 5.2.2 (the “~450 bytes” recorded on the day matched no
+measurement — corrected by the 5.3.0 audit). The README weight line
+ticks 237→238 KB on rounding.
+
+## [5.2.2] — 2026-09-01
+
+**Type has one source.** The 1 Sept type pass read all 114 rules that
+carry a face, a size, a tracking or a line-height, mapped each to the
+surface it draws, and held the sweep against the system as 4.3.1
+recorded it. The system held — the landmark tier is clean and the mono
+tracking ladder works — but the seams that had opened since got closed,
+and the one class of patch that keeps reopening them is now illegal.
+Words and pixels, no features; the patch weighs less than nothing
+against the ceiling.
+
+### Fixed
+
+- **Favorites titles rejoin the ladder.** `.favt` sat at 16px while
+  every sibling row title (`.qt`, `.srow .sn`, `.arow .at`) sits at
+  16.5 — the exact `.uname` drift 4.3.1 fixed, reborn when favorites
+  landed later. 16.5px, and the list-row tier now shares
+  line-height 1.1 (`.arow .at` and `.favt` were at 1.15 for no
+  recorded reason; `.uname` 1.05 and `.ftitle` 1.06 stay tight as the
+  one-liners they are).
+- **One concept, one voice.** The queue's sub-label ("3 shorts")
+  rendered as an inline 11px Big Shoulders span while favorites set
+  the same `subOf()` data in mono — two faces for one datum. The
+  system's rule (micro-labels = mono) picked the winner: the queue sub
+  is now `.qsub`, sharing `.favsub`'s one rule.
+
+### Changed
+
+- **The prose ladder, nine steps to six.** Sans prose had accreted
+  16 / 15 / 14.5 / 14 / 13.5 / 13 / 12.5 / 12 / 11.5 with half-pixel
+  neighbours nobody could defend from the tree. Folded: `.ibody`
+  14.5→14, `.gnote` and `.pick.big span` 13.5→13, `.note` 12.5→12 —
+  the ladder is 16 / 15 / 14 / 13 / 12 / 11.5, line-height 1.5
+  throughout (`.viewing p` joins from 1.4) except `.udesc`'s
+  deliberate 1.35.
+- **`.leadkick` joins the kicker band** at .19em tracking — it sat at
+  .16em as the smallest kicker while the band (.17–.22) widens as size
+  shrinks.
+- **The two footers share their type block.** `.homefoot` and
+  `.note.foot` carried identical declarations twice; one selector list
+  now, beside the diamond rules that already share.
+
+### Guarded
+
+- **Section 17 grew from "one hero size" to "type has one source":**
+  no style attribute in rendered markup may carry a face, size,
+  tracking or line-height — the queue sub was the last inline holdout,
+  and the hero-only clause never watched anywhere else. Two fixtures
+  in negtest680 (the sub going back inline; inline tracking on a
+  surface the old clause ignored); negtest164 and negtest530
+  re-anchored onto the reshaped strings. Deliberate calls written into
+  NOTES.md so nobody "fixes" them: numeral .025em vs display .05em,
+  bare `<b>` resolving to the 600 face, `.empty .big` inheriting 1.5,
+  404's sealed system-mono scale.
+
+## [5.2.1] — 2026-08-30
+
+**The words the searchers use.** The 30 Aug Trends read
+(`claude/trends-analysis-2026-08-30.md`, maintainer-local) said the
+demand for exactly this product is at structural highs and handed over
+the phrasings people type for it — a dozen near-duplicate spellings of
+one question the page answered while using almost none of them. This is
+that copy pass: words, not features, ~1 KB against the ceiling.
+
+### What's new
+
+- **The page speaks the query.** The title is the singular people type
+  ("Batman watch order — every movie and series, no spoilers"), the
+  description leads with "every Batman movie and series in order", and
+  the seed's first paragraph answers "what order to watch Batman in" as
+  a sentence. Animated-and-live-action moved up front, because the
+  animated-order seeker is the fastest-growing visitor.
+- **Two FAQ entries, from the catalogue itself.** "How many Batman
+  movies are there?" — the rising query with a featured-snippet shape —
+  answered with derived counts (137 films, 1943–2028, 68 seasons, 44
+  continuities) that can never drift from the data. And "Which Batman
+  movies go with which actor?" — West, Keaton/Kilmer/Clooney, Bale,
+  Affleck, Pattinson, each mapped to the exact continuity name — because
+  actor names are where searchers start. The continuities section now
+  leads with the same five. The animated FAQ names both narrowings
+  ("animated only or live action only") — the "non animated" demand is
+  real and now stated.
+- **Next up's closing note, actually one line of flow.** 5.2.0 merged
+  the two truths into one block but left the dates line on a `buildline`
+  span, whose 1em gap read as the same orphan. Two sentences, one
+  paragraph now. The guard learned the lesson too: it fails a span that
+  sets the dates truth apart, not just a second block.
+
+### Why PATCH
+
+Copy and one footer line. FAQ answers derive from the same seed the
+guards bless, so the JSON-LD FAQPage moved with them; negtest131/530
+fixtures re-aimed at the one-flow note, one added (that one is inside
+5.2.0's “seven added” — the two entries double-counted it; corrected by
+the 5.3.0 audit).
+
+## [5.2.0] — 2026-08-30
+
+**Drawn, not rented.** The owner's review said the diamonds were three
+sizes, the tick didn't read deco, and Next up's footer orphaned its last
+line. The investigation said something better: **no shipped face has ever
+carried ◆, ✓, ★, ↗ or ›.** Reading the actual cmap tables out of all four
+woff2s (the way guard section 116 already does) showed every ornament in
+the app rendering from the reader's OS — Segoe on Windows, SF on Apple,
+Noto elsewhere — at whatever size and seat that font decided. The 13px
+Progress diamond everyone liked best was an accident on top of the
+accident: `.bk p`'s font-size outranking `.drule`'s 8px on specificity.
+So 5.2.0 does not change the font. It stops renting glyphs at all.
+
+### What's new
+
+- **Every ornament is drawn geometry now.** The diamond is a rotated
+  `currentColor` box on two tokens — `--dia` for the rules (the hero,
+  Case closed, and the gold seam on Progress, all one size at last, the
+  big one the owner chose), `--dia-s` for the three footer seats and the
+  kick's separator pins. The tick's check is two square-cornered border
+  strokes, the old −45° counter-turn and the −45° that turns an L into a
+  check folded into one rotation; the skip mark is the same box
+  flattened to a bar. The rating stars are a clip-path polygon (the
+  buttons and the rated line in film meta both). The where-to-watch
+  arrow is an inline SVG like the tab icons. The chevrons — tier rows,
+  group heads, the progress fold, the belt buckle, and now the
+  expand-all button, which gave up its private `::after` text to join
+  the caret family — are bordered boxes on the same turns the text
+  used. One shape per mark, from our own stylesheet, on every device.
+- **Next up closes on one block.** The two watching-truths share one
+  `note foot`, the dates line riding a `buildline` span the way the
+  build footer already stacks its lines — no more orphan drifting a
+  diamond's width below.
+
+### Under the hood
+
+- **SYSTEM_MARKS is down to one entry, and it earns its place.** The
+  "system font by decision" list held four rendered marks; all four are
+  drawn now, so the characters left the page. What remains is the ★
+  written into the five-stars text-file export — a downloaded file that
+  opens in the reader's editor, the one place no font we ship can ever
+  reach. The comment in section 116 now says the next exception has to
+  be argued the same way.
+- **Section 116 reads CSS content escapes.** The tick's `\2713` hid in
+  `content:"…"` for five versions — in no face, in no exception —
+  because the scan only knew the `\uXXXX` spelling. Both spellings are
+  needed characters now; a fixture in negtest300 smuggles one in and
+  watches it go red.
+- Guard sections 116, 146, 148, 155 and 157 rewritten to pin the drawn
+  constructions; ten fixtures re-anchored and seven added across
+  negtest131/300/530/650/660/670 (the caret losing its borders, the
+  skip bar leaving the family, the dsep and drule rules dropping, the
+  stacked-note exception returning, the closing note splitting, the
+  content-escape smuggle).
+
+### Why MINOR
+
+A new decoration system — every glyph seat in the app rebuilt, two new
+tokens, a guard scan that sees a class of character it could not see
+before. Nothing about the catalogue, the orderings, or a reader's
+progress moved; a backup written under 5.1.x restores untouched.
+
+## [5.1.2] — 2026-08-30
+
+**The node, named.** 5.1.1's first CI run went red on the browser
+(chromium) job with the line 4.9.5 built the diagnostic to print:
+`axe (first-run chooser): color-contrast ×1 [#toast #0e1118 on #13161d =
+1.04 (floor 4.5:1)]`. Not the chooser. The **toast** — the pill that says
+"Path: Bruce's life" at the bottom — hides at `opacity:0` behind a
+0.25 s fade, and for that quarter second after any toast it is a
+half-transparent bone pill with ink text on it. An axe run that lands
+inside the window measures it and gets 1.04:1; one that lands outside
+gets nothing. That is the whole intermittent: red three nights in a row,
+green for a week, red again on the first push after a chooser state that
+happens to follow a toast. Chrome 151 made the window easier to hit. The
+defect was there since the toast was.
+
+### Fixed
+
+- **The toast no longer fades — it slides behind the tab bar, opaque.**
+  Half-transparency was the whole defect, so it is gone: the pill is
+  opaque for its whole life, slides its 80px down behind the tab bar
+  (stacked under it now, 35 to the bar's 40) and goes `visibility:hidden`
+  the moment the slide ends; `.show` brings it back with no delay. Probed
+  with axe at 0, 60, 120, 200, 240 and 300 ms after the hide: the old
+  rule violated at 120 and 200 ms, the new one never — text occluded by
+  the bar is "incomplete" to axe, not a violation. What a reader sees is a
+  pill that slides up and slides away, where it used to fade. A check in
+  section 20 pins the rule, the stacking and the show state; three
+  fixtures in negtest670 remove each.
+
+### Why PATCH
+
+Two CSS rules and their guard. The 4.9.5 promise — "the fix, or the
+recorded exemption, written against a named element and a measured
+ratio" — is met: `#toast`, 1.04:1, fixed.
+
+## [5.1.1] — 2026-08-29
+
+**Every door.** The 5.1.0 audit (`NightWatcherQA5.1.0.md`, 29 August,
+maintainer-local) read the six releases since 4.9.1 whole and found the
+defects clustered where the record's own rhetoric was loudest. 5.0.0 said
+a parked title "cannot be ticked or skipped, from any door" and shipped
+with two watched doors open; it said the resurrection of a stale skip was
+dead, and the drop was in memory only. This patch closes the report in
+full — the two P1s, the two missed counts, the record corrections, the
+missing fixtures — and removes one 5.0.0 feature on the owner's call.
+
+### Fixed
+
+- **A parked title cannot be marked watched, from any door — now true.**
+  `applyMarks()`'s watched loop and the cross-tab merge's watched branch
+  carried no parked gate while their skip twins did; a 4.x backup code, a
+  JSON file, a restore link or a still-open 4.x tab with *The Batman:
+  Part II* ticked would have marked it watched, logged a night for it and
+  re-exported the mark. Gated at both, at `markWatched()` itself, and at
+  `mergeLog()`. **Guard 158 enumerates the doors**: every statement that
+  writes a watched or skipped mark is named, each must sit behind an
+  `isParkedId` test, and a seventh seat nobody gated fails — the
+  head-allowlist pattern, applied to a promise phrased as *every*. Smoke
+  drives all four doors and `markWatched()` directly.
+- **The stale-skip drop reaches the disk.** `dropParkedSkips()` deleted
+  from `S.skipped` and stopped: no clock, no persist. A reader who loaded
+  5.x and never ticked anything still had the skip in localStorage, and
+  the day the `u` badge dropped it would have resurfaced as "still
+  skipped" — the exact behaviour 5.0.0 said it removed. It now stamps
+  each dropped id (so an older tab's merge cannot re-add it) and
+  persists. A pasted pre-5.0 backup code restored after release day
+  still restores what it holds, by design — the merge only adds, and a
+  code carries no clock; the record says so rather than pretending
+  otherwise.
+- **Two counts the `g.size` sweep missed.** Home's tier rows divided by a
+  pool that still held the parked titles (the Core route could never
+  complete); the share card's building fill divided by the shelf where
+  the skyline divides by what exists. Both read `size` now; the card's
+  width stays the shelf.
+- **`when:` is the one home for a date.** The five parked blurbs
+  repeated their date in prose, unguarded; the first slipped date would
+  have printed twice and disagreed. The dates are out of the blurbs, and
+  guard 154 refuses a `d:` on a parked entry that carries `when:`'s text
+  or a four-digit year.
+- **Smoke's watchdog scales, and says what it is.** A fixed 180 s wall
+  since 4.5.3, while the suite grew 391 → 453, turned a loaded two-core
+  box into a wrong-reason red ("a document load handler did not fire")
+  twice in the audit. `SMOKE_WATCHDOG` (seconds) sets it; `run-all.sh`
+  doubles it when it packs suites side by side; the timeout message now
+  carries elapsed time and checks completed.
+- Smaller: the forecast's span counts local calendar days like the nights
+  do, and the near date carries its year across a New Year; arming
+  *Watched up to here* on a second row repaints the first; *Your five
+  stars* gains a text-file door beside the copy; `counts().parked` — a
+  field nothing read — is gone; `upNext()` re-checks that a pick is not
+  parked; RELEASING's Early Hints check greps `HTTP/[23] 103`.
+
+### Removed
+
+- **What's left.** The unwatched route as copyable text, shipped in
+  5.0.0, is gone: it was the one place in the app where a click handed a
+  person the whole curated route, and on a first visit that route is the
+  work. `orders.txt` is not the same thing and stays — offered to
+  crawlers and no-script readers, reachable by URL, never by a button.
+  Guard 156 refuses `routeText()` coming back by its shipped names
+  (this line said "by any name" until 5.3.1; 5.3.0 softened the census
+  to what it can see).
+
+### The record, corrected
+
+- README's MAJOR rule now covers both lines — the shape of saved
+  progress, and what its numbers mean — which is the line 5.0.0
+  actually crossed. NOTES no longer documents `routePos()` (its story
+  is in NOTES-history, with "every door"'s). ARCHITECTURE carries
+  `counts()`'s shape, `upNext()`'s pick, and the two transients. The
+  5.1.0 entry says 27 honest NRs, not 26, and records negtest650's
+  43 → 42. (This release's own What's-left removal took negtest650
+  42 → 41 with `routeText`'s fixture — unrecorded on the day, the exact
+  class this entry corrects in 5.1.0's; recorded by the 5.3.0 audit.) Both 5.x entries drop their shard-weight literals — §113
+  holds the property, and the 5.0.0 figures were wrong on arrival, as
+  it predicted — and 5.0.0's smoke delta is counted. The off-tree
+  citations in the 4.9.2 and 5.0.0 entries carry the "maintainer-local"
+  label the others do.
+- **The 4.9.5 loop, closed — for one push.** 4.9.5 armed a diagnostic
+  for the nightly's `color-contrast ×1` on the first-run chooser (runner
+  Chrome 151) and promised "the fix, or the recorded exemption" as the
+  next patch. The nightly went green on the same tree from the next run
+  and stayed green through 5.0.0 and 5.1.0; this entry first recorded
+  that no fix was made because none was found. This patch's own first CI
+  run then named the node. See 5.1.2.
+
+### Under the hood
+
+- Guard 158; guard 154's date rule; `qa/negative/negtest670.sh` (22
+  fixtures — every door opened and caught, the seventh door, the date
+  rule twice, the six §155/§156 arms the audit found unproven, the
+  watchdog fired at 30 s, What's left by another name); smoke +6
+  (447 → 453). Six older suites re-aimed at the gates this patch added
+  (650, 300, 660, 480, 490, 560 — all the fixtures that anchored on the
+  ungated watched loops). 75 suites, 1,223 fixtures (1,144 guards / 79
+  smoke), shards repacked level.
+
+## [5.1.0] — 2026-08-29
+
+**Someone in the room.** The sitting's sequel, cut the same evening from
+the plan that shrank 5.0.0: a night with company, a pace off the nights
+5.0.0 started counting, and the Progress tab given back its rank. Two
+additions, one number, three pieces of polish the owner chose on mocks.
+Nothing saved changes meaning.
+
+### Added
+
+- **A certificates chip.** *R / TV-MA off*, on The Path beside the seven
+  chips it already had. An exclude-set, never a ceiling: "nothing above
+  PG-13" would need a ladder across two rating systems, and the badge
+  rule (guard 92) refuses to translate between them. The 27 honest NRs
+  stay on the shelf. A view chip like the others — it moves neither the
+  pool, nor the counts, nor the hero, because moving the hero would be
+  jumping the path.
+- **The road done by.** One line under the nights line on Progress: *at
+  your pace, done by March 2027*. Pace is titles per night times nights
+  per day over the span the log covers; the floor is three nights and
+  two titles, and below it the line says nothing rather than forecast
+  off one evening. A date within sixty days prints as a day, further out
+  as a month. Counted, never awarded; it moves with the log and cannot
+  be earned.
+
+### Changed
+
+- **Home's kick says the count.** *Tonight's patrol ◆ 79 of 200* — the
+  logged count, the same number the header says — where 5.0.0 printed
+  the route position, *80 of 200*, ten pixels under a header saying 79.
+  Both were true; together they read as a disagreement. One number,
+  twice. `routePos()` is gone.
+- **Your data stands out again.** 5.0.0 put two cards after it in the
+  same chrome and the box that matters most on Progress read as one of
+  three. It keeps its place and takes a signal-edged frame, and the plain
+  hairline between the backup half and the Restore half is now the
+  diamond rule — gold at full strength, not the hero's 40% fade — with
+  `.bk .drule` pinning the ink so the card's paragraph colour cannot
+  override it (the first mock showed exactly that). Design B1 of five,
+  chosen on renders of the live tree.
+- **One bone recipe.** *Share the night* and *Create backup code* (and
+  the two bone buttons in The Path's empty states) wear the hero's cut:
+  46px, 11px mono at .12em, the 8px corner cut top-left and
+  bottom-right, no border. Guard 157 holds the Progress polygon
+  byte-equal to `.heroacts .go`'s.
+- **The fold carets are signal.** The `››` on By universe, By era, By
+  decade and Your five stars.
+
+### Under the hood
+
+- Guard 157 and `qa/negative/negtest660.sh` (22 fixtures, every promise
+  shown to fail); smoke +6 (441 → 447): the safe chip driven through The
+  Path with an NR left standing and the count and hero unmoved, the
+  forecast's floor from below and from above, and the kick read against
+  the header's own text. Four older fixtures re-aimed at the lines this
+  release moved (negtest650 the kick — whose `routePos` fixture left
+  with the function, 43 → 42 — 600 the chip list's tail, 176 the
+  finger-size floor across both bone rules, 200 the scoreboard seat). Four CI
+  shards repacked greedy-by-weight (§113 holds them level); 74
+  suites, 1,202 fixtures (1,128 guards / 74 smoke).
+
+## [5.0.0] — 2026-08-29
+
+**The sitting.** Next up names a night you can actually watch. The cut on
+the hero always meant "where you stand tonight", and the hero did not
+always deserve it: sometimes it was *Dynamic Duo* (2028), and the only
+way past was Skip — a decision about the title, made to get round a date.
+A date is not a decision. Everything in this release follows from that
+one sentence; nothing in it adds a server, a saved field, a fourth
+chronology, an episode id or a streaming API. The belt still sets the
+route. Progress still never leaves the browser.
+
+### Changed
+
+- **A title that is not out yet is parked.** It stays on The Path, in
+  its place, dimmed, with a dashed ring where the tick would be and its
+  announced date where the meta goes (`when:`, a new catalogue field —
+  required on an unreleased entry, forbidden on a released one, and it
+  leaves with the `u` badge on the trigger patch, guard 154). It is never
+  the hero. It cannot be ticked or skipped, from any door: the tap, the
+  read, a pasted code, a JSON restore, another tab. And it is off every
+  count that means "what exists" — *To go*, the ring, the buckle's
+  "79 of 200", the universe cards, the folds, the skyline's crowns and
+  the share card. A route can be finished while 2028 sits in the
+  catalogue, which is true: you have seen every Batman that is out. The
+  building still widens for it — width is the shelf, fill is what exists
+  — so the skyline and the card keep drawing the same roof (guard 150).
+- **Skips placed on parked titles are dropped at load.** Under 4.x the
+  only way past *The Batman: Part II* was to skip it, and that mark
+  would have resurfaced as "still skipped" the day the film landed. A
+  skip on a title nobody can watch is "not now" said twice; it clears
+  once, after the schema pass, and cannot be placed again. Not a lost
+  mark and not a violation of "the merge only ever adds": there was
+  nothing in it to lose.
+- **The hero is two halves.** The film above the diamond rule — kick,
+  continuity, title, meta, badges, blurb — and the night below it. The
+  rule moved from between the badges and the blurb to under the blurb,
+  because that is the seam. Home is the poster: the kick now says where
+  you stand (**Tonight's patrol ◆ 80 of 200**), and it keeps its one
+  button. Next up is the desk, with everything it had. The meta line
+  prints the cost of the night on both: a season already said its
+  episodes; a film now says **Film** and a short **Short** (an entry
+  whose sub label already says the shape — "15 chapters" — says nothing
+  twice). Running times were considered and dropped: a film is a film.
+- **A bag says so.** Seven universes carry `bag:1` — no internal order.
+  On Next up the hero now carries one line, *No suggested order — these
+  stand alone*, above the controls, and one more button under Mark
+  watched and Skip: **⟳ Let Gotham choose**, which surfaces a random
+  unwatched title from that shelf for this session. Only on a bag,
+  because only there is nothing to break; not saved, so a refresh returns
+  to the first row and the belt stays the only thing that sets the
+  route. The arrow is inline SVG — the subset fonts carry no ⟳ and guard
+  116 said so before the render did.
+- **Then draws a parked row in place.** Dimmed, wearing NOT OUT YET, the
+  date where the year goes. The hero does not say it again: a "then,
+  when it lands" line was built, rendered, and taken out the same
+  afternoon, because the table under it already says it.
+
+### Added
+
+- **Watched up to here.** On any expanded row on The Path: one tap arms
+  it and names the count ("Tap again to log 12"), a second tap logs every
+  unwatched, unskipped, released title before that row on the current
+  route, through `markWatched()` like every other tick. Skips stay
+  skipped — they were decisions. It disarms on its own after four
+  seconds, the way the reset button does. The first-minute feature for
+  someone who has already seen thirty Batman films.
+- **What's left.** A card on Progress: the rest of your route, in order,
+  as plain text — copy it, or take it as a file. Zero state.
+- **Nights.** One line under the scoreboard: *23 nights on patrol · the
+  latest, 3 titles*. Distinct local calendar days in the log the app
+  already kept. Counted, never awarded; no streaks, and not a tile,
+  because the three tiles account the pool and nights are another axis.
+- **Your five stars.** Ratings have existed since 1.4.1 and were only
+  ever visible per row. A fold on Progress — closed by default, named
+  with its count, beside the three ordering folds — lists what you
+  rated five, copyable as text. Renders only once a rating reaches
+  five. (It shipped as an open card first and was refolded the same
+  evening: a reader who rates everything got a Progress tab as long as
+  the catalogue.)
+- **Guards 154–156, `qa/negative/negtest650.sh`** (43 fixtures, every
+  new guard shown to fail), and a 5.0.0 smoke block that drives the
+  parked shelf, both heroes, the bag, the chooser, up-to-here and the
+  three Progress cards through the real buttons, plus a "stale skip"
+  reboot for the load-time drop; 403 → 441 smoke checks. CI shards
+  repacked greedy-by-weight (§113 holds them level — the figures this
+  entry first printed were wrong on arrival, as §113 predicted). Five
+  older fixtures re-aimed at the lines
+  this release moved (negtest200 the scoreboard seat, 510 the hero
+  diamond, 550 the skyline crown, 560 and 570 the skip gate in
+  `applyMarks()`), and guard 146 now matches the continuity line by
+  name, since the kick carries a diamond of its own.
+
+### Why MAJOR
+
+*To go* and *Skip* change meaning for a reader who already has progress:
+five titles leave the count on the next load, a skip placed on one of
+them disappears, and a route can now reach 100% before the catalogue
+does. Nothing in a saved payload or a backup code changes shape — a 4.x
+code restores whole — but what the numbers say has, and that is the
+line.
+
+### Records
+
+`claude/plan-5.0.0-sitting-2026-08-29.md` (the plan and the decisions
+that shrank it), the approved render mocks (Home A, Next up, the bag, a
+parked row), and `claude/release-prep-5.0.0.md` — all maintainer-local.
+
+## [4.9.5] — 2026-08-29
+
+**The nightly names the node.** A corrective cut two hours after 4.9.4,
+for a red that was not 4.9.4's: the 03:17 UTC nightly (QA #410) went
+red on the untouched 4.9.3 tree with `FAIL axe (first-run chooser): no
+serious violations — color-contrast ×1`, the 4.9.4 upload (#411) went
+red with the same line, and a re-run of #410 made it three for three.
+The night before (#407) had passed on the same tree, the same lockfile
+and the same pinned Chrome build. So: deterministic, and the world
+moved, not the code — which is exactly what the nightly exists to
+catch. What it could not do was say WHERE.
+
+### Changed
+
+- **An axe failure now carries the node.** The detail used to be the
+  rule id and a count, and that was the entire message: `color-contrast
+  ×1`. It now lists every offending node's target selector and, for
+  contrast, the foreground and background axe measured, the ratio it
+  computed, the floor it applied, and the text's size and weight — the
+  numbers axe already had and the check threw away. The state is
+  photographed too (`qa/.shots/shot-axe-<state>.png`, full page), so
+  the artifact a red run uploads shows what axe was looking at. No new
+  check, no count moved; a green run prints exactly what it printed.
+- **The 4.9.4 verdict stands.** Every text token on the chooser
+  measures above its floor in `qa/contrast.md` (worst text pair 5.24:1)
+  and the tree passes 108/108 on the Chromium available to the cutting
+  host, which is older than the runner's Chrome 151 and cannot fetch
+  it. Whatever the runner now measures differently — a blended fill, a
+  transition mid-flight, a Chrome change in how it resolves a
+  background — is unknown until this cut's first red run says so. The
+  fix, or the recorded exemption, is the next patch, and it will be
+  written against a named element and a measured ratio rather than a
+  guess.
+
+### Why PATCH
+
+One diagnostic in `qa/browser-check.mjs`. Nothing served changed but
+the BUILD string.
+
+## [4.9.4] — 2026-08-29
+
+**One letter.** Two small things that arrived on the same day, neither a
+defect a user could meet, both worth a line so nobody undoes them.
+
+### Changed
+
+- **The straight answer to "which order" now says "watch order" in the
+  singular.** The owner searched. For *batman watch orders no spoilers*
+  the site is first, above the AI Overview — an exact match on the title,
+  in a phrasing so rare Google offers *"Did you mean: order"*. For
+  *batman watch order no spoilers*, the phrasing people actually type, the
+  site is nowhere: a Reddit thread feeds the Overview and a listicle holds
+  the first slot. Google stems, so the two are near-equivalent — near, not
+  equal — and the singular had never appeared on the page at all. The
+  FAQ's first answer now opens *"There is no single Batman watch order —
+  three honest answers instead of one fake one"*, which is what the app
+  has always meant and happens to be the sentence the query wants. One
+  source (`buildFAQ()` in guards), so the crawlable seed and the FAQPage
+  schema moved together under bless. The title is not touched: it is
+  doing its job. No ranking is promised on the singular — on that query a
+  referring domain matters and wording does not.
+- **Guard 152's tier labels are stored plain and escaped at the
+  pattern.** They used to be stored regex-escaped (`"\\+ Optional"`) and
+  un-escaped again for the failure message with `.replace("\\", "")`,
+  which replaces one backslash — CodeQL `js/incomplete-sanitization`,
+  alert #34, the same class as the three selector escapes 3.5.0 fixed.
+  Three literals, one backslash at most, build-time only: nothing was
+  reachable, and the alert was dismissed on that basis. Fixed anyway,
+  in the shape that cannot regress — the label is never decoded, only
+  ever encoded, at the one place a pattern is built from it.
+
+### Why PATCH
+
+One FAQ sentence, one guard's internal string handling. No behaviour
+change in the app, no catalogue change, nothing touching saved progress.
+
+## [4.9.3] — 2026-08-28
+
+**Zero pending.** The two independent audits of live 4.9.2 (ISO/IEC
+25010 follow-up, 4.7/5; the multi-agent pass, composite 9.00) surfaced
+exactly one in-tree residual between them, and the owner's call was to
+clear it now rather than carry a one-line backlog into the weekend. After
+this cut there is nothing pending in the tree at all — not even a rider.
+
+### Added
+
+- **The corrupt-backup sequence, named.** The ISO follow-up's remaining
+  Reliability residual: every piece existed — junk rejection, malformed
+  ratings, poison imports, the corrupt-store reboot — but not as one
+  named walk. Smoke now runs it under one banner: seed real progress,
+  hand the restore door five corrupt shapes in turn (truncated JSON,
+  containerless JSON, containers of the wrong type, a code of illegal
+  characters, binary noise) — every one refused whole, nothing lost,
+  nothing invented, the stored payload still parses, the app still
+  renders, saving still on. The tolerant half is asserted in the same
+  breath: a TRUNCATED code is not corrupt — it merges what parsed and
+  says it was cut, the designed behaviour since 1.x. 398 → 403 smoke
+  checks.
+- **negtest640** (2 smoke fixtures): a restore door that stops refusing
+  containerless JSON, and an `importCode()` that stops flagging a
+  truncated body, are each caught by name. Shards repacked level —
+  72 suites, 1,138 fixtures.
+
+## [4.9.2] — 2026-08-28
+
+**The empty backlog.** The owner's call: everything still pending lands
+here, and nothing is left open in the tree. Three things were pending —
+the Early Hints patch parked since the 27 Aug Cloudflare check, the three
+in-tree items from the 26 Aug ISO/IEC 25010 triage, and the one nit from
+the 4.9.1 audit (`NightWatcherQA4.9.1.md`, maintainer-local, which otherwise closed clean:
+its "154 sections" baseline line is a miscount — the run it quotes prints
+153). After this cut, `open-items.md` (maintainer-local) holds only the
+owner's off-tree items and the dated triggers.
+
+### Added
+
+- **Early Hints.** Six `Link: </fonts/…>; rel=preload; as=font;
+  crossorigin` lines under `/` in `docs/_headers`. With the zone toggle on
+  (Speed → Optimization → Protocol — the owner flips it after the deploy),
+  Cloudflare caches the hints from the document response and answers the
+  next request with a `103` carrying them, so the six font fetches overlap
+  the 224 KB HTML transfer instead of waiting for the parser. Guard 104
+  holds the hints, the `<head>`'s own preload tags and `docs/fonts/` as
+  one three-way set (token form pinned; a hint under `/*` refused); guard
+  133 narrows the worker's built responses to the three document relations
+  — a markdown body gets no font hints. RELEASING gains the `103` wire
+  check, which reads the toggle no guard can see (the hint cache primes on
+  the first request; the 103 shows from the second).
+- **The keyboard traversal, as a named test.** The ISO triage's
+  Interaction gap, the half a harness can do: browser-check now Tabs
+  through the real page from a known state — every stop must be visible,
+  outside inert panels, and show the `:focus-visible` outline; the
+  header's three controls, the peek, the search box, a chip, a group
+  header and all four footer tabs must be visited in document order, with
+  a cap that turns a focus trap into a failure. Then the belt: Enter on
+  the parked peek drops it, the path buttons and buckle join the tab
+  order, Escape closes it. (The screen-reader pass stays a manual item —
+  a harness cannot listen.)
+- **Offline → tick → reload, as a named test.** The triage's honest
+  Reliability lift: with the service worker in control and the network
+  off, browser-check ticks an entry, reloads offline, and the mark is
+  still there — the localStorage write under a SW-served page, the
+  debounce flushed by pagehide, and `restore()` reading it back from the
+  cache-served shell, one sequence. 101 → 108 browser checks.
+- **`qa/contrast.md` — the numbers, attached.** Section 20 measures every
+  ink-on-surface pair in both themes on every run; the figures lived only
+  in the run's notes, and the ISO evaluator could only take the claim on
+  faith. The table is now a file: written from the measured pairs under
+  `npm run bless`, never typed, and any other run fails if it does not
+  match what the run would write — a palette change without a bless is a
+  stale table. 56 pairs, worst pair named per theme; the gradient,
+  blended-fill and UI-exemption edge cases stay asserted in section 20
+  itself.
+- **negtest630** (6 fixtures): the hint set torn three ways, a hint leaked
+  onto the markdown response, the contrast table stale and missing. Shards
+  repacked level — 71 suites, 1,136 fixtures.
+
+### Fixed
+
+- **The 4.9.1 audit's one finding:** the 4.9.0 entry cited the 4.8.0
+  report with a hyphenated filename the reports do not use. One spelling
+  (the unhyphenated form is the reports' own).
+
+## [4.9.1] — 2026-08-28
+
+**The loop closed.** The 4.9.0 delta review found one real defect, two
+instances of the drift 4.9.0 was built to end landing inside 4.9.0 itself,
+one wrong sentence in a day-old document, and hardening nits. All of it is
+here; the Early Hints patch stays its own cut. (The report:
+`NightWatcherQA4.9.0.md`, 28 August, maintainer-local.)
+
+### Fixed
+
+- **The 304 path could be inert in production.** `worker.js` compared
+  `If-None-Match` with strict string equality — but Cloudflare weakens
+  ETags on the compressed responses it serves, so the header a real
+  browser echoes back is `W/"x"` for the asset's `"x"`, and the
+  revalidation the 4.9.0 fix exists for would never have fired at the
+  edge. The comparison is weak now and honours `*` (RFC 9110 §13.1.2);
+  guard 133 drives both cases.
+- **The sweep did not cover the release that shipped it.** negtest610's
+  README-row half missed five rows — four of them files 4.9.0 added — and
+  had no way to notice. Five fixtures added, and the suite now counts the
+  table's rows against its own fixtures, so the next added row fails the
+  sweep instead of drifting past it (the head half already had its stray
+  census). The 39 head fixtures also pin the lost tag's name in their
+  expects now.
+- **Two history pointers aimed at the file the histories had just left.**
+  `sw.js` and `worker.js` said "History: NOTES.md" for sections that moved
+  to `NOTES-history.md` in the same release (run-all.sh carried an older
+  one). Fixed — and section 65 now reads every pointer on every run: the
+  old address fails, a named file must exist, a quoted heading must be in
+  it.
+- **DATA-MODEL.md's one wrong claim.** The JSON import does not keep
+  unknown slugs — `applyMarks()` admits only catalogue ids; they are
+  counted and reported, and the file itself is what preserves them
+  (owner's call: reword, don't change the import).
+- **Section 153's census reads every head tag.** The first census filtered
+  to meta/link, so a planted `<base href>` — a real hijack vector — a
+  second plain script or a third style block was invisible, and a
+  duplicated required tag matched its own regex. Every element is on an
+  allowlist now, a head script may only be the JSON-LD block, styles are
+  exactly two, and each required tag must appear exactly once.
+- **The shard weights this changelog printed were stale on arrival** —
+  computed before 4.9.0's own six struck fixtures left. The 4.9.0 entry is
+  corrected in place, and section 113 measures the packing's balance on
+  every run (fail over 15% off the mean) so the numbers live nowhere in
+  prose. Same class, same fix: the episode-floor comment in guards.js now
+  names no number either.
+
+### Changed
+
+- **`sw.js` deletes before it puts**, both under `ignoreVary` — `put()`
+  honours `Vary` when it dedupes, so `/` could hold the install-time
+  wildcard-Accept entry beside a navigation's and answer the stale one
+  forever (harmless within one VERSION, and exactly what the "one
+  representation per path" comment claimed was enforced). Guard 132 pins
+  it; its harness cache grew a `delete`.
+- **The last warn of the promoted family is a fail:** a control whose CSS
+  declares no measurable height switched the touch-target rule off with a
+  warning outside CI (guard 75).
+- **The search-everything offer appears only under the All chip** — under
+  Watched or Skipped its "No films match" could be literally false (films
+  matched the query; the chip hid them).
+- **Copy.** The three dated phrasings the 4.9.0 pass missed (universe 08's
+  "newest live-action continuity", universe 44's "so far … will land", the
+  2030s "still being made") are rewritten durable. README's catalogue
+  examples now carry `lo` and `r`, so a copy-paster's first bless is not
+  red twice; the package.json row says how wrangler actually runs; the
+  NOTES-history row claims dated headings, not one per release — and the
+  4.9.0 essay that release never wrote for itself is written
+  ("The clean road", NOTES-history.md). CONTRIBUTING documents the `+1`
+  suite-number suffix; ARCHITECTURE's render steps match the code's order
+  and `bag`/`fmt` read as the optional fields they are; the 4.9.0 entry's
+  "nearest control" is the first with the same action.
+- **negtest620** (11 fixtures) covers the new checks; the shards repacked
+  level; 70 suites, 1,129 fixtures.
+
+## [4.9.0] — 2026-08-27
+
+**The clean road.** A MINOR because the catalogue grew — five entries the
+4.8.0 report put to the owner, each decided by name (below) — and because
+the script's shape moved under the guards' feet on purpose, before the
+next feature rather than during it. The rest is the report itself, fixed
+in full: three runtime defects a reader could meet, two ways a green
+`npm test` was telling less than the truth, the documents corrected where
+they would have misled a new developer today, the history moved out of
+the files a reader and a crawler are served, and the four documents the
+tree never had. Everything the report listed is either done here or
+written down as a decision. (The report: `NightWatcherQA4.8.0.md`,
+27 August, maintainer-local.)
+
+### Added
+
+- **Five catalogue entries, each decided by the owner against the README's
+  rules.** *Man of Steel* (2013) opens the DC Extended Universe under the
+  written exception — no Batman, and *Batman v Superman* is its direct
+  sequel — so the exception now names eight entries. *Elseworlds* (2018),
+  the three-night Arrowverse crossover, joins the Batwoman continuity as
+  the hour Kate Kane debuted in; the era note for "After the cowl" stops
+  counting to three. *Scooby-Doo and Guess Who?* — "What a Night for a Dark
+  Knight!" (2019), Kevin Conroy's Batman for twenty-two minutes — joins
+  *Scooby-Doo Meets Batman* in a group renamed **The Scooby-Doo Crossovers**
+  (no order between them). *The Death and Return of Superman* (2019), the
+  DCAMU's recut of two films, in as optional beside the two Deluxe
+  Editions. *The Dark Knight's First Night* (1991), the two-minute pitch
+  reel Bruce Timm and Eric Radomski drew to sell Fox on the series, opens
+  the DC Animated Universe. **Left out, and recorded in the README:** the
+  *Meet the Batwheels* shorts, music-video character introductions that
+  fail the "a story, not a sketch" test the way *Super Best Friends Forever*
+  did; and *Catwoman* (2004), *Powerless*, *Superman* (2025) and *Peacemaker*
+  season 2, which get asked and fail the rule they are now listed beside.
+  Ratings sourced (guard 92's table moves with them): PG-13, TV-14, TV-PG,
+  PG-13, NR. Counts everywhere: 137 films, 68 seasons, 44 continuities,
+  205 entries; the share card regenerated; life positions renumbered in
+  eras 2, 7, 8 and 11.
+- **Era 0 says why, per row.** `out:` rides `FILMS` now and `metaOf()`
+  prints the reason on every "Outside any timeline" row in Bruce's life
+  — another Bruce, more than one Batman, no Batman in it, a Batman with no
+  life to place (the two LEGO Movies, the reason the era note never
+  named), place not decided yet. The README's "with the reason given" is
+  true per row.
+- **Section 153, the head's required tag set.** The report deleted each of
+  the 42 `<head>` tags and ran `npm test`: thirteen went green, the
+  manifest link among them — the manifest file was guarded, the link that
+  makes the app installable was not. Every required tag is now named and
+  its absence is a failure; a stray tag fails too until it joins the list.
+  `og:url` must exist (guard 38's only check on it was gated on its own
+  presence), and smoke's theme-colour read is null-safe instead of a
+  `TypeError`.
+- **negtest610, the delete-and-assert-red sweep, made permanent:** every
+  head tag deleted in turn, every README file-table row deleted in turn,
+  107 fixtures. The README-row half needed section 45 to stop trusting a
+  hand list: the tracked set comes off `.git/index` now (the parser guard
+  144 already had, lifted into `gitIndexPaths()`), and `_lib.sh` carries
+  the index into every scratch tree so the fixtures prove something. The
+  four shards repacked by weight, level. (The four figures first printed
+  here were stale on arrival — computed before this release's own six
+  struck fixtures left the corpus. Corrected in 4.9.1, where section 113
+  measures the balance on every run instead of prose stating it.)
+- **Four documents the tree never had.** `ARCHITECTURE.md` (the sections
+  of the script, `S`, the counting pipeline, the routes, one render);
+  `DATA-MODEL.md` (the payload key by key, the `NW3` grammar, the JSON
+  export, the tolerance rules); `CONTRIBUTING.md` (which document answers
+  what, how a change lands, the add-a-guard and add-a-suite checklists);
+  and `NOTES-history.md`.
+- **Smoke, 391 → 398:** the Crisis trilogy in release order and the Beyond
+  pilot before its season; the search-everything offer under the tier
+  pouch; the cross-tab write-back and the stale-clock-after-erase case; a
+  view hash consumed once routed; a pasted code surviving a trailing
+  quote, period or bracket.
+
+### Fixed
+
+- **Release order inverted a numbered trilogy.** `releaseCmp` broke a
+  same-year tie by title, so *Crisis on Infinite Earths — Part Three* sorted
+  before *Part Two* ("Th" < "Tw") and *Batman Beyond* season one before its
+  pilot feature — in the app, in `orders.txt`, and in what crawlers read.
+  The tie is the catalogue's own order now (group, then position).
+- **"Search everything" ignored the tier pouch** — a 4.8.0 regression of
+  the 1.7.5 rule. Under Essentials, a search that only hit Optional series
+  offered to widen the scope, switched `scopePref`, and showed nothing.
+  The hidden-count loop asks `onRoute()` like everything else.
+- **The cross-tab merge never wrote back.** The `storage` listener merged
+  into memory and stopped, so two tabs each writing inside the 200 ms
+  debounce ended with unions neither had on disk — close both and one
+  side's marks were gone. It persists when anything moved; the echo
+  merges nothing, so it cannot loop. And a clock at or before an adopted
+  `resetAt` is stale by definition, so a tab that never saw the erase
+  cannot resurrect what it erased.
+- **The splash cover had no failure exit.** `splashOff()` ran only from
+  the boot, so a throw before it — a CSP hash broken by a
+  whitespace-reflowing proxy, a listener registration, the first render —
+  left a permanent bat over the one page written for exactly that reader.
+  Three doors now: a `finally` around the boot render, a `window` error
+  listener that is the first statement of the script, and a CSS failsafe
+  that fades the cover after five seconds whether or not any script ran.
+- **View hashes were sticky.** `#life` stayed in the address bar, so a
+  reader who arrived on it, chose Release order and reloaded was put back
+  into "Viewing Bruce's life"; and `revealHero()` persisted from a
+  read-only view. A routed view hash is consumed like `#nw=` always was,
+  and `revealHero()` no longer writes.
+- **A pasted backup code with a chat client's closing quote, period or
+  bracket** was "not a backup". Trimmed; a junk suffix still rejects.
+- **Offline through `Vary: Accept`.** The Cache API honours `Vary`, so the
+  precached `/` never matched a navigation's `Accept` and offline survived
+  only through the explicit `./` fallback. Every match passes
+  `ignoreVary`: one representation per path in that cache.
+- **The Worker's markdown response dropped its validators** — no `ETag` or
+  `Last-Modified` under `no-cache`, so every revalidation was a full fetch,
+  and HEAD read the body to return nothing. The asset's validators ride
+  through, a matching `If-None-Match` answers 304, HEAD never reads the
+  body; guard 133 drives all three.
+- **Warnings never affected the exit code.** Nine sites warned where the
+  thing they check had gone missing ("could not find the count to
+  verify" switched a section off) and the run printed "all guards passed
+  (1 warning(s))" with exit 0. Those sites fail; in CI any warning at all
+  is red.
+- **Two sites tested the badge instead of `tierOf()`**; the `.pathseg`
+  carried a `data-lit` nothing read while guard 128 pinned the vestige
+  instead of the live setter in `renderHead()`; `.toast` ignored
+  `--vpdead` and floated too high on the healed iOS viewport; no-script
+  readers saw "Loading" in the subtitle forever; the CSP `<meta>` sat
+  after the six preloads and the manifest link (ungoverned) and granted
+  `style-src 'self'` for a stylesheet that does not exist; Escape did not
+  close a dropped belt; unmarking from Recent activity dropped focus to
+  `<body>` (the restore falls back to the first control with the same
+  action); *Kite Man* had no season label; Knightfall Parts 2 and 3 lost
+  their "Batman:" prefix relative to Part 1.
+- **Catalogue copy.** Thirty-five descriptions used straight quotes and
+  twenty curly, never both in one entry; every quote in `PATH` is curly
+  now (display text only — no slug touched). The dated logistics in three
+  released entries ("landed 31 July 2026", "Digital 25 August, disc 8
+  September", "finishing in July 2026") and the relative phrasings ("the
+  most recent run", "the final season to date", "still running … and
+  counting", "the current release") are gone — nothing in the catalogue
+  needs a clock to stay true. *Harley Quinn* season 6 checked: in
+  development, undated, so the group is not stale.
+- **Documents that would have misled a new developer today.** NOTES
+  contradicted itself on the merge (present tense "never resurrects an
+  untick" beside the 3.8.0 clocks) and on `KEY` ("bump only for a breaking
+  shape" beside "must never change"); the README's catalogue schema
+  omitted `lo`, `r`, `out` and per-entry `fmt`, an entry written from it
+  failed guard 70, and the universe object was not described at all; the
+  README said the guards had "zero dependencies" (Acorn since 4.2.4),
+  described `--bless` as "re-snapshot frozen IDs" (it rewrites
+  `index.html`, `orders.txt`, two JSON-LD blocks and three manifests —
+  every writer is listed now), called `qa/smoke.js` optional (it is half
+  of `npm test`), described licence links that do not exist and omitted
+  the Brave Creators one, listed four of the eight route tokens, and
+  misdescribed `qa/subset-fonts.py`; the versioning rule did not cover
+  feature MINORs; the project's seal status was stated nowhere a joining
+  developer would look. `SECURITY.md` and `security.txt` said "no server"
+  with a Worker at the edge. The `parkFocus()` entry described attributes
+  that have been static since 4.0.4. `docs/vp.html`, the iOS viewport
+  probe, outlived the investigation it answered (closed in 4.0.9) —
+  retired, with its guard-13 exclusion; **the zip cannot carry a deletion,
+  so the owner removes the file by hand.**
+
+### Changed
+
+- **The groundwork, before the next feature.** `GROUPINGS` is the three
+  orderings as one table — prefix, list, frozen roof code, membership,
+  tag, comparator — and `modeGroups()` builds groups from it; the key
+  scheme that lived in five places (`buildGroups`, `groupFilms`,
+  `viewStats`, `drawShareCard`, `goToGroup`) lives in one. `render()`
+  snapshots every input and textarea in the panel through
+  `fieldSnap()`/`fieldRestore()` instead of carrying one dance for `#q`
+  and another for `#restorebox` (and a third in `fillPanel()`); a new
+  input needs no new copy. `segmented()`/`segButtons()` render every
+  segmented control — the three pouches, the theme row, the path
+  segments, the chips — from named option tables, each wrapper now
+  `role="group"` with an accessible name (the report's accessibility
+  note, landed in the one place it could land). `SCHEMA` is the persisted
+  state as a table — one row per key, its writer and its reader — and
+  `persistNow()`/`restore()` are loops over it; the `mode` mirror the
+  payload wrote for a 1.1.0 downgrade is dropped (the read stays). The
+  `window.storage` adapter for Claude artifacts, unreachable on every
+  origin the config declares, left with the Promise shape it was the only
+  reason for: the store is synchronous and `restore()` returns. The
+  feature detection below the floor the script already requires
+  (`closest`, `scrollIntoView`, `replaceState`, `toBlob`,
+  `focus({preventScroll})`, the two observers) went, and the floor is
+  written down in NOTES ("The floor"); smoke installs inert observers and
+  `scrollIntoView` for jsdom.
+- **AST predicates in the guards.** `fnNode`, `fnCalls`, `topVar`,
+  `objProp`, `srcOf`, `schemaRow`, `schemaKeys`, `callsIn` — questions
+  the parsed program answers that a formatter cannot change. The twenty
+  sections the refactor touched were re-anchored through them, so the
+  next refactor of the same shapes does not go red in twenty places; the
+  sections pinning a reviewed wording keep the wording. Seven regex-based
+  function extracts that survived the 4.2.4 parser switch now use `fn()`;
+  the CSS is extracted one way (`cssText()`/`cssRules()`, every `<style>`
+  block, so the `<noscript>` block is seen); three unreachable
+  truthiness checks on `optionalFn()` results are gone; section 107's
+  nested-section check reads the headers through `sections()` and strips
+  comments like every other reader; the unnumbered "idHash is memoised"
+  block is filed as the tail of section 2 on the record (a number of its
+  own would renumber 151 sections and every fixture's `sect`).
+- **`qa/browser-check.mjs` measures instead of sleeping:** the nine fixed
+  sleeps (80–450 ms) are `frames()`, `scrollSettled()` and `until()` —
+  waits for a paint, a scroll offset that has stopped moving, a state the
+  page reaches on its own timers, each with a ceiling. Screenshots land
+  beside the script, not in the working directory; `const URL` no longer
+  shadows the global.
+- **CI.** `setup-node` asks for the newest 22 (`check-latest`) so a lagging
+  runner image cannot hard-fail `npm ci` under `engine-strict`; `wrangler`
+  — the heaviest package in the lock and used by no CI job — left
+  `devDependencies` for `npx wrangler@4.123.0` in the deploy and preview
+  scripts (`wrangler.jsonc` drops the `$schema` that pointed into
+  `node_modules`).
+- **Documents.** `NOTES.md` is per-symbol and rules, present tense, with a
+  table of contents; every post-mortem, release essay and archived comment
+  block is `NOTES-history.md`, one dated heading each, superseded
+  sections marked. `CHANGELOG.md` opens at 4.0.0; 1.x–3.x are
+  `CHANGELOG-archive.md`, whole. The served and config files carry their
+  invariants and a pointer, not their history: `docs/_headers` (85 lines
+  of essay to a page), `worker.js`, `docs/sw.js`, `docs/robots.txt`,
+  `docs/sitemap.xml`, `wrangler.jsonc`. `RELEASING.md` drops the
+  review-ticket lead-ins and its placeholder command, states the
+  quantize, and reframes "Freeze notes" as standing notes for any cut.
+  The README's episode floor reads 1,950+ (the data is four short of the
+  2,000 the old floor would have tripped on); the fixture prologue is one
+  `pro()` helper in `_lib.sh` where nine suites redefined it; the six
+  guard-66 fixtures copied across three suites are struck (`NO_SECT_PINNED`
+  770 → 764); the guards' own comments cite the releases that shipped
+  (3.0.0 and 2.5.0, not the 2.8.0 and 2.2.1 that never did) and render
+  their em dashes as em dashes.
+
+### Not done, on the record
+
+- **The 7 px and 8 px mono lines** (`.bs2`, `.bd`) stay: the buckle's
+  three lines were measured into a 44 px belt in 4.8.0 and the badges into
+  one box in 1.x, and a floor for low vision is a design pass, not a
+  number change.
+- **Network-first with no timeout in `sw.js`** stays: the timeout would
+  have to be a real `Promise` race, which the synchronous harness guard
+  132 drives the worker with cannot see, and the lie-fi case is the price
+  of a bad deploy never being sticky.
+- **The 106 fixtures that share an expect string** stay: the fixture
+  twins in far suites are deliberate (`RELEASING.md`, step 4).
+
+## [4.8.0] — 2026-08-26
+
+**The third pouch.** Until now the tier lived only in The path's chips,
+and a chip hides rows without moving a count. So a reader following the
+Core route had to skip every Optional entry by hand to reach 100%, the
+Skipped tally carried the cost, and the share card showed steel where
+there was never anything to skip. The tier is now the third pouch on the
+belt, beside format and scope, and it feeds `visible()` the way those two
+do — one term, through `tierOf()`, so the belt and the chips can never
+disagree about what "Core route" means (Essentials inside, Optional
+out). Every count on the page follows from `pool()`, which is why the
+change is one term and not forty. Skip goes back to the job it was built
+for: "not this one, not now" — the reader with an announced title on the
+route still skips it and unskips it when it lands. The chips stay, all
+seven; a glance must not need the belt. Owner's calls, 26 August, all
+before code: the third pouch itself; the wording, settled against two
+rows ending in the same word; the closed buckle's rule; and the chips.
+
+### Added
+
+- **A tier pouch: Essentials / Core route / + Optional.** `S.tier`
+  (`ess`, `core`, `all`), persisted beside `scope` and `format`, read
+  back through a whitelist that defaults wide — a save written before
+  4.8.0 opens with + Optional, so nobody's denominator moves overnight
+  (the 1.5.0 rule). `onRoute(f)` is the one test; `visible()` calls it
+  and `groupsKey()` carries the tier, so the group cache invalidates
+  with it. The pools nest: 28 essentials inside 74 core route inside 200.
+  Toasts on change, in the scope row's voice: "Optional added", "Core
+  route only", "Essentials only". The first-run chooser asks the same
+  third question under "What are you watching", at the larger size.
+- **The buckle names only what is narrowed.** One line per pouch, in
+  pouch order — Animated, Movies, Core route — and when nothing is
+  narrowed there is nothing to list, so it reads the app's own two words:
+  EVERY BATMAN. The accessible name still reads all three answers in
+  full. Measured before it was built: the slot is 55px at 390 and grows
+  with its content; every line here is under the 62px "Movies + Series"
+  already took, and three lines fit the 44px belt.
+- **The Optional chip explains a narrowed belt.** Under the Core route or
+  the Essentials, tapping Optional used to say "Nothing in this filter
+  yet", which was false — the entries exist, the belt is hiding them.
+  The empty state now says so, names the setting, and offers **Add
+  optional** (the same `data-tier` handler; the "Search everything" shape
+  from 1.7.5).
+- **Section 152** holds the whole shape: the declaration, the write, the
+  whitelisted read, `onRoute()` through `tierOf()`, the three pools
+  nesting with the Essentials kept inside the Core route, the pouch's
+  three labels, the format row's wide label, no pouch button saying All
+  or Everything, the drop order, the first-run row, the handler and the
+  toasts, `buckleLines()` run against four states, the buckle's markup
+  and label, the stair's third step and its closing travel and stagger,
+  the chooser rows' nowrap, `everyBatman()` on all three axes, "every
+  Batman there is" living exactly once, Home's tiles, the Optional chip's
+  empty state, the seven chips, and the share card's route line.
+  **negtest600**, 36 fixtures: 33 against the section, 3 smoke. Smoke
+  gains 30 checks (391): the pouch driven through its real buttons, the
+  count, the storage, the toast, the buckle in four states, the chip's
+  empty state and Add optional, Home's tiles, the first-run row, and
+  three cold boots — no tier, a Core-route save, a junk tier.
+
+### Changed
+
+- **"All" left the pouches.** The format row's wide button reads
+  **Animated + live**; the tier row's reads **+ Optional**; the scope
+  row already read Movies + Series. Every pouch button names what it
+  holds, and the belt's one summary word belongs to the buckle alone —
+  two rows ending in "All" was the confusion the wording was settled
+  against. The chooser's rows drop to the pouches' `.05em` tracking with
+  `white-space:nowrap` and 4px side padding, because "Animated + live" at
+  `.09em` broke across two lines at 390 (the 1.5.7 lesson, at the other
+  size); the third button may run a few pixels wider than its neighbours
+  at 375 and 360 rather than wrap.
+- **The stair has three steps.** `.scope.tier` sits under the scope pouch
+  at 22px inset and `z-index:0`, closes on its own travel (`--out:-305%`),
+  and the middle pouch gets its own stagger on the way out (.05s) and back
+  (.04s), so the three tuck first / middle / last.
+- **"Every Batman there is" is said once, and only when it is true.**
+  `everyBatman()` tests all three axes; `allLoggedWord()` says "every
+  entry on the route" otherwise. The Next up close, the Home hero's blurb
+  ("every side story" only with + Optional) and the share card's 100%
+  line all read through it, and the card's tag line carries CORE ROUTE
+  or ESSENTIALS beside the format and the path.
+- **Home's tier tiles follow the belt.** Under the Core route the Optional
+  tile goes (it would read 0/0 — the denominator lying in a second
+  place); under the Essentials only the Essentials tile stays.
+- **FAQ Q3** gains one sentence: the belt can set the count to the core
+  route, or to the essentials alone, so there is nothing to skip.
+  `buildFAQ()` is still the single source; the bless moves the seed and
+  the FAQPage node together.
+- **Weight.** 222.0 KB raw / 63.6 KB gzipped (+2,620 B raw over 4.7.0;
+  script bytes 146,167 → 148,325). README quotes 222 / 64. The 250 KB
+  ceiling stands.
+
+### Not done, and why
+
+- **No `#core` / `#essentials` deep-link tokens.** Guard 72's route
+  vocabulary is a published interface and stays frozen; the tier is a
+  preference, like the scope preference a link may not overwrite (1.7.5).
+- **No migration of existing skips.** An entry skipped as a workaround
+  simply leaves the count while the belt is narrow and comes back, skip
+  intact, when it widens. Nothing to untangle, so nothing is touched.
+- **Backup codes and the JSON file still carry no tier**, as they carry
+  no scope and no format: progress and path only, by design (1.5.0).
+
+## [4.7.0] — 2026-08-26
+
+**The cover, and the audit's bundle.** A phone showed the crawlable seed
+for a frame on every launch — the H1, blue underlined links, "Loading" —
+before the first render replaced it. The seed is real markup inside
+`#view` on purpose (1.8.6; both analyzers skipped `<noscript>`), so the
+frame between parsing it and running the script was always going to paint.
+4.7.0 covers it: a fixed plane in the page's own ink with the header's bat
+on it, painted from the head CSS so it is in the first frame, and taken
+down one frame after the app has rendered underneath — no timer, no hold,
+no font waited for. The fade out is the only time it costs, and a reader
+without JavaScript never meets it. Since a minor was opening anyway, the
+4.6.0 audit's on-page bundle rides along, and the one open-items note
+(the chosen drop pouch) is settled. Three calls, all the owner's, 26
+August: the cover over a timed splash, the ceiling's fifth number, and
+the dimmed pouch — a hairline was built first, looked at on the phone,
+and could not be noticed.
+
+### Added
+
+- **The splash cover.** `<div id="splash">` is the first thing in
+  `<body>`, outside `#app`: `position:fixed`, `--ink` ground, the header's
+  bat in `--signal` at 64vw (320px cap) — a splash, not an icon. `splashOff()` runs after the first `render()`
+  in the restore callback, waits one `requestAnimationFrame` so the app has
+  painted under it, sets `.gone` (opacity 0, the bat shrinking to
+  a third over 320ms) and removes the element after the fade. Reduced
+  motion is the existing transition kill: `.gone` lands as a cut. A
+  `<noscript><style>` in the head hides it for a reader without
+  JavaScript. Section 151 holds every part of that shape — first in body,
+  the header's own path, no entrance animation, no timer before the fade,
+  the undo in the head — and the "no `<noscript>` anywhere" clause of
+  section 78 narrows to "one `<style>` and nothing else", with attributes
+  refused. ~1.0 KB.
+- **The seed samples the two orderings it only described.** Each era on
+  the eras list now opens with its first title, from the app's own
+  `lifeCmp`; a new "By release" paragraph names the first eight from
+  `releaseCmp`, decade-bucketed the way the app buckets. Both are generated
+  in section 78 from the data and blessed, never typed — an announced
+  title that leads an era (Dynamic Duo, the Grayson years) carries "not
+  out yet" the way the full list marks it. The paragraph ends on the seed's
+  one link to a file: `orders.txt`, the plain-text catalogue with all
+  three orderings in full. Section 90 allows exactly that href, once; a
+  second file, or none, fails.
+
+### Changed
+
+- **Three FAQ answers, one source.** Q1 gains the words the query actually
+  uses ("every Batman film and series in each, no spoilers"); Q2 names the
+  1966 series and *Batman: The Animated Series* instead of "all of it"
+  alone; Q7 gains the frozen-ID promise in crawlable prose ("a backup
+  written today restores in every later version, because an entry's
+  identity never changes"). `buildFAQ()` is the single source; the bless
+  moves the seed and the FAQPage node together.
+- **The chosen drop pouch is a dimmed yellow.** New token `--signaldim`
+  `#B8941A` — ink letters at 6.9:1, a clear step (1.95:1) under the belt's
+  `--signal` — replaces the 4.6.0 belt-bright fill, so the chosen pouch is
+  read at a glance and the belt stays the brightest yellow on the page. A
+  1px hairline was tried first and rolled back the same day: on the phone
+  you could not tell which pouch was chosen. Section 55 pins the token,
+  the value and the ink letters, and refuses the belt's own fill by name;
+  three fixtures re-aimed.
+- **The weight ceiling is 250 KB raw.** The owner's fifth number, on the
+  record 26 August. This tree is 219.4 KB raw / 63.0 KB gzipped
+  (+2,728 B raw over 4.6.0; script bytes 145,909 → 146,167, all of it
+  `splashOff()`). The 80 KB gzip ceiling is unchanged. README quotes
+  219 / 63.
+
+### Not done, and why
+
+- **`orders.txt` in the sitemap.** The 4.6.0 triage proposed it and said no
+  guard touched the sitemap. Section 105 does, on purpose since 2.7.2: the
+  seed and `orders.txt` are the same 200 entries, and submitting both asks
+  a search engine to choose between two near-identical bodies on one
+  domain. The body link above is the honest answer to "keep it linked";
+  the sitemap stays as decided.
+
+### Why MINOR
+
+A visible feature after the seal: the app changes look — a cover on
+launch, a dimmer pouch where the belt-bright one was — and the crawlable page grows two
+samples and a link. No catalogue movement, no change to saved progress,
+no new files served. One new negative suite (negtest590, 22 fixtures) and
+one new guard section (151).
+
+## [4.6.0] — 2026-08-25
+
+**Two uniforms and a yellow belt.** The first feature after the seal — a
+new decision, with its own entry, exactly as the seal said it would be.
+Two themes, two suits: Dark Deco was always the blue-and-grey uniform and
+is untouched; Darker stops being Dark Deco with the lights down and becomes
+the black uniform. And the Belt is finally the utility belt — yellow, with
+dark pouches. Three calls, all the owner's, confirmed on the design board
+on 25 August from renders of the real app. CSS only: no markup, no state,
+no script byte moves, catalogue untouched, nothing ticked moves.
+
+### Changed
+
+- **The Belt is yellow.** The strip fills `--signal`, framed and seamed in
+  1px `--ink`, and the chosen path inverts — an ink pouch with signal
+  lettering — where it used to be the one signal segment on a dark strip.
+  The buckle sits one step deeper in `--signalpress`, and both of its lines
+  set in ink (the 3.3.0 `.bs2` contrast story ends here: 11.0:1 on the
+  plate). The peek — the 12px that parks under the header — is the top of
+  the same belt: a signal rail with an ink notch at the chosen path, so when
+  the belt drops the pouch lands exactly where the notch was. The glow, the
+  positions, the parking arithmetic and every state are unchanged.
+- **The drops are part of the belt.** The format and scope pouches keep
+  their ink fill and their from-behind shadow, and take signal edges and
+  signal lettering; the chosen pouch inverts to a signal fill with ink
+  letters — the belt's own inversion, mirrored. Ink seams (A) over gold
+  seams (B), owner's pick.
+- **Darker is the black uniform.** Every surface, hairline and grey in the
+  Darker block goes neutral: page `#000000`, sunk `#050506`, cards
+  `#0E0E11` / `#17181C`, hairlines `#232429` / `#33353C`. Bone is a silver
+  `#C9CCD3` (the cowl's highlight) instead of the dimmed blue-white
+  `#AEB6C8`; `--dust`, `--dim` and `--staroff` get neutral overrides of
+  their own for the first time (`#A0A4AD` / `#969AA3` / `#6B6F7A`) so no
+  blue-grey ink is inherited onto a black suit. Signal, steel and crimson
+  are inherited untouched — the belt, the cape and the sky are the same in
+  both suits. Every ink-on-surface pair clears 4.8:1 on every surface
+  (worst: bone 11.0, dust 7.1, dim 6.3, steel 5.8 on `--card2`), so section
+  20 does not warn; the surface ladder holds (147). The status-bar colour
+  stays `#000000`.
+- **Two guards moved with the belt.** The "chosen path is marked in
+  signal" rule now asserts the inversion (ink pouch, signal letters, never
+  bone) and that the strip itself is signal; the "include rows never wear
+  signal" rule inverts to its opposite for the same reason, and pins the
+  pouch seams and lettering. The height relation between the rows — which
+  was asked first — is unchanged and still pinned. Section 147's comment
+  records the retune.
+
+### Why MINOR
+
+A visible feature after the seal: the app changes look. No new files, no
+deletions, no catalogue movement, no change to saved progress. Weight moves
+by 52 bytes of CSS; script bytes do not move.
+
+## [4.5.4] — 2026-08-25
+
+**The Knightfall trigger.** The one dated catalogue edit every release since
+1.9.5 said would wait for this day, and the first commit after the seal. A
+decision, not a mechanism: the seal said anything landing after it gets an
+entry like every other, and this is that entry. One entry moves, nothing
+ticked moves, no saved progress is touched, no slug changes.
+
+### Changed
+
+- ***Batman: Knightfall — Part 1* is out.** Digital 25 August 2026, disc
+  8 September, as the entry has said since 1.8.7. The `u` badge drops — NOT
+  OUT YET leaves the row, the Next-up hero, the crawlable seed and
+  `orders.txt` in the same edit — and the entry gains its certificate:
+  **`r:"R"`**, sourced (the MPA rating is R for strong bloody violence;
+  the 26 July WB release notice and the 25 Aug release-day coverage both
+  carry it). The blurb is unchanged: it was written as a premise and a date,
+  and both are still true. Parts 2 and 3 stay NOT OUT YET with no rating —
+  late 2026 and early 2027, undated, exactly as before.
+- **Guard 92's distribution moves with it.** 91 MPA + 26 NR + 78 TV = 195
+  rated, five unreleased carrying none; `R` 17 → 18. The comment that said
+  the R "rides the 25 Aug trigger patch" now says it did. The
+  negtest195 fixture that handed a certificate to an unreleased entry early
+  was aimed at Part 1 — it is re-aimed at Part 2, which is what an
+  unreleased entry is now.
+
+### Why PATCH
+
+One data edit and its guard, blessed. No feature, no new files, no
+deletions, no tag. The share card is untouched — its three numbers (133
+films, 67 seasons, 44 continuities) did not move, so guard 91 is green
+without a regeneration. Weight moves by the bytes of `r:"R"` minus
+`b:["u"]`.
+
+## [4.5.3] — 2026-08-24
+
+**The seal, last cut.** No feature. The final audit of the 4.5.2 tree
+called it seal-ready and left eight doc-and-comment nits and one decision;
+this takes the nits and makes the decision. Catalogue untouched; nothing
+ticked moves.
+
+### Changed
+
+- **The Plex faces are renamed.** IBM's upstream OFL header reserves the
+  name "Plex" (restored to `OFL.txt` in 4.5.2), the four Plex faces ship
+  as subsets — Modified Versions — and the OFL FAQ says subsetting does not
+  normally get to keep a Reserved Font Name (2.6) and that the name "as
+  presented to users" includes the mechanism a document uses to specify
+  the font (5.3), which is the `@font-face` string. Owner's call, of three
+  honest ones: leave it (a licensing bet inside a sealed tree), ship IBM's
+  own Latin1 files (+≈45 KB), or rename (0 bytes). Renamed: name IDs
+  1/3/4/6/16 in the four woff2 read **NW Sans** / **NW Mono** (copyright,
+  version and licence records untouched), and `@font-face`, `--body`,
+  `--mono`, the story card's canvas font and `qa/share-card.html` declare
+  the same. The file names keep `ibm-plex` — a file name is not a presented
+  name, and it is what `_headers`, `sw.js` and the manifest address.
+  `qa/subset-fonts.py` does the rename after the subset (`RENAME`), so the
+  fonts regenerate the same way; `qa/font-subset.json` re-blessed (−36 B
+  net across the four). `OFL.txt` says so under IBM's block. Same rule
+  Limelight got, with the answer that costs nothing. Glyph sets and cmaps
+  unchanged (223 glyphs, 204 codepoints each).
+- **§106 holds it.** The reserved names are read out of `OFL.txt`
+  ("Limelight", "Plex"), and no face the manifest marks subset may carry
+  one in its name table — read out of the woff2 by the guard itself: the
+  directory, one brotli stream, the `name` table at its offset — or in the
+  `@font-face` family the page declares for it. An `OFL.txt` that reserves
+  nothing is refused too. Four fixtures (negtest580).
+- **The eight nits.** RELEASING.md's `/index.html` wire check no longer
+  says a 404 breaks offline (the shell is `./`; 404 is informational, 200
+  is the platform change), and the freeze note mentions the CI and format
+  refusals. `626482b` is the **3.9.6** upload (its `BUILD` says so; the
+  4.5.2 entry and NOTES.md said 3.9.5). Fourteen maintainer-local
+  qualifiers, not fifteen. The §133 exclusion list is named in full
+  (`Content-Type`, `Content-Location`, `Content-Length` — no wildcard, so a
+  `Content-Security-Policy` under `/*` would rightly be required). Six
+  scans → two on the grid, four → two on the rows. ≈45 KB is the Plex
+  saving, not 56 (that was five faces with Anton). The "costs nothing"
+  sentence under `applyMarks()` is narrowed: a pre-3.8.0 mark, never
+  toggled since, is still clockless in a current tab, and the one loss case
+  that leaves is written down as accepted. The stripper's header names its
+  real callers (107 and 138). §144's fallback note says "unparsed;
+  byte-scanned" instead of inventing an entry count. And `OFL.txt` carries
+  IBM's `©`.
+- **Smoke's watchdog says why.** A timed-out run printed "1 smoke
+  failure(s)" and nothing else; the reason is printed like any other
+  failure now. (The full wall on a loaded two-core box tripped it once at
+  ~3½ minutes; CI shards are single-tenant and a clean smoke takes ~90 s.)
+
+### Added
+
+- **negtest580 — 4 fixtures**, the two halves of the reserved-name rule,
+  the parse, and the floor. 66 suites, 946 fixtures; smoke stays at 361.
+  Shard 4 carries it.
+
+## [4.5.2] — 2026-08-24
+
+**The seal, second cut.** No feature. The audit of the 4.5.1 tree confirmed
+every 4.5.0 item closed and found that the closing had introduced five
+Medium defects of its own — three guards claiming an invariant they did not
+hold, one unlisted behaviour change in the cross-tab merge, one release step
+that dead-ends — plus fourteen Low items and a handful of numbers in the
+4.5.1 entry that did not match the tree. All of it is taken here. Catalogue
+untouched; nothing ticked moves.
+
+### Fixed
+
+- **§111 asserted two of its three halves.** The header said applyMarks()
+  holds "watched clears skip, the BYID gate, skipped never lands on a
+  watched entry"; the section checked the first two. Removing the
+  `S.watched[id] ||` from the skipped loop left guards and smoke green. The
+  third is asserted on the loop itself now, with a fixture.
+- **§43 told you to run a bless that could not do what it said.** The
+  stale-ledger branch printed "Fix with: npm run bless" and returned before
+  the only line that writes the ledger. A stale `qa/script-bytes.json`
+  under `--bless` printed the same failure and left the file alone. Bless
+  re-records the ledger in that branch now (a green fixture under
+  `--bless` proves it).
+- **§96 read the belt's duration in seconds only.** `animation:beltclose
+  900ms` parsed to NaN, NaN compared false, and the BELTCLOSE ↔ CSS tie was
+  green with a fourfold drift. Both units are read and normalised; an
+  unreadable duration is a failure, not a pass. Three fixtures.
+- **§133 held "the security set" as a fixed list of five.** A sixth header
+  added under `/*` was not required of the Worker (tested with
+  `X-Permitted-Cross-Domain-Policies` — green), and the two HEAD responses
+  were never compared. Every name under `/*` is required now, minus a
+  documented per-response list (`Cache-Control`, `Vary`, `Link`,
+  `Content-Type`, `Content-Location`, `Content-Length` — the three by name,
+  so a `Content-Security-Policy` under `/*` would rightly be required), on
+  all four built responses. Three fixtures.
+- **§140's "never on a live tree" was a convention.** `NW_TODAY` accepted
+  any `Date.parse`-able string and nothing stopped it in CI, where a pinned
+  clock would keep a green badge on an expired `security.txt`. The pin is
+  refused when `CI` is set and must be `YYYY-MM-DD`. Two fixtures.
+- **§144 byte-scanned the git index.** A version-4 index prefix-compresses
+  paths against the previous entry, so `.vscode/…` followed by
+  `.wrangler/state/x` stores `wrangler/state/x` and the scan for
+  `.wrangler/` misses it. The section parses index versions 2–4 (whole
+  paths, extended flags, the varint strip) and falls back to the scan with
+  a warning on anything else. The fixture plants a v4 index the scan
+  cannot see.
+- **§65 never compared a snippet heading under six characters.** `#view`,
+  `.bd.e`, `--num` and eight others were exempt. The floor is three for a
+  heading shaped like an id, a selector or a custom property; a bare word
+  that short stays exempt. Two fixtures.
+- **`stripComments()` read `\/\/` inside a regex literal as a line
+  comment.** `/^https?:\/\//` ended the line at the escaped slashes and
+  everything after it on that line — ten lines in guards.js itself — was
+  invisible to the "every section can fail" censuses. None carried a
+  `fail(` there today. The stripper recognises a regex literal after an
+  opener (`( , = : [ ! & | ? { } ;`, a keyword, a line start) and copies
+  it through; a template literal runs to its backtick instead of dropping
+  its quote at the first newline. The old and new strippers agree on every
+  line of the file but those ten.
+- **Smoke's closed-view bound had quietly made room.** 4.5.1 replaced
+  `< 150,000` (measured 145,644) with `closedSize * 2 < alwaysOn`, which is
+  `< ~311,000` — the closed view could double before it fired. The
+  relation stays and an absolute ceiling of 160,000 stands beside it, with
+  a smoke fixture that pads every row past it.
+- **RELEASING.md's order dead-ended on a catalogue move.** Step 2 said
+  "Bless, once" and step 6 said regenerate the share card and bless again;
+  §91 goes red inside step 2's bless. The card step is step 2 now, ahead
+  of the bless; the two wall-time figures (~15–20 vs ~25 minutes) are one
+  figure; "an old Node fails at `npm ci`" is true now — `.npmrc` sets
+  `engine-strict=true` — where before npm only warned.
+- **The 4.5.1 entry, corrected:** 2.5 KB lighter, not 2; a dozen stale
+  snippet headings, not seven; §2 asserts two ledgers disjoint, not three;
+  the `engines` line flagged rather than failed; and the unlisted behaviour
+  change below. NOTES.md: the 475/476/478 suites belong to 4.0.5/4.0.6/4.0.8,
+  not 4.2.x; `--moss` left `:root` in 3.8.4, not 2.7.x; the constant is
+  `GRIDWORD`, not `GRIDNAME`; 219.2 KB, not 219.3; `supportsAnchor()` is
+  annotated as the 3.6.4 removal it is; a stray `/* ` opener and a
+  "seventy releases" that were 134. README: `icon.png` is the install icon,
+  not the social card (`share.png` is); four rows the file table lacked
+  (`.well-known/security.txt`, `brave-rewards-verification.txt`,
+  `qa/script-bytes.json`, `qa/make-favicon.py`) — §45 holds them now.
+  `docs/fonts/OFL.txt` carried the licence body twice after Anton's block
+  came out; the orphaned second copy is gone, and IBM's line carries its
+  upstream Reserved Font Name clause (*"Plex"*), which the shipped copy had
+  dropped — and which matters, because the four Plex faces are subsets and
+  every note arguing Limelight's keep-whole rule said the other faces
+  reserved nothing. They stay subset; the judgement is recorded as open in
+  NOTES.md ("Open: the Plex reserved name"), not decided in a patch.
+- **One audit claim refuted, on the record:** the sitemap's `llms.txt`
+  `lastmod` of 2026-08-15 was said to be one edit old (4.0.1, 2026-08-17).
+  `git log -- docs/llms.txt` shows the file unchanged since the 3.9.6
+  upload on 2026-08-15 (`626482b`, `BUILD "3.9.6"`); 4.0.1's entry says llms.txt *agreed* with a
+  spelling, not that it changed. The date stands.
+
+### Changed
+
+- **The cross-tab merge's unclocked fallback applies the BYID gate — said
+  out loud.** 4.5.1 routed the storage event's legacy path through
+  `applyMarks()`, whose gate drops ids the catalogue does not carry; in
+  4.5.0 that path adopted them. It is the right tightening for a payload
+  with no clocks, and it is written down now rather than filed under a
+  refactor. The clocked loop is deliberately NOT gated: it mirrors
+  `restore()`, which keeps marks for unknown ids so that two tabs on
+  different catalogue builds cannot lose one by taking turns writing
+  storage. NOTES.md, "Why the clocked merge carries ids it cannot render".
+- **`./index.html` left the service worker's SHELL.** The assets plane
+  redirects it to `./`, so `cache.add` followed a 308 and stored a
+  redirected 220 KB duplicate that a navigation can never use — one
+  redirect and one wasted entry per install. `./` is the shell; the
+  fallback still consults `./index.html` last, for a platform where that
+  path answers 200. §13 lists it as deliberately not cached and refuses a
+  shell entry that is also an exclusion; §132 asserts the install caches
+  `./`; the browser check waits on `./`.
+- **Script, one bless:** the unused `i` on the eras/decades `forEach`s;
+  `gSub()`/`gBarFill()` take the counts a caller already has (the universe
+  grid and the progress rows computed `gDone`/`gSkip` and then had the
+  helpers compute them again — six scans per group on the grid and four on
+  the rows, two now); `gPct()`
+  folded into `gBarFill()`.
+- **guards.js comments:** the stripper's caller list reads 13, 107 and 138
+  (66 no longer calls it); the bless re-verify block has its lead-in back;
+  two comments that began mid-sentence after the 4.5.1 lead-in removal
+  begin at their beginning; the fourteen citations of maintainer-local
+  evidence files say so, including the four inside `fail()` strings that
+  print to whoever reads a red run.
+- **`qa/smoke.js`** spells its three NUL separators as `"\u0000"`, so a
+  file `.gitattributes` forces to text is no longer one git detects as
+  binary.
+
+### Added
+
+- **negtest570 — 17 fixtures** (14 guards, 2 green, 1 smoke): §111's third
+  half, §43's bless under `--bless`, §96 in both units, §133's sixth header
+  and both HEAD responses, §65's short anchors, §144's version-4 index,
+  §13's exclusion, the four §104 cache blocks 4.5.1 added without one, and
+  the closed-view ceiling. negtest560 gains §140's format and CI refusals
+  beside the clock fixtures it already had (which now run with `CI`
+  unset). 65 suites, 942 fixtures; smoke 361. Shard 3 carries the new
+  suite.
+
+## [4.5.1] — 2026-08-24
+
+**The seal.** No feature. The pre-seal audit of the 4.5.0 tree — dead code,
+stale comments, tests that had stopped testing, and three real defects in
+the guard suite's own machinery — shipped whole, so that what the frozen
+tree says about itself is true. Catalogue untouched, nothing ticked moves.
+`index.html` is 2.5 KB lighter.
+
+### Fixed
+
+- **Guards: a failure inside section 24 printed as §23.** `sectOfLine()`
+  matched the section header at column 0 and 24's header is indented (it is
+  nested inside 23); a fixture naming `sect=24` could never match. Five
+  places counted the headers with three regexes; one cached `sections()`
+  census now, the indented header included.
+- **Guards: the comment stripper ate code.** `stripBlockComments` was a
+  regex, and a slash-star inside a string literal — the `_headers` path
+  patterns §104 checks, the `*/*` Accept header §133 sends — opened a
+  comment that ran to the next real close. §104 read as 133 lines instead
+  of 322 and lost three of its assertions to the "every section can fail"
+  count, quietly, because one survived. It is a string-aware
+  `stripComments()` now, shared with §13's `wrangler.jsonc` parse and §136.
+- **Guards: eight fixtures had never been harvested.** §138's coverage map
+  read only double-quoted expects; the eight with single-quoted ones were
+  invisible to the map and to the sect ratchet. The harvester reads
+  arguments the way bash does; `NO_SECT_PINNED` moves 763 → 770 (eight
+  found, one retrofitted a sect — negtest166's empty-section fixture is
+  §107's now, since §66 no longer duplicates that check).
+- **Guards: `qa/script-bytes.json` is read outside bless.** The ledger was
+  written by bless and read by nothing else, so a stale one was invisible
+  to `npm test` and the next bless would have measured its size jump
+  against the wrong baseline. §43 holds it against the page, and a failed
+  write warns instead of being swallowed.
+- **Smoke: two checks that could only fail by coincidence.** "The intro
+  counts what is in view" looked for the literal "58" (the catalogue size
+  when written); it counts from the data. The closed-view bound was a
+  remembered 150,000 with 3% headroom; it is a relation to the measured
+  per-row delta.
+- **The Worker's two responses carried no security headers.** `_headers`
+  reaches asset responses only, so the negotiated markdown root and
+  `/.well-known/api-catalog` were the only URLs on the site without
+  Referrer-Policy, X-Frame-Options, Permissions-Policy, COOP and CORP, and
+  nothing recorded it as a decision. `worker.js` restates the set and the
+  root's Link lines from constants; §133 holds them equal to the file.
+- **The service worker's navigate fallback tried the redirected name
+  first.** The assets plane redirects `/index.html` to `/`, so the copy
+  cached under `./index.html` is a redirected response, which a browser
+  refuses for a navigation — an offline navigation to a non-root path under
+  scope would have failed with the shell in the cache under the other name.
+  `./` first; §132 drives the case. RELEASING.md gains the one `curl` that
+  confirms the redirect on the wire.
+- **Docs and comments that stated things the tree no longer did.** The
+  README's licence paragraph said the only links in the app are the
+  where-to-watch searches (the Progress footer has carried "read the source"
+  since 2.7.4), listed a retired `m` badge, and had no row for `worker.js`;
+  LICENSE and OFL.txt still credited Anton (retired 4.3.0); NOTES.md said
+  `offCanonical()` was "still in the tree on purpose" (removed 3.3.1) and
+  read three other retired states in the present tense; a dozen of its
+  code-snippet headings anchored lines that no longer exist, and its palette
+  notes were shifted one token down; `qa.yml` argued its Ubuntu pin against
+  Playwright 1.56 while the lockfile was at 1.62; `worker.js` cited an
+  in-project triage that is maintainer-local; nine guards.js comments
+  carried wrong numbers or sections; the sitemap's `llms.txt` date was two
+  edits old; the 4.5.0 entry above said 219.3 KB where the guard prints
+  219.2. All corrected. §65 now checks NOTES.md's snippet headings against
+  the file, which is the gap that let them rot.
+- **`qa/make-favicon.py` used `getdata()`**, which Pillow deprecated and
+  later removed; it reads raw bytes now, with the same chroma key
+  `make-share-card.mjs` uses. Output byte-identical. The card generator
+  rejects on a failed icon load instead of hanging `page.evaluate`.
+
+### Changed
+
+- **One merge.** The three hand-copied "apply foreign marks" loops — the
+  cross-tab storage event, the JSON restore branch, `applyImport()` — are
+  one `applyMarks(res, stamp, gate)`. §111 holds the invariant in the
+  helper (watched clears skip, the BYID gate, skipped never lands on a
+  watched entry) and refuses a site that grows its own copy back. One
+  behaviour change rides in it (recorded in 4.5.2, missed here): the
+  storage event's unclocked fallback — the path for a payload written by a
+  pre-3.8.0 build, with no clocks on it — now goes through the helper's
+  BYID gate, so an id the catalogue does not carry is no longer adopted
+  from that shape. The clocked loop above it still carries such ids, on
+  purpose; NOTES.md, "Why the clocked merge carries ids it cannot render".
+- **One focus restore.** `focusSnap()`, `focusRestore()`, `focusBack()` and
+  `attrEsc()` replace the snapshot/restore `tickUpdate()` and `render()`
+  each carried, the selector escape written three times and the
+  `preventScroll` try/catch written four. §123 pins the helpers and refuses
+  a site that calls `.focus()` itself. The restore-box refocus gains
+  `preventScroll` in passing.
+- **Named constants.** `RINGC` (the ring's circumference, tied by §80 to the
+  markup and 2πr) and `BELTCLOSE` (the close timer, tied by §96 to the
+  `beltclose` animation's duration). `GRIDWORD` replaces three copies of the
+  eras/decades/universes ternary; `gDone()`/`gSkip()`/`gSub()`/`gBarFill()`
+  replace five re-derivations and two inlined progress bars.
+- **Dead code out of the script**, one bless: the unread `k:` on life
+  groups, the `String(i+1)` tags renumbered unconditionally two lines
+  later, the unreachable `|| [0,"1"]` in `importCode`, the non-Promise
+  branch of `persist()` (both store adapters always return one), the
+  never-empty `.hbadges` gate, six `typeof requestAnimationFrame`
+  fallbacks (the script hard-requires Promise, `closest`, Path2D and Blob;
+  no browser has those without rAF — the `requestIdleCallback` fallback
+  stays), a ternary-as-statement, and the second shape of the `S.clk`
+  wipe. In the CSS: `.pick`/`.pick span` (every pick is `.pick.big`, which
+  re-declared all of it), `.buildline` restating `.note.foot`, two
+  `margin-top:0`s overridden on the next rule. In the markup: the header
+  HTML comment and the two `twitter:` metas X falls back from.
+- **The histories left the served and config files.** `sw.js`,
+  `worker.js`, `wrangler.jsonc`, `_headers`, `qa.yml`, `smoke.js`,
+  `browser-check.mjs`, `run-all.sh` and `_lib.sh` keep each decision's
+  "why"; the dates, release numbers, review-ticket names and evidence files
+  went to NOTES.md ("Where the served and config files' histories went").
+  In `guards.js` the fourteen longest memoirs were condensed to their
+  invariant paragraph (the full text is in NOTES.md) and sixteen
+  review-ticket lead-ins came off. `_headers` is a header file again, not a
+  changelog. Guard duplicates retired: §66's empty-section check (§107
+  owns it), §114's `offCanonical` check (§77), §110's and §118's
+  404.html-exists checks (§101).
+- **CI.** The four negative shards are repacked by fixture weight (shard 4
+  had carried 22 smoke-fixture-weight against 11–14; negtest300 alone is
+  13). The two copy-pasted browser jobs are one job with an engine matrix,
+  and `qa/.shots/` — written on every run, read by nothing — is uploaded on
+  failure. The Ubuntu pin is re-argued against Playwright 1.62.
+- **`_headers`:** Cache-Control blocks for `icon.png`, `icon-192.png`,
+  `icon-maskable-512.png`, `share.png` and `manifest.json` — a day each,
+  the file's own reasoning, which had applied to them all along. §104 pins
+  the five.
+- **`vp.html`** gains the meta CSP `404.html` already had (hash-pinned
+  inline script). `wrangler.jsonc` drops `nodejs_compat` (the Worker uses
+  no Node API). `.gitignore` drops entries nothing produces;
+  `.wrangler/.gitkeep` is deleted (nothing reads the directory; `wrangler
+  dev` recreates it) and §144 refuses anything under `.wrangler/`.
+- **The wrangler config comment** no longer carries the 8 August
+  postmortem — it carries the decision, and points at NOTES.md.
+
+### Added
+
+- **`qa/share-card.json`** — what `share.png` bakes in (the three counts and
+  the file's hash), written by the generator, held against the data by §91
+  the way `font-subset.json` holds the fonts. A catalogue edit now fails
+  the build until the card is regenerated; `npm run bless` re-records the
+  hash after the manual quantize. RELEASING.md step 2 (step 6 until 4.5.2 moved it ahead of the bless).
+- **`qa/requirements-tooling.txt`** (Pillow, fonttools, brotli) —
+  the Python side of the tooling, declared. **`.gitattributes`** — LF
+  everywhere, binaries named; the guards hash and split the tree
+  byte-for-byte and a CRLF checkout goes red across many sections at once.
+  **`package.json` `engines`** matching jsdom's requirement, so an old Node
+  is flagged at `npm ci` rather than mid-suite (flagged, not refused — npm
+  only warns without `engine-strict`; 4.5.2 adds the `.npmrc` that makes it
+  refuse).
+- **`NW_TODAY=YYYY-MM-DD`** pins §140's clock for an archival run of the
+  sealed tree (it goes red thirty days before `security.txt`'s Expires with
+  no edit anywhere). It never silences the check on a live tree. RELEASING.md
+  gains a "Freeze notes" section.
+- **§21 pins the storage key** (`batwatch-v3`, unchanged since the first
+  commit and never to change); NOTES.md says why. **§2 asserts the retired and
+  renamed id ledgers are disjoint** (the frozen ledger is the catalogue's
+  census and is held to it separately).
+- **negtest560 — 27 fixtures**, one per claim above, plus the suite's own
+  floor: a §24 failure printing as §24, a slash-star in a string leaving the
+  code after it alone (a green case), and a single-quoted expect being
+  harvested. 64 suites, 923 fixtures; smoke stays at 360.
+- **Kept on the record:** the 1.1.0 downgrade shim stays (§27 and a smoke
+  case pin it); the swallowed `routeHash()` on `hashchange` stays; the
+  guard-pinned CSS duplicates stay. NOTES.md, "The seal".
+
+## [4.5.0] — 2026-08-24
+
+**The city.** Release 2 of the two-release plan the deco pass opened on
+20 August: the Progress skyline stops being a bar chart with a good name
+and becomes a skyline, and the story card's chart becomes the same city.
+Rethought on the day it shipped so it could ship in one evening — the
+20 August plan's eight clip-path roof forms became stacked blocks and
+masts, the beacon was cut on the owner's word, and the card's bottom block
+did not move. Catalogue untouched, nothing ticked moves.
+
+### Added
+
+- **The shaft is the chart, the crown is above it.** Everything measured
+  lives in a uniform 96px shaft — width is group size, solid `--signal`
+  rising from the ground is watched, `--steel` stacked on it is skipped,
+  exactly the encoding 3.8.2 shipped. Above the shaft sits a **crown** that
+  encodes nothing: it is form, and it lights only once the shaft under it is
+  already full (`--signal`; `--steel` when the rest was skipped; `--line2`
+  otherwise), so ornament can never make a building look further along than
+  it is. Seven forms — flat, block, setback, ziggurat ×2 and ×3, spire, twin
+  — as **stacked blocks and masts**, never `clip-path`: ~44 polygons on a
+  view that re-renders on every tick was a cost the plan measured and the
+  cut declined. Every roof steps in from its shaft (an 8% shoulder, capped
+  in px so a wide era still wears a cap rather than a slab with a lip), so
+  the roofline always steps and never slices.
+- **Deterministic roofs.** Seeded from the group's frozen code through
+  `idHash` — PATH's `n` for universes, the era and decade keys otherwise —
+  and gated on title count, not pixels: a one-title universe may wear flat
+  or block; seven and up may wear anything. Same seed, same roof, on a phone,
+  on a desktop and on the card. A universe is a place, not a render.
+- **The city on the card.** `drawShareCard()` draws the same crowns from the
+  same spec (one `ROOFS` table, two renderers — a DOM one and a canvas one).
+  Radius 5 → 0: the card joins the square family. Shaft 300 → 260px so the
+  tallest crown clears the bat by 51px, measured. The rule, strapline and
+  domain lines stay exactly where 2.7.1 put them; guard 98's pins are
+  untouched.
+- **Guard section 150** pins the rule: the roof spec and its seed, the frozen
+  codes on every Progress group and on the card, both renderers drawing from
+  `ROOFS`, `SKYSHAFT` agreeing with the `--sh` token, `crownState()` lighting
+  only a full shaft, crown colour by class and never inline, no `clip-path`
+  in the city, the solid fill, the 1px street, the card's square buildings,
+  and the numerals row without its tiles. `negtest550` — 17 fixtures, three
+  through smoke.
+
+### Changed
+
+- **The chart is a card.** Same frame as every other card on Progress
+  (the plan's full-bleed was cut on sight — "too wide"); inside it the city
+  runs frame to frame, 150px tall on a phone: 96px shaft, up to 40% of that
+  in crown. The sub-line gains the topped-out count, where it is a fact and
+  not a control.
+- **The numerals row.** Watched · To go · Skipped lose their tiles: one
+  card, three cells on hard 1px rules, 38px numerals over 8.5px labels. The
+  three tier buttons underneath are section 40's, unchanged.
+- **The one progress fill that stays solid.** The deco pass ribbed every
+  fill; the city does not, and the reason is the ribbing rule itself: ribs
+  work because they cross the axis a bar travels along. The city fills
+  upward, so vertical ribs would run parallel to the travel, encode nothing,
+  and cost every tower its footprint. On the record so nobody "fixes" it.
+- **No beacon.** The plan lit the group holding your next entry; the owner
+  cut it during the build. The here-group on The Path already says where
+  you stand.
+- **Smoke +5 → 360**: a building is a shaft and a crown; the three crown
+  states driven on one group so none passes vacuously; the same universe
+  wears the same roof across renders. The CSS sweep stages an all-skipped
+  city so the steel crown rule is seen to match.
+- **Weight: 219.2 KB raw of the 220 KB budget.** The city cost ~3 KB. The
+  next feature raises the ceiling, and that is the owner's number to give.
+
+## [4.4.4] — 2026-08-20
+
+**CI's shard 2 failed on the 4.4.3 upload — two negative fixtures gone stale,
+and both were maintenance this changelog's own releases owed.** The app is
+untouched; this release is the harness keeping its word.
+
+### Fixed
+
+- **negtest360's listener-count twin.** 4.4.2 added the third scroll listener
+  and re-anchored the count fixture in negtest470 — but negtest360 carries a
+  twin ("a third scroll listener arrives here too") that still expected
+  "reviewed with exactly 2". Re-anchored to 3.
+- **negtest460's restore fixture no longer brought the bug back whole.**
+  4.4.2's settle added a second `scrollPut(keep)` inside the rAF; the fixture
+  removed only the first call, the guard rightly still saw a restore, and the
+  expected failure never fired. The fixture now strips all three restore
+  calls — and the guard fails exactly as §122 promises.
+- Both misses share one cause worth writing down: the 4.4.3 verification ran
+  the negative wall selectively ("the suites whose anchors sit near the
+  change") and the full wall only in CI. Fixture twins do not live near the
+  change. The full 62-suite wall ran locally green before this cut — all
+  four CI shards, 879 fixtures — and selective runs are for iteration, not
+  for release verification. That rule is now in RELEASING.md where the next
+  release will read it.
+
+## [4.4.3] — 2026-08-20
+
+**The Path's closing diamond was bigger than the other three.** The soak
+caught it a release after a full round made the footers identical — because
+that round unified the clearance and left the glyph's face to inheritance.
+
+### Fixed
+
+- **One glyph, one face.** The footer ◆ is CSS content, and content inherits
+  the element's font: the legend sits in the body face while the colophon
+  and notes sit in Mono, so The Path's diamond drew from a different
+  fallback at a different width — no subset carries U+25C6, which makes the
+  face pure fallback roulette, and iOS spreads the fallbacks hardest. The
+  shared ::before now pins `font-family` to the body face — the one the
+  hero's own diamonds already render from — so all four footers close on
+  the same mark at the same size. Three contexts and no pinned face is the
+  4.4.1 margins bug wearing a font.
+
+- **And the memory's one blind spot, closed by its own ruler.** The first
+  run of 4.4.2's exact swipe check on this tree failed honestly: "kept
+  2526, back at 2600." An engine can adjust a panel's position without
+  firing a scroll event (content-visibility settling does exactly that),
+  so the place-recorder never heard the adjustment and the memory restored
+  a stale number. Every departure now records the leaving tab's DOM truth
+  at the moment of leaving — the swipe's first motion off the parked
+  position, and goTab's first line — while the panel is still current and
+  nothing has parked, clamped, or refilled it. §149 pins both captures;
+  fixture 5 reopens the blind spot and proves the guard sees it.
+
+### Added
+
+- **The ruler, again beside its sibling.** Browser-check gains "the four
+  closing diamonds share one face at one size" — the ::before's computed
+  font, read off the rendered page on every tab, both engines — and §148's
+  footer clause holds the pin in the source. No new fixtures owed: the
+  existing reshaped-rule fixture proves the grown regex still fails.
+  Counts: 879 fixtures (823 guards).
+
+## [4.4.2] — 2026-08-20
+
+**The phone lost The Path's place on a swipe, and every desktop check was
+green.** Swipe away, swipe back, and the list is somewhere else — iOS only.
+
+### Fixed
+
+- **The reader's place has one memory.** The DOM was the only record of
+  where you were, and the DOM cannot be trusted with it: a panel parked
+  off-screen has its `content-visibility` groups collapsed to the 64px
+  estimate on engines that do not remember rendered sizes (WebKit — Chromium
+  remembers, which is why desktop never showed it), the scroll range
+  shrinks, the engine clamps `scrollTop`, and the background refill then
+  faithfully restored the clamped number. The place now lives in JS
+  (`nwKeep`), written only where truth is available — a panel's own scroll
+  while it is the current tab on a parked deck, and every deliberate
+  `scrollPut` — and read back everywhere the DOM might lie: the background
+  refill and the swipe arrival, which restores under `settling` and re-puts
+  after a laid-out frame for engines that clamp the first write.
+
+### Added
+
+- **The ruler that let it through is reforged.** The swipe check tolerated
+  150px of drift and WebKit had been drifting 116 in plain sight of CI
+  ("kept 2600, back at 2484" — passing). It now demands the place back
+  exactly, in both engines. Guard §149 pins the memory's four claims
+  (fixtures in negtest540 prove each fails), §120/§128 carry the argued
+  third scroll listener and reads. Counts: 149 sections, 62 suites,
+  878 fixtures (822 guards).
+
+## [4.4.1] — 2026-08-20
+
+**The soak found the diamond floating.** One evening with 4.4.0 live and the
+owner caught the footer divider sitting at three different heights — the
+4.3.1 belt bug's mirror image, at the other end of the page.
+
+### Fixed
+
+- **The four tabs end level.** The closing diamond stood 30px under Home's
+  theme row, 16px under Next up's and Progress's notes, and 14px over the
+  legend — `.homefoot`, `.note.foot` and `.legend` each kept a private top
+  margin from their pre-diamond lives, three sources for what 4.3.1 already
+  established is a one-source number. The clearance now lives once, on the
+  shared footer rule (`margin-top:30px` — Home's was the authored one), the
+  three rules give up their own, and the stacked second note keeps its old
+  16px as the named exception: it sits under a footer, not under a tab.
+
+### Added
+
+- **Guard §148 pins the source; browser-check measures the result.** A
+  footer rule growing back a nonzero top margin fails the guard
+  (fixture 23 proves it), and the browser drive gains "the four tabs end
+  level" beside 4.3.1's "the four tabs start level" — the closing gap is
+  read off the rendered page on every tab, in both engines. Counts:
+  874 fixtures (818 guards); browser-check +1.
+
+## [4.4.0] — 2026-08-20
+
+**The deco pass.** The direction the owner locked over three mock rounds on
+20 August: the 45° cut stops being the hero's private ornament and becomes
+rank — "where you stand tonight" is the only thing that earns it — and
+everything that doesn't earn it stands square. One visible release for the
+whole language: the app changes look once. The hero is untouched. Catalogue
+untouched, nothing ticked moves.
+
+### Added
+
+- **The cut is rank.** Three new cut sites, each in the construction its
+  element needs rather than the one 4.3.0 used. The CTA that begins the
+  night (`.heroacts .go`) wears an 8px two-corner cut — solid fill, so a
+  straight `clip-path` is the whole cut. The lead chooser card wears 12px on
+  its top corners only, because the deck overlaps its bottom edge and a cut
+  under an overlap reads as a rendering bug. And **the group that holds the
+  film `upNext()` names** wears 12px corner overlays — the "here-group,"
+  computed once per render and passed into `groupBlock()`, so the mark
+  follows the film you are actually up to and lands on exactly one group
+  (Case closed marks none). The overlays are two 13px gradients painting the
+  page ink back over the corners with the 1px `--line` diagonal in the same
+  paint — chosen over `clip-path` because the group has a sticky header and
+  `content-visibility`, and a clip would fight both. All three surgical
+  paths (tick, row, group toggle) carry or move the mark, held byte-identical
+  to a full render by the existing smoke gate.
+- **One ribbing formula.** Every progress fill — group bars, season bars,
+  universe bars, tier bars — is the same
+  `repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 5px)`
+  on a `--card2` track; each fill states only its colour (inline styles carry
+  `color:`, never `background:`). Vertical ribbing, not diagonal — diagonal
+  gold on black reads as hazard tape, which the mock round established the
+  expensive way.
+- **The stepped underline.** The Path's title carries the deco signature: a
+  34×3px solid signal bar over a full-width `--line2` hairline, drawn in
+  `::after` so the title and its architecture cannot be separated.
+- **Guard section 148** pins all of it — the square-family sweep (every
+  `border-radius` in the sheet is `0` or `inherit`, with `:focus-visible`'s
+  4px as the one named exception), the three cut constructions, the
+  here-group mechanics in CSS and in both render paths, the ribbing count
+  (exactly four), the chevron sites and their states, the underline, and the
+  tick arithmetic. New suite `qa/negative/negtest530.sh` (20 fixtures, all
+  sect-anchored; two drive the render path through smoke). Browser-check
+  gains the computed half: the CTA's clip resolves to a polygon, exactly one
+  here-group with both overlay gradients painted, the tick's rotation read
+  back out of layout (30px × .78 × √2 ≈ 33px box), chips computing square,
+  and the here-group's sticky header still sticking — the interaction the
+  overlay construction was chosen for.
+- **The WebKit CI job, at last.** Parked since the 4.2.x audits with a named
+  trigger; the deco pass fires it by multiplying clip-path sites. Same
+  browser-check file, same server, `NW_ENGINE=webkit`. Its rider lands in
+  the same commit: the 700ms jump sleep is now a settle assertion — the
+  scroll position is read across frames until it stops moving, capped at 2s.
+  The job's first run (on this release's first upload) returned its verdict:
+  every deco assert green on WebKit, and two reds from the harness's own
+  offline reload — `page.reload` under `setOffline` dies with a WebKit
+  driver-internal error after registration, control and THIS build's cached
+  shell had all been asserted. The offline reload is now scoped to Chromium,
+  with an explicit skip line on WebKit naming the driver limit (no silent
+  caps: a skip that says so beats a red that cries wolf).
+
+### Changed
+
+- **The square family.** Forty-odd `border-radius` declarations go to 0:
+  chips and the all-continuities pill (both were full 100px pills), search,
+  the chooser cards, groups, the belt and its peek, mode/scope switches,
+  action pills, the watch link, hero action row, stat cards, universe cards,
+  backup chrome, tiers, the toast, the intro card, badges, the group-number
+  plaque. The plaque gains a 1px solid-gold baseline — the one vertical
+  accent at that scale.
+- **Every tab closes on the diamond.** The four footers — Home's colophon,
+  Next up's availability notes, Progress's build lines, and the badge legend
+  that closes The Path — trade their plain top border for the diamond rule:
+  a gold ◆ on a hairline that fades in from either side, one construction
+  shared by all four (and only the first of a stacked pair wears it). The
+  hero's own rule is untouched; this is the same ornament at footer rank,
+  the owner's call extending it beyond the hero.
+- **The chevron family.** The `\u25B6` triangle retires everywhere: group
+  carets, the progress fold and the belt buckle point with the `\u203A\u203A`
+  pair, and the all-continuities control's `::after` does the same — on the
+  identical rotation states (right = shut, down = open). Section 116's
+  system-marks list drops the triangle and the chevron entry names its new
+  duties; the pair ships escaped, dodging §106's literal scan by the same
+  decision as the diamond.
+- **The diamond tick.** The watched circle becomes a rotated square — the ◆
+  form — at `rotate(45deg) scale(.78)`, check counter-rotated, done/skip
+  states untouched, `aria-pressed` untouched. The tap halo grows to −14px so
+  the scale buys itself back: 58px × .78 = 45.2px across the rotated
+  square's centre, over the 44px floor. The Activity tick inherits the
+  rotation and stays under the Path tick (the §76 relation).
+- **Guards that had to learn the new truth, updated in place and
+  negative-tested rather than deleted** (the §44 lesson): §119 reads the
+  hero-pill/Skip pairing through a unit-tolerant reader (a square corner is
+  `border-radius:0`, no unit — what it asserts is unchanged: whatever edge
+  one declares, both declare); §103 pins `groupBlock(g, q, nid)`'s grown
+  signature; §146's prose records that the cut stopped being hero-only while
+  its assertions keep holding the hero's own construction exactly as 4.3.0
+  built it. negtest176, negtest200, negtest310 and negtest360 re-anchored to
+  the moved rule text in the same commit.
+- Counts: 61 suites, 873 fixtures — 817 guards / 56 smoke — smoke 355
+  checks (five new: the here mark lands on exactly one group and the right
+  one, Case closed marks none, every rendered caret is the chevron pair,
+  tier fills carry colour tokens only), guard sections 148, sect-less pin
+  unchanged at 763.
+
+## [4.3.1] — 2026-08-19
+
+**The tabs start level.** The owner's review of 4.3.0 found only Progress
+standing at the correct top margin — and the reason is this project's
+oldest bug class wearing a new coat: an offset with two sources. Progress's
+first block carried a private inline `style="margin-top:18px"`, so it stood
+18px clear of the parked belt while Home, Next up and The path stood at
+10px, with The path's bare Limelight title crowding the peek worst. Plus
+the type-ladder rungs the Big Shoulders swap left un-tuned. No features,
+no catalogue change, nothing ticked moves.
+
+### Fixed
+
+- **One first-content offset, from one source.** The belt's bottom margin
+  is now 18px — the single source of clearance below the parked peek —
+  and the inline patch on Progress's chart row is struck. Margin collapse
+  means Progress does not move; the other three tabs rise to meet it.
+- **Every inline margin leaves the rendered markup.** Five style-attribute
+  margins (the pathkick, the picknote, the grid heading, the scope note,
+  the fold headings) moved into classed rules; data-driven inline widths
+  and colours stay, since those are values, not offsets. **Guard 128 now
+  pins both**: the 18px source, and a sweep that refuses any
+  `style="…margin…"` in the page — with the pies patch named in the
+  comment as the drift it exists to stop. Smoke drives the same rule in
+  the rendered DOM; the browser check gains "the four tabs start level,"
+  the geometry assert that would have caught this the day the patch
+  landed.
+
+### Changed
+
+- **The Path's group titles outrank their rows again.** `.gtitle`
+  (Limelight) 17px → `clamp(17px, 5.5vw, 20px)`: the 4.3.0 swap put the
+  rows under it at 19.5px Big Shoulders 700, inverting the hierarchy in
+  every open group. The clamp rather than a flat 20 because the 320px
+  check argued: the longest continuity names ("Standalone Justice League
+  Films", "The Burton / Schumacher Films") take a third line at 20px on
+  the narrowest phones — and at 19px too, so the honest floor is today's
+  17. Every other deco landmark (the hero, the path title, the intro)
+  already sizes by viewport; the group title was the odd one out, fixed
+  where its siblings flex. At 390px and up the hierarchy stands corrected;
+  at 320 the shipped relation holds rather than buying rank with a third
+  line.
+- **One row-title ladder.** `.uname` 16 → 16.5px, joining `.at`/`.qt`/`.sn`
+  on the same rung; the display ladder is 19.5 / 16.5 with the deco
+  landmarks above it.
+- **The shadowed `.pick b` type block is deleted.** Nothing renders a bare
+  `.pick` — only `.pick.big`, whose own `b` rule overrides every
+  declaration the base block made. It was Anton's last ghost: a face
+  assignment that styled nothing, waiting for the next reader to trust it.
+- Section 99's seat pins updated with the offsets' move (the seats are the
+  pin; the margins were incidental); negtest177 and negtest200 re-anchored
+  in the same commit. New suite `qa/negative/negtest520.sh` (4 fixtures:
+  each of the margin pair shrinks back, the patch returns at the source,
+  the patch returns in the rendered DOM). Counts: 60 suites, 851 fixtures —
+  797 guards / 54 smoke — smoke 350 checks, guard sections still 147.
+
+## [4.3.0] — 2026-08-19
+
+**The deco release.** The feature the audit cycle kept clearing the runway
+for: three changes from the mock round, all owner-picked. The row titles
+move to the face that was already in the building, Darker stops being a
+dimmer and becomes a dark, and the hero card gets the one deco ornament
+that survived the panel round — 45° cuts and a gold diamond, with the
+double hairline and the sunburst both ruled out on the record. The
+catalogue is unchanged; nothing anyone has ticked moves.
+
+### Changed
+
+- **The display face is Big Shoulders Display.** Anton had been the row-title
+  face (`.pick b`, `.ftitle`, activity and queue titles, universe names)
+  since 1.0.0; Big Shoulders 700 was already loaded for the scorecard
+  numbers, and it is the more deco of the two — tall, geometric, condensed —
+  where Anton reads sports-poster. Big Shoulders sets narrower and lighter,
+  so every consumer takes ~10% more size (`.ftitle` 17.5 → 19.5px) and
+  tracking opens `.025em` → `.05em`. `--disp` and `--num` now name one face.
+- **Darker is a dark, not a dimmer** (recipe C from the mock round). The
+  theme used to drop the ink and keep the room; lowering text luminance at
+  the same hue is what a brightness slider does. Now the surfaces drop
+  instead — `--sunk` `#05070C` → `#04060C`, `--card` `#0B101B` → `#0A0E18` —
+  and the hairlines come up (`--line` `#1B2233` → `#20283C`) so structure
+  carries the depth on what is now effectively pure black. The dimmed bone
+  `#AEB6C8` stays, owner's call: bone measures 10.32:1 on ink, 9.96 on sunk,
+  9.48 on card, 8.73 on card2 — every pair AAA, every one at or above where
+  it stood. Default theme untouched.
+- **The hero wears the cut.** Corners are chamfered at 45° — on the hero
+  only; list cards, buttons and the watch pill keep their radius. A straight
+  `clip-path` would eat the old border at the corners, so the card is built
+  as a wrapper-clip: `.hero` itself is the frame (background `--line2`, the
+  line the frame was always drawn in — `#33405C` default, a touch lighter
+  than Darker's new `#20283C` so the cuts stay legible on black) clipped to
+  the cut polygon, with `::before` carrying the gradient inset 1px behind
+  the content, `isolation:isolate` holding it under the text. The meta
+  line's plain `·` becomes a small gold `◆` (`.dsep`), and a diamond rule —
+  one `◆` on a gradient gold hairline — sits between the badges and the
+  blurb, on the patrol hero and the Case closed card alike. Both are
+  `aria-hidden`: ornament, not words. The diamond renders from the system
+  font by decision, named in section 116's SYSTEM_MARKS beside the star.
+
+### Removed
+
+- **Anton.** Its woff2 (8.2 KB), its preload and its `@font-face` all leave
+  the page — one request fewer against the budget — and it leaves the
+  `--num` and share-card fallback stacks, `qa/font-subset.json` and the
+  README's file table with it. `docs/share.png` is untouched: Big Shoulders
+  has rendered the card's numbers since its `@font-face` landed, so Anton
+  was a fallback that never fired there. **Operator note: apply the zip,
+  then delete `docs/fonts/anton-latin-400-normal.woff2` — guard 106's
+  manifest equality is red while the orphan ships, which is the guard
+  working.** Guard 42 gains the retirement clause: any Anton reference
+  returning to the page fails the build.
+
+### Added — guards
+
+- **Section 146: the hero wears the cut.** The polygon and the absent
+  radius, the `--line2` frame, the 1px `::before` hairline, the isolation,
+  the `dsep` separator and the diamond rule on both heroes — each with its
+  own failure.
+- **Section 147: the surfaces keep their order.** No literal is pinned —
+  the next honest retune should not go red for moving a hex — but
+  `ink < sunk < card < card2` must hold per theme, measured with section
+  20's own palettes, because pressed states lighten and the hero gradient
+  falls from `card2` to `card`.
+- Smoke drives the ornament in the rendered DOM (4 new checks: the rule on
+  the patrol hero, the diamond-not-dot meta line, `aria-hidden` on both,
+  the rule on Case closed) — 349 checks.
+- New suite `qa/negative/negtest510.sh` (10 fixtures: the four halves of
+  the cut construction, the three ornament strips, the ladder reorder,
+  Anton's return, and the ornament driven through smoke). Counts: 59
+  suites, 847 fixtures — 794 guards / 53 smoke — guard sections 147.
+
+## [4.2.5] — 2026-08-19
+
+**The hygiene commit.** The 4.2.4 re-audit found one miss and named it in
+bold: the changelog said `.wrangler/state` was out of the index and the
+live tree still tracked it — a sentence claiming a fact the tree does not
+hold, this project's most-repeated bug class, in the release note of the
+release meant to close the audit loop. This cut makes that lie impossible
+and lands the report's three optional hardenings. No features.
+
+### Fixed
+
+- **Guard 144: the wrangler state stays out of the index.** The section
+  reads the git index file directly (no git binary, no child process) and
+  fails while `.wrangler/state` objects are tracked — so the claim can
+  only be made by a tree where it is true. Where no `.git` exists (a
+  zip-applied copy, a negative scratch tree) it notes and stands down.
+  **On the live tree this section is red until `git rm -r --cached
+  .wrangler/state` is run — that is the point.** The false 4.2.4 sentence
+  is struck above, not erased.
+- **`dedupeLog` consults `BYID`** (C-5, the restore-path half of 4.2.4's
+  gates). A previously polluted or hostile store could keep phantom ids in
+  `S.log` through every restore — no loss, but a count lie, and one more
+  path shaped differently from the other three. All four import/restore
+  surfaces now agree: the log is a subset of the catalogue. Guard 35
+  drives the drop; smoke drives it on the real page.
+
+### Changed
+
+- **A missing parser fails CI instead of warning** (Q-fn2). `fnIndex()`
+  falling back to the legacy regex is fine on a bare laptop clone and a
+  silent downgrade of every extraction under CI — the same lesson smoke's
+  jsdom skip taught in 3.0.2. Under `CI` the absence of Acorn is now a
+  failure.
+- **Guard 145: the extract shape is pinned.** `fnIndex()` indexes
+  FunctionDeclarations, which is every function this file has — but a
+  future style shift to `var foo = function(){}` would *empty* the index
+  without one red. Top-level function-valued variables are refused at the
+  door: write a declaration, or teach the indexer the new shape in the
+  same commit.
+- New suite `qa/negative/negtest500.sh` (4 fixtures — three
+  section-anchored; the acorn-under-CI one fires before section 1, so the
+  sect pin in guard 138 moves 762 → 763 for the documented reason).
+  Counts: 58 suites, 837 fixtures — 785 guards / 52 smoke — smoke 345
+  checks, guard sections 145.
+
+## [4.2.4] — 2026-08-19
+
+**The parser release.** The re-audit of 4.2.3 said the remaining P1-shaped
+risk was all in the instruments, and named the cut: make extraction a fact,
+caller-proof the two import helpers, ratchet the section anchor, and write
+the two-speed rule where releases are cut. Smaller than 4.2.3, as asked.
+
+### Changed
+
+- **`fn()` is a parser, not a regex** (re-audit Q-fn, the founding claim's
+  weak joint). Acorn — dev-only, beside jsdom and Playwright; the page
+  keeps zero runtime deps — parses the inline script once and indexes every
+  top-level function declaration. An extract is the AST node's exact source
+  slice: balanced by construction, immune to the column-0 assumption, the
+  `)` -in-a-default-param case, and one-liners. A missing REQUIRED extract
+  is now a readable `§`-attributed failure plus a stub, never a stack
+  trace — and a new crash guard prints everything already collected if a
+  section still throws on what the stub can no longer do, so the report
+  survives the crash it is reporting. Without `node_modules` the file
+  falls back to the legacy regex with a warning. `npm test` semantics are
+  unchanged.
+- **`applyImport` and `mergeLog` consult `BYID` themselves** (C-4). Both
+  were safe only by the grace of their callers — importCode is fuzzed and
+  cannot invent an id; Activity skips unknown logged ids at render. A
+  future caller routing JSON through either would have reopened the door
+  4.2.3 closed. The gates are theirs now; smoke drives an invented id at
+  each and watches it bounce. The log is a subset of the catalogue.
+- **The sect ratchet** (Q-3b). Guard 138 counts guards fixtures that pass
+  no section number and pins the figure at 762 — the corpus written before
+  4.2.4, which keeps the substring-anywhere semantics it was written
+  against. A fixture added without `sect` fails the build; the pin may
+  only move in a commit that says why. negtest490 plants one and watches
+  the ratchet catch it.
+- **RELEASING.md states the gate** (Q-2). For belt / scroll / focus /
+  content-visibility / service-worker changes, browser-check is the test
+  and `npm test` is only the tripwire — with the FAST / SLOW / MUTATE
+  split written down so the sentence survives the person who knows it.
+- New suite `qa/negative/negtest490.sh` (4 fixtures). Counts: 57 suites,
+  833 fixtures — 781 guards / 52 smoke — and smoke's run is 344 checks.
+  ~~`.wrangler/state` is out of the index (H-1, the last open morning
+  item).~~ *Corrected in 4.2.5: that was true of the release branch and
+  false of the live tree — a zip cannot carry a git operation, and this
+  sentence was exactly the bug class the audits name. Guard 144 now
+  refuses the claim until the index agrees.*
+
+## [4.2.3] — 2026-08-19
+
+**The audit release.** The 19 Aug full QA (code, QA code, efficiency — one
+document) found no P0 but named the two persistence doors and four ways the
+instruments were greener than the tree. One release, no new features:
+instruments and the two persist doors, exactly as §8 of that report asked.
+The report is cited here once and then left behind.
+
+### Fixed
+
+- **A corrupt store no longer loses your marks** (audit C-1, P1). A
+  `localStorage` body that *read* fine but did not *parse* fell through
+  `restore()`'s catch as "no state": the app booted as a first visit, kept
+  saving on, and the next tick overwrote the unread bytes with a near-empty
+  payload — silent loss on the page whose pitch is that the data never
+  leaves the device. A failed parse is now a failed read, the split the
+  code already knew: `readFailed` latches, writes stop for the session, the
+  #nosave banner shows, and the bytes stay on disk for restore-from-code.
+  Guard 127 pins all three failure paths; smoke boots a document with a
+  truncated payload, ticks, and asserts the old bytes survive.
+- **JSON import can no longer write unknown IDs into live state** (audit
+  C-2/C-3, P1). `doRestore()` counted known-versus-unknown against `BYID`
+  and then wrote every key into `S` anyway — an invented slug inflated the
+  counts, survived into storage, and waited to collide with a future real
+  ID. Backup codes were fuzzed against exactly this; JSON was the unguarded
+  door beside the vault. Unknown keys now increment `unknown` and stop
+  there, and the `for…in` over parsed payloads goes through `HAS.call`, the
+  same hardening `marksOf()` has had since the shaping work — a `__proto__`
+  key counts as unknown and is dropped. Driven in smoke, not grepped.
+- **The guards' flatten is the app's flatten again** (audit Q-1, P1).
+  `qa/guards.js` said "Flatten exactly as index.html does" and did not: its
+  copy carried an `out:` field the app never puts on `FILMS` and dropped
+  the `d:` the app carries, so section 70 asserted `f.out` on an object the
+  page never builds. The copy now matches byte-for-byte, section 70 reads
+  `out:` off the raw `PATH` entries where the app does, and a new pin
+  compares the two `FILMS.push` field lists on every run — the founding
+  "extracted, never reimplemented" claim is finally checkable one screen
+  down from where it is made.
+- **The INDEX titles are pinned to their headers** (audit Q-7/H-3). Guard
+  66 pinned the numbering in 1.4.2 and never the titles; 77, 82 and 103
+  had all drifted, and 103 still narrated a *group* repaint two releases
+  after the tick became a *row* paint — the exact "optimization" the 3.3.x
+  scroll-jump class shipped as. All three entries now match their headers
+  and the pin fails the build on the next drift.
+- **`run-all.sh` counts every smoke fixture** (audit Q-6). Longest-first
+  dispatch weighed suites with `grep -c '"smoke"'`, and the suite argument
+  does not have to be quoted — negtest400's three bare `smoke main`
+  fixtures counted as zero, so a heavy suite could start last. The pattern
+  now matches the argument where it sits, quoted or bare, and agrees with
+  guard 65's census over the same files.
+- **`browser-check.mjs` stops lying about itself** (audit Q-9/Q-4/H-2/Q-13).
+  The header said "not committed to CI" four minor releases after the
+  browser job started running it on every push. The retracted-ring check
+  hardcoded `109.96` while guard 80 computes 2πr — one radius edit would
+  have failed a correct page; it now computes from the `r` the page ships.
+  The two swallowed waits (`.catch(() => {})` on the CV settle and the
+  cache fill) are named checks that say what never arrived. And the
+  offline reload now asserts the worker serves *this* BUILD, not just any
+  shell with entries — a stale cached shell passed the old bar, which is
+  the 2.5.1 incident restated as a test.
+
+### Changed
+
+- **Every guards failure names its section** (audit Q-3). Failures print as
+  `✗ §NN message`, with the section read off the call stack against the
+  file's own headers — nothing hand-maintained. `run_case` gains an
+  optional sixth argument naming the section a fixture is aimed at: when
+  given, the expected string must land on that section's own `§`-prefixed
+  line, so a mutation that breaks four sections can no longer pass a
+  fixture from the wrong one. The 825 existing fixtures keep the semantics
+  they were written against; new fixtures should name their section.
+  `qa/negative/negtest480.sh` carries the four new fixtures (two drive
+  smoke behaviour, two use the section anchor), and the counts move:
+  56 suites, 829 fixtures — 779 guards / 50 smoke — and smoke's own run is
+  340 checks.
+- **qa.yml stops quoting a wall clock.** The cost comment's "~14 s full
+  run" was measured on one machine and narrated on all of them (the audit
+  host measured ~43 s). The guarded split counts stay; the figure is gone.
+
+## [4.2.2] — 2026-08-18
+
+**Four tabs, one footer.** The owner's punch list: the footers weren't all
+centered, only The Path's carried a separator line, and Progress had a
+saves-line under "Clear all progress" restating what the Your Data card says
+two blocks up.
+
+### Changed
+
+- **Every tab's footer now carries the legend's hairline** — `border-top:
+  var(--line)`, 18px of air — and centers: Home's colophon and Next up's
+  watching-truths gain the line, Progress's build/support block joins the
+  `.note.foot` system, and The Path's legend (which had the only line)
+  centers its rows. Consecutive foot-notes share one line, not one each.
+
+### Removed
+
+- **The saves-line.** "Progress saves automatically in this browser…" under
+  the Clear button was a second copy of the Your Data card's own first
+  sentence, and two copies of one fact drift — guard 121's lesson, applied
+  the way the watching-truths were in 3.7.0. The no-save case was already
+  the header's #nosave banner, which renders whether or not Progress is
+  open. The guard that required the line now refuses it;
+  `qa/negative/negtest131.sh`'s fixture flips with it (same case count).
+
+## [4.2.1] — 2026-08-18
+
+**The story card draws YOUR skyline.** Since 4.1.0 the card has drawn the
+Progress tab's chart — but always the universes cut of it, whatever path the
+reader had chosen. `drawShareCard()` hardcoded `PATH` and `"c"+gi` keys, so a
+reader on *Bruce's life* got a card whose mode line said their path and whose
+skyline said somebody else's. Reported by the owner the day 4.2.0 was cut.
+
+### Fixed
+
+- **`drawShareCard()` picks its groups the way its own mode line already
+  did** — from `S.path || S.mode`: eras on *Bruce's life*, decades on
+  *release order*, universes otherwise, through the same `groupFilms()`
+  keys `viewStats()` uses. The closed-count line and the key line under the
+  rule speak the same word ("N of M eras closed", "N ERAS · WIDTH IS SIZE ·
+  FILL IS WATCHED"). A fresh visitor with no path chosen still gets
+  universes — the old behavior was only wrong once a choice existed.
+
+## [4.2.0] — 2026-08-18
+
+**The numbers get their own voice.** Anton has carried every title AND every
+big count since the beginning, so a score never read as a score — the owner
+noticed the same face doing double duty across the scoreboard and the cards,
+reviewed four OFL candidates side by side against the current face, and chose
+Big Shoulders Display. It was already family: the `--deco` stack has named it
+as Limelight's fallback since 1.0 — Chicago deco-industrial, the same era and
+city as the wordmark.
+
+### Added
+
+- **`big-shoulders-display-latin-700-normal.woff2`** joins `docs/fonts/`:
+  subset through `qa/subset-fonts.py` like the rest (9,964 bytes; its OFL
+  carries no Reserved Font Name, so Limelight's keep-whole rule does not
+  apply), blessed into `qa/font-subset.json`, preloaded with the other six
+  (guard 124's set equality holds), precached by `sw.js`, licence section
+  appended to `docs/fonts/OFL.txt`, row added to the README file table.
+- **`--num`** — the numeral stack: Big Shoulders Display 700, falling back
+  to the title stack so a failed load degrades to exactly what 4.1.x
+  looked like.
+
+### Changed
+
+- **The scoreboard tiles** (`.bigstat b`) and **the story card's count**
+  (`drawShareCard`'s 230px figure) set in the numeral face; every title
+  stays Anton.
+- **`docs/share.png` regenerated** with the new numerals — and the stats
+  row's three columns are now equal-width, which centers the middle count
+  on the card's own centerline: the old flex box was centered as a group,
+  but "CONTINUITIES" is a wider column than "FILMS", so the middle number
+  sat 27.7px left of the wordmark's axis. Measured, not eyeballed, at the
+  owner's "check alignment" — the same pass verified the Brave banner
+  lockup centers at exactly x=1350 with symmetric 84px margins inside the
+  2:1 crop window.
+- **The Brave Creators banner** rebuilt to the recorded spec (2700×528,
+  crop-critical content inside the center 1056px) with the numeral face on
+  its three stats; delivered to the owner for the dashboard — the banner is
+  not a served file of this repo.
+
+## [4.1.2] — 2026-08-18
+
+**Closing a group no longer throws the reader down the path.** The group
+head is `position:sticky` and scroll anchoring is off by design
+(`overflow-anchor:none` — the app pays its own compensation or the defect
+is visible). This was the one collapse nothing paid for: close a long group
+from deep inside — the head stuck at the top of the viewport, under your
+finger — and the body vanished while the panel's scrollTop kept its number.
+Measured at 390×844 on the largest universe: the list lost ~1,300px, the
+clicked head landed 1,206px above the viewport, and the reader landed
+somewhere else in the path entirely, with keyboard focus still on the
+now-off-screen head.
+
+### Fixed
+
+- **`groupUpdate()` anchors the clicked head.** Its viewport top is read
+  before the class toggle and again after, in the click's own task, and the
+  drift is handed to `scrollPut()` — the head stays exactly where it was
+  clicked. A short, unstuck head measures a drift of 0 and nothing moves;
+  opening a group grows the body below the head, drifts 0, and never
+  writes. The two `getBoundingClientRect` reads are pinned and argued in
+  guards section 120 (2 → 4, the same shape as 3.8.3's search-box anchor),
+  and `qa/negative/negtest320.sh`'s multiply fixture now expects 5.
+- **`NOTES.md`** records the mechanism under `drift`, beside the sticky-head
+  and scroll-seam notes it belongs with.
+
+## [4.1.1] — 2026-08-17
+
+**The README goes on a diet.** Documentation only — nothing served changes
+beyond the build string. The README had grown to ~4,500 words by narrating,
+in place, history this file already records: the beta era, the mirror
+unpublishing, the aggregator attempts, the beacon, all five weight-ceiling
+raises, the guard-138 origin story, the 1.6.5 cold-start lesson, and a file
+table whose every row carried an essay. A history that lives in two files
+drifts in one of them, and this file is the record.
+
+### Changed
+
+- **README.md loses over a thousand words of history.** Every retelling
+  removed in favour of the CHANGELOG entry that already records it; the file
+  table keeps every row (guard 45 still holds it against the tree) with
+  one-line purposes; the four prose paragraphs restating guard sections in
+  the Checks section collapse to an outline pointing at `qa/guards.js`,
+  where each rule lives beside the code that enforces it, negative-tested.
+  Every guarded anchor stayed and stayed green: the canonical sentence, the
+  headline counts, the era run, the old-origin paragraph (still marked
+  unpublished, still no present-tense offer), the visit-counts bullet, the
+  catalogue hard cases, the tagline, the size figure, and the 55 / 825 / 332
+  counts.
+- **README gains the CI badge and the share card as a first image** — the
+  badge is served by GitHub itself; the repo page fetches nothing from a
+  third party, same as the app.
+- **The cold-start verification rule moved to `RELEASING.md`** ("Before the
+  version moves"), because it is a live release rule, not history — the
+  checklist that runs is where it can be followed.
+- **The file table's reasoning moved to `NOTES.md`** ("The README goes on a
+  diet"), not deleted — the favicon family, the IndexNow key, `vp.html`,
+  `_headers`, the browser check's inside-the-click measurement. The rule is
+  the same as 1.6.3's: reasoning moves out of the shipped surface and into
+  the file that exists to carry it.
+
+## [4.1.0] — 2026-08-17
+
+**The story card learns the app's own chart.** Since 3.8.2 the Progress tab
+has drawn the skyline — every universe a bar as wide as its share of the
+catalogue, filling bottom-up as you watch — while the share card kept drawing
+an older cousin: equal-width bars, height standing for size, a 50% yellow
+wash. Two charts claiming to be the same picture. Now the card draws the
+skyline too, from mockups the owner reviewed against three alternatives.
+
+### Added
+
+- **The support line.** The standing open item, closed: one line in the
+  Progress footer, under the build line — `Keep the path lit. Support` —
+  with the one word carrying the link to the owner's Brave Creators page
+  (verified since 4.0.4; the only rail). The host joins the guard's NAMED
+  allowlist — origins the page may mention, never fetch — the anchor
+  inherits the same guarded underline as "read the source", and the line
+  gets its own guard clauses plus three negative fixtures in negtest273
+  (gone / reworded / above the build line). Fixture counts move 822 → 825
+  (774 → 777 guards-running) in the README and qa.yml.
+
+### Changed
+
+- The share card's bottom chart is the Progress skyline at card scale: bar
+  width is the universe's share of the catalogue (8px floor for the one-film
+  continuities, the rest squeezed proportionally, same as the app's flexbox
+  does), the track is the app's line color, the fill rises bottom-up in
+  **solid** signal yellow — the half-alpha wash is gone, and with it the
+  62%-alpha "complete" variant; a finished card is every tower fully lit
+  plus the yellow bat, which says it louder. Skipped entries cap their bar
+  in steel, exactly as on Progress. Corners rounded via `roundRect` where
+  the browser has it, square where it doesn't.
+- A key line under the rule, in the scope line's voice: `44 UNIVERSES ·
+  WIDTH IS SIZE · FILL IS WATCHED` — the count is live, the reading lesson
+  travels with the picture.
+- The Limelight wordmark grows 64 → 96px, on the owner's call from the same
+  mock round ("Limelight wordmark but bigger"). Baseline holds at 300; the
+  word grows upward into space that was empty.
+- The card's bottom block does not move: rule at 1590, strapline at 1700,
+  domain at 1750, bat at its 2.7.1 seat — guard 108 still holds all four.
+
+## [4.0.9] — 2026-08-17
+
+**The footer, measured.** The owner ran `vp.html` on the installed app and the
+numbers ended three days of guessing: screen 874pt, granted viewport 812 —
+`svh`/`dvh`/`innerHeight` all agree at 812, `vh`/`lvh` claim 874, and the
+painted stripes prove the webview renders NOTHING below 812. The short render
+is real; the 16 Aug `height:100%` decision was right; no height unit and no
+heal will ever reach the bottom 62pt on iOS 26. What CAN be fixed, is:
+
+### Fixed
+
+- **The 34pt phantom pad is reclaimed.** `env(safe-area-inset-bottom)` still
+  reports 34 inside a viewport whose bottom edge sits 28pt ABOVE the home
+  indicator — an inset for an indicator that is not over the page. The tab
+  bar's pad is now `max(0px, calc(env(safe-area-inset-bottom) -
+  var(--vpdead, 0px)))`, where `vpSync()` writes `--vpdead` (the measured
+  screen-minus-viewport gap) in standalone and nothing else ever sets it: a
+  browser keeps the full inset, a healthy install keeps the full inset, and
+  the short-granted install stops padding for a bezel it cannot reach. The
+  visible footer drops by a third.
+
+- **The dead band reads as bezel now.** The canvas below the app was
+  `--ink`, and iOS frosts whatever sits at the bottom edge — navy frosts to
+  the owner's grey stripe; black frosts to black (proven live by the darker
+  theme). `body` is `#000` and `#app` carries `var(--ink)` as its own
+  ground: every visible pixel of the app is unchanged, and the one region
+  the app cannot render — iOS's 62pt — now shows frosted black and reads as
+  hardware.
+
+- **The heal gives up when a toggle changes nothing.** vpHeal() stays for
+  the documented keyboard-shrink bug, but the probe proved the cold-start
+  gap is not stale — so a heal whose re-measure moves nothing now spends
+  its whole cap at once instead of toggling `#app` six times per session.
+
+### QA
+
+- **negtest200/210/270 repaired — the three red CI shards.** Each quoted a
+  reduced-motion list from a mid-4.0.4 draft that never shipped; each sat in
+  a different shard, which is why shards 1, 2 and 3 were red and 4 was
+  green. Retargeted to the list the tree actually carries. (The `browser`
+  job's 42s failure is the Playwright `--with-deps` apt step on the runner —
+  environmental; re-run it.) Guard: the tabs-pad clause moves to the
+  reclaim form, vpSync/--vpdead and the give-up line are pinned, and
+  negtest478's fixtures follow vpTick.
+
+## [4.0.8] — 2026-08-17
+
+### Fixed
+
+- **The installed app's dead band, healed at the root this time.** The owner
+  called the mechanism before the research confirmed it: the band was never a
+  problem while the document scrolled, because a scroll is what makes WebKit
+  re-resolve its viewport. 3.9.7 moved scroll onto `#app` and the document
+  went silent — so a stale standalone grant (the collapsed browser-chrome
+  height, granted at cold start for chrome that does not exist) just sticks,
+  `height:100%` honestly fills the short number, and the remainder shows as
+  a band nothing in CSS could reach. Three fixes missed because they changed
+  what the frame believes; none made WebKit re-measure. `vpHeal()` does: hide
+  `#app`, force one layout, show it — same task, no paint in between, no
+  flash — and WebKit re-resolves the viewport. It runs at standalone boot,
+  on app resume, and after every input blur, which also heals the documented
+  iOS bug where the keyboard shrinks the viewport for good (this app has a
+  search box). Four gates keep it honest: standalone only, portrait shrink
+  over 24px (iPad windows and desktop installs are legitimately short),
+  never while an input holds focus (`display:none` would eat the keyboard
+  mid-word), and capped tries — if the short render is real, the heal is a
+  no-op and must not spin. Scroll survives through the seam
+  (`scrollKeep`/`scrollPut`) and the deck re-snaps (`snapTo`). If the band
+  still shows after this, it is iOS's own render and `vp.html` will say so.
+
+- **The glow does not pulse any more, and that is the fix.** "Why was it OK
+  before the swipe?" — because before 4.0.0 the glow sat on the belt strip,
+  on opaque card, in the content column, where animating a box-shadow is
+  cheap. The swipe rework moved the handle onto the header's live
+  backdrop-filter, and an ANIMATED box-shadow over a blur layer repaints the
+  blur every frame — the on-device glitch, four shape-tweaks in a row,
+  because the shape was never the fault. The glow is now STATIC: the same
+  owner-tuned two-layer corner hug, permanently on while the handle is
+  parked. Nothing repaints, nothing glitches, and reduced-motion needs no
+  carve-out — a still image is compliant by construction. The keyframe is
+  deleted and guarded against return: a pulse must be argued against the
+  repaint bill it reintroduces.
+
+### QA
+
+- Section 120's census admits `innerWidth`/`innerHeight` (pinned 1/2, window
+  metrics, the heal's two gates) and argues `offsetHeight`'s second
+  appearance — vpHeal()'s forced reflow IS the mechanism. The standalone
+  block grows five vpHeal clauses; section 130's glow block is rewritten for
+  the static shape with the keyframe REFUSED. **negtest478** proves the new
+  clauses bite; 380/476's glow fixtures retargeted to the static form;
+  negtest320's census message follows the new count.
+
+## [4.0.7] — 2026-08-17
+
+### Changed
+
+- **The glow is a little brighter and reaches the corners.** 4.0.6's single
+  under-edge left the strip's rounded corners dark; the owner asked for
+  brighter, corners included. Two layers now, both in `--signaledge`: a tight
+  hug (`0 1px 5px -1px`) that lights the outline and both bottom corners, and
+  a down-biased bloom (`0 3px 12px -3px`) that carries the brightness below
+  the strip. Verified against the 4.0.4 failure before shipping: no
+  full-width seam through the header's backdrop-filter, no wash over the
+  cards passing beneath. Section 130's pin moves to the new shape.
+
+### Added
+
+- **`docs/vp.html` — the viewport probe, because the next standalone fix will
+  be measured, not guessed.** The bottom band in the installed iOS app has
+  now outlived three fixes, and the research splits into two documented
+  failure modes with OPPOSITE prescriptions: a stale short *grant* (webview
+  renders full height, `100%` believes the lie — fix is `100vh` and a
+  re-measure heal) versus a true short *render* (`100vh` overshoots and cuts
+  the tab bar — the owner's own 16 Aug screenshot). One page answers it from
+  the device: five height units, one painted stripe each, ending exactly at
+  the bottom that unit believes in — the stripes that are visible mark what
+  iOS actually renders — plus the numbers (`screen`, `innerHeight`,
+  `visualViewport`, safe-area insets) and a keyboard round-trip to expose the
+  documented shrink-for-good bug. Out of the offline shell (an offline copy
+  of a measuring instrument is a contradiction), named in guard 13's
+  exclusions with its own removal condition, `noindex`, never linked from
+  the app. The height decision waits on its screenshot.
+
+## [4.0.6] — 2026-08-17
+
+### Fixed
+
+- **The peek sits on the column again.** On any desktop with classic
+  scrollbars the peek rode 7.5px right of the strip it retracts into:
+  `scrollbar-gutter:stable` reserves the gutter on one side, so a panel's
+  column centres against viewport-minus-scrollbar while the header-anchored
+  `#beltpeek` centres against the viewport itself. `stable both-edges`
+  reserves the gutter symmetrically and the two centres agree to the pixel
+  (measured 640/640 in the harness at 1280px). The original stable-alone
+  defect stays fixed — a panel too short to scroll still reserves what its
+  scrolling neighbors do — and browsers without `both-edges` degrade to
+  exactly the 4.0.5 behaviour, not to something new. Owner-reported.
+
+- **The glow lights the handle, not the page.** The 4.0.4 halo
+  (`0 0 16px` all round) did two things nobody asked of a 12px handle: its
+  upward lobe passed behind the header's translucent bar and the
+  backdrop-filter smeared it into a full-width glowing seam, and its
+  downward lobe washed 16px into whatever card was passing beneath — both
+  surfaces, owner-reported, and the harness reproduced both. The pulse is
+  now a faint under-edge — `0 2px 8px -3px var(--signaledge)` — picked by
+  the owner from rendered candidates: below the strip, tight, spread pulled
+  in so nothing reaches sideways. Same keyframe, same 4.5s breath, same
+  token, same reduced-motion cut.
+
+### QA
+
+- **The gutter guard requires `both-edges` and says why; section 130 pins
+  the shadow's SHAPE, not just its token** — an all-round halo is exactly
+  what a designer reaching for "make it glow" writes first. **negtest476**
+  proves all of it bites: gutter reverted, gutter deleted, halo restored,
+  token swapped. **negtest380's** quoted keyframe retargeted.
+
+## [4.0.5] — 2026-08-17
+
+### Fixed
+
+- **The installed app's grey stripe under the tab bar is painted over — by
+  the only hand that can reach it.** The owner's screenshot showed a dead
+  band between the tab bar and the screen's bottom edge on iOS 26, in the
+  installed app only, surviving a relaunch. Two on-device tests settled
+  what three releases of layout work could not: the band is **outside the
+  webview** — a touch there moves nothing — so it is iOS's, not the
+  page's, and no height, anchor or padding will ever reclaim it. But
+  switching to the darker theme turned the band black, which proves iOS
+  paints it from `<meta name="theme-color">` — frosted, so the dark
+  theme's navy `#0C111C` came out as a visibly lighter grey stripe, while
+  black came through unchanged. So `applyTheme()` now answers the meta
+  with `#000000` whenever the app runs installed, both themes: the band
+  reads as bezel and the browser keeps the theme's own tint, because in a
+  browser the meta paints real toolbar chrome and the band does not
+  exist. The band's height is still lost to iOS — the tab bar sits a
+  phantom toolbar above the true bottom until Apple resolves the granted
+  viewport against chrome that is not there (the same misreporting 4.0.x
+  fought from the other side). This release makes the loss invisible;
+  it cannot make it untrue.
+
+- **The 4.0.4 release zip was uploaded into `docs/` as well as the root,
+  and the census caught it.** `docs/CHANGELOG.md`, `docs/README.md`, a
+  full second copy of the app at `docs/docs/`, and five QA files under
+  `docs/qa/` — 26,054 lines of accidental duplicates, all publicly
+  routable in principle (the Cloudflare layer answered 403, so nothing
+  actually leaked). Deleted. Guard 13's census is why a stray upload
+  cannot survive a release: every file `docs/` serves is either in the
+  shell or named as a decision.
+
+### QA
+
+- **Guard 28 pins the standalone branch.** `applyTheme()`'s installed-app
+  arm is exactly the kind of special case a tidy refactor collapses back
+  into the table lookup, so the guard fails the build the moment
+  `isStandalone() ? "#000000"` stops appearing. **negtest475** proves the
+  pin bites from both directions — branch deleted, branch answering navy —
+  and a green_case proves a reworded browser-arm fallback does not trip it.
+
+## [4.0.4] — 2026-08-17
+
+### Added
+
+- **`/.well-known/brave-rewards-verification.txt`.** The Brave Creators
+  verification token, at the exact name and bytes Brave's publisher
+  service expects. Served as a static asset — the Worker's
+  `run_worker_first` paths are untouched — out of the offline shell with
+  the IndexNow key's reasoning (fetched by a machine that never runs the
+  app), and named in guard 13's exclusions so the omission stays a
+  decision instead of an oversight.
+
+### Fixed
+
+- **The peek is part of the header, full stop — and the flicker at the
+  gesture's edges goes with the swap.** 4.0.3 built `#beltpeek` but showed
+  it only mid-gesture, swapped in by a scroll-driven flag — and the swap
+  itself was the last movement left: the 2px threshold and the rAF hop
+  showed the strips riding for the first frame or two of a gesture, and
+  the seam played again at the settle. A scroll listener cannot beat the
+  compositor to the first frame any more than 4.0.2's counter-translation
+  could chase it, so 4.0.4 stops swapping on gestures at all. Parked is
+  STATE: `parkFocus()` reads the two parked truths (`data-beltpark`,
+  `data-park`), excludes held and dropped, and toggles the peek's
+  `data-on` — the peek is permanent header chrome whenever the belt is
+  parked, and the parked strips hide whole inside the deck
+  (`visibility:hidden`: out of paint, hit-testing and the accessibility
+  tree in one line, F5 entire). Unparked strips are content and ride
+  their panels, which is what content should do. Nothing swaps
+  mid-gesture, so nothing is left to flicker. The tap and the keyboard
+  door move onto the peek itself — a real `role=button` in the header,
+  outside `render()`'s innerHTML churn — and the strips' own 12px band
+  (`::before` rail, `::after` chunk, the entrance transition) is deleted
+  rather than orphaned; the glow rides `#beltpeek[data-on]`. Two seams
+  kept honest: `closeBelt()` stages the retraction with `data-ride`, so
+  ending a drop still rides the strip home over the `top` transition
+  instead of blinking out (removing `data-drop` alone would leave it
+  `[data-park]` and hidden in the same frame); and `beltWatch()` calls
+  `parkFocus()` before its IntersectionObserver gate, because a browser
+  without the observer still parks by state — with the peek as the only
+  handle, gating the toggle would have left those browsers a belt with
+  no door. `data-swiping`, the 2px test and the whole mid-gesture
+  machinery are removed, and a guard fails the build if the flag ever
+  comes back.
+
+- **`sw.js`'s shell comment stopped lying about the touch icon.** It still
+  said `icon-192.png` is referenced "for rel=icon and apple-touch-icon";
+  the head has linked a dedicated 180×180 `apple-touch-icon.png` since the
+  favicon surface shipped in 3.9.x. Comment only — the shell list itself
+  was already right, and the touch icon stays out of it on purpose: iOS
+  copies it at install time and never asks the worker for it.
+
+### QA
+
+- Section 128's Q2/F5 blocks rewritten for the header-resident peek: the
+  base rule pinned `display:none` + `pointer-events:none` (off is off),
+  the `data-on` rule pinned as a working handle (block, pointer, hand),
+  the parked strips pinned hidden whole, `parkFocus()` pinned on both
+  truths and both exclusions plus the pre-gate call, and the peek's click
+  and keydown doors pinned where the view handler's branch used to be.
+  Section 130's strip-is-the-peek trio now asserts the inverse — the
+  strip hides, the ride is staged — and the lit-chunk thirds moved from
+  the strips' dead band to `#beltpeek`. Section 143 asserts `data-swiping`
+  stays deleted.
+- **negtest360** trades the band-entrance fixtures for unmoored-base,
+  taps-eaten and mouse-only-peek ones; **negtest380** gains the
+  blink-retraction and half-truth fixtures; **negtest470** trades the
+  swap fixtures for the returning-flag and gated-parkFocus ones. The
+  smoke sweep stages `data-on` where it staged the gesture flag, and the
+  browser check opens the drop from the header peek.
+
+## [4.0.3] — 2026-08-17
+
+### Fixed
+
+- **The belt closes to a peek that is part of the header — really locked
+  this time.** 4.0.2 counter-translated the strips from the scroll read,
+  and it was wrong the honest way: the deck's scroll is composited and the
+  correction is main-thread, so the belt trailed the finger by a frame or
+  two and still read as movement — worst on a fast fling, invisible to any
+  probe that samples a held position. A composited scroll cannot be chased
+  from JavaScript, so 4.0.3 stops chasing: the moment a gesture crosses the
+  2px threshold, the panels' strips hide and a real header element
+  (`#beltpeek` — pixel-matched to the parked peek: same width and
+  centring as the strip, same card ground, borders, bottom radius, and lit
+  segment) shows in their place. It lives outside the deck, so it cannot
+  move; at the settle the swap reverses and the strip returns in whatever
+  state it held. The gesture is flagged on `<html>` (`data-swiping`, the
+  `data-beltpark` precedent), `renderHead()` keeps the peek's lit segment
+  in step with `S.mode`, and the dropped belt stays visible and rides —
+  its pouches are anchor-positioned, and the drop retracts at the door
+  anyway. The 4.0.2 machinery (`--swx`/`--pi`/`--vw` and the transform
+  rule) is removed; the rotation squelch and the no-observer degrade stay.
+
+### QA
+
+- Section 143's anchor pins rewritten for the swap — the peek element and
+  its show rule, the strips' hide rule, `swipeRead()`'s flag-and-clear on
+  the document, and `renderHead()`'s lit sync — with the three `negtest470`
+  fixtures rewritten to break each leg. The smoke sweep stages
+  `html[data-swiping]` the way it stages `data-beltpark`, and walks release
+  mode so all three lit segments match. Fixture count unchanged.
+- **The reset's handle drop reuses `fhKeep(null)`** instead of 4.0.1's
+  separate `fhDrop()` — same store, same key, one code path, ~300 bytes
+  back. Found the honest way: the page had drifted to 4 bytes under the
+  README size claim's rounding line, and the bless green-fixtures (which
+  add a few bytes before healing) started flipping it to red.
+
+## [4.0.2] — 2026-08-17
+
+### Fixed
+
+- **The belt is anchored to the header, not to its panel.** Every panel
+  carries the same parked strip directly under the header, so a swipe
+  showed the belt sliding out with the page — two identical copies crossing
+  the seam — while the header held still above it. Mid-gesture, every
+  non-dropped strip is now counter-translated by the deck's own arithmetic:
+  `--swx` written from the one `scrollLeft` read the deck already makes
+  (section 120's pin is unchanged), `--pi` stamped on each panel at build,
+  `--vw` delivered by the same observer that delivers `nwVW`. The outgoing
+  and incoming copies hold the identical viewport position, so the gesture
+  reads as one belt fixed under the header with the content sliding beneath
+  it — and the panels' own clip edges do the reveal. The writes clear at
+  the settle, so no transform (and none of the horizontal overflow a
+  transform can mint inside a panel) survives the gesture. The dropped belt
+  is excluded on purpose: its pouches are anchor-positioned, and anchors do
+  not track transforms, so a translated dropped strip would leave its
+  pouches behind — the drop already retracts at the door.
+
+### QA
+
+- Section 143 pins all three legs — the CSS rule, `swipeRead()`'s
+  write-and-clear, and the build-time terms — and `negtest470` proves each
+  can go red (three new fixtures).
+
+## [4.0.1] — 2026-08-17
+
+**The 16 August review of 4.0.0, applied. No entries added, removed or
+renamed — still 200 entries, 133 films and 67 seasons across 44
+continuities, every `i:` untouched.**
+
+### Fixed
+
+- **A pasted backup code survives a swipe.** `render()` has preserved
+  `#restorebox` since the storage-event wipe (section 112) — but 4.0.0's idle
+  refill rebuilds a background panel through `fillPanel()`, which did not
+  carry the box: paste a code on Progress, swipe away, and the paste was
+  wiped milliseconds later by a path the guard could not see, because it
+  only read `render()`. `fillPanel()` now carries the value across, and
+  section 112 pins both fill paths.
+
+- **The frame has a height everywhere.** `#app` was sized by
+  `100svh`/`100dvh` alone. Engines that predate the new viewport units parse
+  neither declaration, and 3.9.7's document lock (`html,body
+  overflow:hidden`) turned that from a graceful degrade into one unreachable
+  viewport with the tab bar below the fold. A plain `height:100%` now
+  precedes the pair — `html` and `body` already carry `100%`, and the modern
+  declarations still win wherever they parse. The svh/dvh pair could never
+  back each other up: every engine shipped both units in the same release.
+
+- **Rotation cannot commit a wrong tab.** `swipeRead()` pairs a fresh
+  `scrollLeft` with a width only the ResizeObserver delivers, and nothing
+  enforced the pairing: a mid-rotation read could misround by a whole panel
+  and the observer's own re-snap would then cement it. The observer now
+  squelches swipe reads for two frames around its re-snap — the same shape
+  as `dropSquelch` — and reads once more when the squelch lifts, so a settle
+  is never missed.
+
+- **No observer, no gesture.** Without ResizeObserver the deck was built
+  swipeable but could never commit (`nwVW` stays 0) — a drag stranded the
+  reader on an inert panel while the tab bar named the old tab. The viewport
+  now refuses horizontal scrolling when the observer is absent
+  (`main.sw.nosw`): the footer tabs still snap programmatically, and the
+  gesture simply does not exist on engines that cannot support it honestly.
+
+- **"Clear all progress" lets go of the backup file.** The reset cleared
+  every mark but kept the file handle, so Progress still offered "Update
+  backup file" and one tap would overwrite the only external copy with the
+  post-wipe state. The reset now drops the handle — `S.fh` and the
+  IndexedDB store both — and the button honestly offers "Save to a file"
+  again.
+
+- **`HEAD /` negotiates like `GET /`.** A HEAD probe preferring markdown
+  fell through to the assets plane and read as HTML — the same HEAD/GET
+  mismatch api-catalog fixed in 3.9.2, on the one URL that negotiates. Same
+  headers, no body, asserted in section 133.
+
+- **The Penguin's description is a sentence again.** The 4.0.0 spoiler cut
+  removed its opening clause and shipped "and the underworld has a
+  vacancy…" starting mid-sentence in the hero, the rows and the peeks. And
+  the file speaks one dialect again: "cruellest" and "labelled" join the
+  rest of the British spelling — the seed FAQ, the schema and llms.txt now
+  agree on the word.
+
+### QA
+
+- **Bless prints what it re-hashed.** Guard 10's comment promised a summary
+  as the compensating control for its vendor-mark filter, and the summary
+  did not exist — a signature-free foreign blob still blessed to green with
+  one quiet line. Every CSP re-hash now records the script's byte size in
+  `qa/script-bytes.json` and prints the delta since the last bless:
+  laundered code has to arrive as a visible size jump in the one line a
+  launderer cannot avoid.
+- **The comment allowlist matches whole bodies.** 3.9.2 cut the dead names
+  but kept `indexOf`, so a comment *beginning* with a live name could still
+  smuggle prose in behind it (reproduced 16 August). The allowlist now
+  carries each comment's full text, whitespace-collapsed, and matches
+  exactly.
+- **Section 143 counts on collapsed whitespace.** The dirty-mark and
+  snap-door counts required exact formatting — blind to a reformatted new
+  site, red on a benign reindent.
+- **Sections 141–143 fail readably.** Their extractions went through
+  `fn()`, which throws — deleting a function under test ended the run in a
+  stack trace instead of a `fail()`. They route through `optionalFn()` now,
+  as `buildDeck` already did.
+- `make-share-card.mjs` no longer instructs the separate Playwright install
+  its own header says is unnecessary.
+
+Adding catalogue entries is a MINOR bump. Fixes and copy changes are PATCH.
+MAJOR marks a change to the app's shape — 2.0.0 is the Belt. A breaking change
+to saved progress would also be MAJOR, and should never happen, because every
+`i:` slug is frozen (see the README).
+
+> **Note on versioning**
+> v1.0.0 → v2.x.x were public beta / early-access builds running directly on
+> production. **v3.0.0 is the first version considered stable.** Every version
+> in this file shipped to the live origin the day it was written — there is no
+> staging environment and never has been — so the 3.0.0 line is not a change of
+> process, only of the stability contract it is honest to offer.
+>
+> Anything experimental after 3.0.0 takes a pre-release tag — `3.1.0-rc.1` —
+> rather than a plain version.
+
+## [4.0.0] — 2026-08-16
+
+**The tabs swipe. Release two of two: 3.9.7 moved scrolling onto `#app` so
+this release could change only what swipes — `#view` is now a horizontal
+scroll-snap viewport holding four persistent panels, one per tab, and each
+panel is its own vertical scroller. One gesture arrives, and one bar detail
+rides along: the scrollbar now hides below the header, the same way it has
+always hidden below the footer, because the scrollport's top edge moved to
+the header's bottom.**
+
+### Added
+
+- **Swipe between tabs.** Home, Next up, The path and Progress sit side by
+  side in a snap viewport — `scroll-snap-type:x mandatory` with
+  `scroll-snap-stop:always`, so a hard fling crosses one tab, never three.
+  Each panel keeps its own scroll position across swipes; the footer tabs
+  stay plain buttons with `aria-current` and still reset the view they open,
+  and swiping into The path adopts the chosen path exactly as tapping it
+  does. Non-active panels are `inert` once a swipe settles, so nothing
+  off-screen answers the keyboard or the screen reader. The active panel
+  renders synchronously on every state change; its neighbors re-render in
+  idle time behind dirty flags; the far panel waits until a swipe makes it a
+  neighbor. The settle is computed from the snap arithmetic — no `scrollend`
+  (Safari shipped it late) and no CSS `scroll-behavior:smooth` (it fights
+  snap; deliberate smooth scrolls already route through `calmScroll()`).
+
+### Changed
+
+- **Scroll lives in the panels now, and the scrollbar starts below the
+  header.** `#app` is pure frame — header, viewport, tab bar, clipped. Every
+  sticky offset became panel-relative in the same move: `--ghtop` is just the
+  peek, the Belt parks at `calc(--ghtop - --beltH)`, and a dropped strip pins
+  at the panel's top edge, which IS the header's bottom. `--hdrh` remains for
+  the two consumers that really do measure from the viewport: the dropped
+  pouches' no-anchor fallback and flagSave()'s banner override. Before
+  JavaScript runs, `main` itself scrolls, so the crawlable seed reads the
+  same as ever — with the same below-the-header scrollbar.
+
+- **The seam widened without growing.** `scroller()` answers the active
+  panel; `scrollKeep()`/`scrollPut()` take an optional element so background
+  fills preserve their panel's place — still one `scrollTop` read and one
+  write in the whole file (section 120), joined by exactly one `scrollLeft`
+  read: `swipeRead()`, rAF-throttled, dividing by a width the
+  `ResizeObserver` delivered rather than one anybody read. The Belt's
+  auto-close observer roots on the active panel and compares against its
+  `rootBounds.top`; the drop's one-shot retraction gained a disarm so a tab
+  change cannot strand it armed on a panel that stopped scrolling. Two
+  scroll listeners are now pinned where one was: the one-shot retraction,
+  and `swipeTick` on `#view`.
+
+### Fixed
+
+- **A skip finishes a Home card, and The path's bars agree.** Skipping is a
+  decision about an entry — an Optional you'll never want, a Not out yet —
+  so a universe, era or decade whose every entry is watched OR skipped has
+  nothing left to offer and now reads complete: signal edge, check on the
+  name. Both bars fill honestly rather than pretending — watched in
+  signal, skipped in steel beside it — and both counts name the skips
+  ("12 of 14 · 2 skipped") instead of a full card claiming a number it
+  never reaches: the Home grid cards, and The path's own group heads,
+  which build from the same two helpers (`gSub`/`gBarFill`, guard 103) on
+  the full render and the surgical tick path alike, so the count under
+  your thumb and the count after a redraw cannot disagree. An entry
+  neither watched nor skipped still holds a card open, and un-skipping
+  reopens it, because completion is computed, never stored.
+
+- **A footer tap with the belt dropped no longer strands the pouches.**
+  `closeBelt("auto")` renders the new panel only, so the departed panel
+  kept its dropped strip and its `position:fixed` pouches — fixed paints
+  over every tab, and a far panel never receives the idle refill that
+  would have cleaned them ("belt opened hit a tab, it breaks drops").
+  Both tab doors — the footer button and the swipe — now scrub the
+  departed panel's drop DOM in the same breath (`scrubBelt`), and the
+  drop arms again cleanly afterward. Guarded on both doors, driven in
+  Chromium through the exact reported sequence.
+
+- **Progress speaks the same skip language as the rest.** The skyline's
+  columns and the fold rows now carry the steel skip share exactly like
+  the Home cards and The path's bars — watched fills in signal, skipped
+  stacks above it in steel — and a group of watched + skipped counts
+  complete in the fold tallies. The columns grew 25% taller (88 → 110px)
+  while they were open. And steel now means skipped, nowhere else: era 0
+  ("outside any timeline") used to draw its column and its fold row in
+  steel, which made a cataloguing decision look like a leftover skip —
+  it wears the same signal as every other era now, matching the colour
+  language the scoreboard's numbers already speak.
+
+- **The installed app's tab bar no longer floats above the home indicator.**
+  The owner's standalone screenshot showed the footer sitting a toolbar's
+  height too high: iOS standalone can resolve a `position:fixed` bottom
+  anchor (and `svh`/`dvh`) against browser-chrome metrics for chrome that
+  does not exist there. The bar is now the frame's third flex member — it
+  ends where `#app` ends, no anchor to misplace — and a
+  `(display-mode: standalone)` override pins `#app` to `100%`: the second
+  screenshot showed iOS granting the installed WebView a viewport shorter
+  than the screen while `100vh` claimed the screen anyway, cutting the
+  bar's labels below the fold — the containing block is the one measure
+  that cannot overshoot what iOS actually laid out. Content no
+  longer passes under the bar, so the panels' runway padding is a plain
+  28px, and the vertical scrollbar now terminates at the bar's top edge —
+  the same symmetry the header got.
+- **The home-screen icon fills its tile.** `apple-touch-icon.png` carried
+  the bat at ~56% × 42% of the tile, because the generator pasted
+  `icon.png`'s whole canvas at 78% and the canvas is an opaque rounded tile
+  with its own margins — `getbbox()` answers the tile, not the bat. The
+  generator now finds the signal-yellow ink by colour, crops to it, and
+  scales that to 80% of the tile's width on the tile's own sampled ground.
+  (The greyscale look in the dock is iOS's tinted-icons mode, not the
+  icon — left alone on purpose.) Re-add the app to the home screen to pick
+  it up; iOS copies the icon at install time.
+
+### QA
+
+- **Guards: 142 → 143 sections.** New section 143 holds the deck's contract
+  — four panels in footer order, dirty-flag rendering from both render()
+  and tickUpdate()'s surgical path, the inert sweep and its mid-swipe
+  exception, belt suppression in background copies (the negtest250
+  two-copies defect, now with an anchor to lose), snap via
+  `scrollIntoView`, resize re-snap. The unnumbered scroll-owner block was
+  rewritten for the new ownership; section 128's offset pins moved to the
+  panel-relative bases; section 120 pins `scrollLeft` at one appearance.
