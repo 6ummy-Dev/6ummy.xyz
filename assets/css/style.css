@@ -1037,6 +1037,13 @@ a.row--link:focus-visible .row__link,
 a.row--link:hover .row__end,
 a.row--link:focus-visible .row__end { color: var(--live); }
 
+/* The tag lights with the name — otherwise a tagged row only half
+   highlights on hover and reads as greyed next to an untagged one. */
+.row--link .row__tag { transition: color .2s ease; }
+
+a.row--link:hover .row__tag,
+a.row--link:focus-visible .row__tag { color: var(--live); }
+
 /* The row is one target, so the ring belongs on the row. Inset
    rather than offset: at 3px an outline on a full-width row is
    clipped by the section's own padding. */
@@ -1048,7 +1055,8 @@ a.row:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .row__link,
-  .row--link .row__end { transition: none; }
+  .row--link .row__end,
+  .row--link .row__tag { transition: none; }
 }
 
 /* ============================================================
