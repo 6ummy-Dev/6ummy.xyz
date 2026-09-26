@@ -38,7 +38,8 @@ API is unreachable.
 
 ## Projects
 
-- [Night Watcher](https://nightwatcher.life) — separate project, not a 6UMMY release channel.
+- [Night Watcher](https://nightwatcher.life) — Batman watch-order site; separate project, not a 6UMMY release channel.
+- [Nocturne](https://nightwatcher.life/nocturne/) — Night Watcher's newspaper.
 - [Techno Punks](https://discord.gg/CfmfMxDZv5) — Discord community.
 - [VINILOS](https://x.com/i/communities/1493258083975385088) — X community about records.
 
