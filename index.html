@@ -36,8 +36,9 @@
      style-src and script-src are strict because there is no inline
      script and no inline style anywhere in the build. formspree and
      web3forms are pre-authorised so wiring formEndpoint later does
-     not silently break under this policy. mailto: is there for the
-     form's no-JS action (form-action governs where a form may submit).
+     not silently break under this policy. mailto: is harmless and
+     matches the Cloudflare header copy; the form no longer submits to
+     it (app.js opens the mail draft by navigation instead).
 
      Since Oct 2026 Cloudflare also sends this policy as a response
      header (Transform Rule), plus frame-ancestors 'none'. If you change
@@ -311,10 +312,12 @@
       <h2><span data-en>Bookings &amp; contact</span><span data-es>Contrataciones y contacto</span></h2>
     </div>
 
-    <!-- action/method are the no-JS path: without them the browser
-         submitted a GET to / with all three fields in the query string.
-         With JS, app.js takes the submit and these are never used. -->
-    <form class="form" id="contactForm" action="mailto:sync@6ummy.xyz" method="post" enctype="text/plain" novalidate>
+    <!-- No address anywhere in this page's markup, on purpose: it was
+         being harvested. The form ships with Send disabled and app.js
+         enables it, so with JS off nothing can be submitted (no GET to /
+         with the fields in the URL) and the noscript line says where
+         else to reach out. -->
+    <form class="form" id="contactForm" novalidate>
       <div class="field">
         <label for="f-name"><span data-en>Name</span><span data-es>Nombre</span></label>
         <input id="f-name" name="name" type="text" autocomplete="name" required>
@@ -334,14 +337,11 @@
         <input id="f-company" name="company" type="text" tabindex="-1" autocomplete="off">
       </div>
 
-      <button class="btn" type="submit">
+      <button class="btn" type="submit" id="formSend" disabled>
         <span data-en>Send</span><span data-es>Enviar</span>
       </button>
       <p class="form__msg" id="formMsg" role="status"></p>
-      <!-- Filled by app.js with a mailto link built from content.js. The
-           form hands off to the visitor's mail app, so the address has to
-           be on the page for anyone who doesn't have one set up. -->
-      <p class="form__alt" id="formAlt"></p>
+      <noscript><p class="form__msg"><span data-en>The form needs JavaScript. You can also reach me on any of the profiles under Elsewhere.</span><span data-es>El formulario necesita JavaScript. También podés escribirme en cualquiera de los perfiles de En otros lados.</span></p></noscript>
     </form>
   </section>
 

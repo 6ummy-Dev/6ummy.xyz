@@ -18,7 +18,7 @@ API is unreachable.
 - Active since: 2004
 - Formats: vinyl and digital
 - Styles: techno, house, rares
-- Contact / bookings: sync@6ummy.xyz
+- Contact / bookings: the form on the page, or any profile below
 
 ## Sections
 
@@ -28,7 +28,7 @@ API is unreachable.
 - **Portfolio** — a curated YouTube playlist, in playlist order. Data: `GET /youtube`.
 - **Crate** — the record collection, newest first, from Discogs. Data: `GET /crate`.
 - **Elsewhere** — profiles and projects (below).
-- **Bookings & contact** — sync@6ummy.xyz.
+- **Bookings & contact** — a form that opens a mail draft in the visitor's own mail app.
 
 ## Profiles
 

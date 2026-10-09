@@ -939,14 +939,6 @@
     $("glyphs").textContent = F.glyphs || "";
     $("tagline").textContent = F.tagline || "";
 
-    /* The visible address under the form. Built here rather than
-       typed into index.html so there's one copy (content.js), and so
-       Cloudflare's email obfuscation, if it is ever on, has no static
-       address to rewrite. */
-    $("formAlt").innerHTML = C.email
-      ? es("O escribime directo: ", "Or write directly: ") + mailLink()
-      : "";
-
     $("support").innerHTML = (S.support || []).map(function (s) {
       return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' +
         es("Apoyame", "Support") + " · " + esc(s.label) + "</a>";
@@ -988,8 +980,17 @@
       '<span class="row__end" aria-hidden="true">\u2197</span></a>';
   }
 
-  function mailLink() {
-    return '<a href="mailto:' + esc(C.email) + '">' + esc(C.email) + "</a>";
+  /* The address is never written into the page. content.js keeps it
+     split; it is joined here only to build the mailto: the visitor's
+     own mail app opens. */
+  function mailTo() {
+    var e = C.email;
+    return Array.isArray(e) ? e.join("@") : (e || "");
+  }
+
+  /* Point at the Elsewhere section rather than an address. */
+  function elsewhereLink() {
+    return '<a href="#elsewhere-section">' + es("En otros lados", "Elsewhere") + "</a>";
   }
 
   function spec(k, v) {
@@ -999,6 +1000,9 @@
   /* ---------------------------------------------------------
      CONTACT FORM
      --------------------------------------------------------- */
+
+  /* Send ships disabled so a no-JS submit can't happen; JS is here. */
+  $("formSend").disabled = false;
 
   $("contactForm").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -1013,16 +1017,17 @@
 
     /* No form endpoint: hand off to the visitor's mail app. On a
        machine with none set up that does nothing visible, so say what
-       should have happened and where to write instead. The fields are
-       not cleared — what they typed is still there to copy. */
+       should have happened and where else to reach out — without
+       printing the address. The fields are not cleared, so what they
+       typed is still there to copy. */
     if (!C.formEndpoint) {
-      location.href = "mailto:" + C.email +
+      location.href = "mailto:" + mailTo() +
         "?subject=" + encodeURIComponent("6ummy.xyz — " + data.get("name")) +
         "&body=" + encodeURIComponent(data.get("message") + "\n\n" + data.get("email"));
       msg.innerHTML = es(
-        "Se debería abrir tu app de correo con el mensaje listo. Si no se abre, copiá el mensaje y mandalo a ",
-        "Your mail app should open with the message ready. If it doesn't, copy your message and send it to ") +
-        mailLink() + ".";
+        "Se debería abrir tu app de correo con el mensaje listo. Si no se abre, escribime en cualquiera de los perfiles de ",
+        "Your mail app should open with the message ready. If it doesn't, reach me on any of the profiles under ") +
+        elsewhereLink() + ".";
       return;
     }
 
@@ -1034,8 +1039,9 @@
         msg.textContent = es("Enviado. Te respondo pronto.", "Sent. I'll get back to you.");
       })
       .catch(function () {
-        msg.textContent = es("No se pudo enviar. Escribime a " + C.email,
-                             "That didn't send. Email me at " + C.email);
+        msg.innerHTML = es("No se pudo enviar. Escribime en cualquiera de los perfiles de ",
+                           "That didn't send. Reach me on any of the profiles under ") +
+                        elsewhereLink() + ".";
       });
   });
 

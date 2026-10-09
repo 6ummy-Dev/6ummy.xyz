@@ -690,16 +690,11 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   min-height: 1.2em;
 }
 
-/* The address in plain sight. The form only hands off to a mail app,
-   so anyone without one set up needs something to copy. */
-.form__alt {
-  font-size: .8125rem;
-  color: var(--ink-64);
-}
-.form__alt a,
+/* Links inside the status line (the Elsewhere pointer). */
 .form__msg a { color: var(--ink); border-bottom: 1px solid var(--rule-hi); }
-.form__alt a:hover,
 .form__msg a:hover { border-bottom-color: currentColor; }
+/* Send ships disabled for no-JS; don't let that read as broken. */
+.btn:disabled { cursor: default; }
 
 /* ============================================================
    CRATE — the same strip as Portfolio, square. Sleeves are

@@ -25,7 +25,11 @@ window.SITE = {
     // Contact form. Formspree / Web3Forms / your own Worker.
     // Not a secret — safe to keep here.
     formEndpoint: "",
-    email: "sync@6ummy.xyz",      // mailto: fallback if the above is empty
+    // mailto: fallback if the above is empty. Split in two so the
+    // address never appears whole in any file the site serves —
+    // scrapers look for user@host. app.js joins it only when someone
+    // presses Send.
+    email: ["sync", "6ummy.xyz"],
 
     twitchChannel: "6ummy",
 
