@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>6UMMY</title>
+<title>6UMMY · DJ, collector and curator · Montevideo</title>
 <meta name="description" content="6UMMY — DJ, collector and curator based in Montevideo, Uruguay. Techno, House, and Rares. Livestreams, gigs, and vinyl since 2004.">
 <meta name="author" content="6ummy">
 <meta name="theme-color" content="#1A1A1A">
 
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="6UMMY">
 <meta property="og:title" content="6UMMY">
 <meta property="og:description" content="DJ, collector and curator based in Montevideo, Uruguay. Techno, House, and Rares. Livestreams, gigs, and vinyl since 2004.">
 <meta property="og:url" content="https://6ummy.xyz/">
@@ -35,7 +36,13 @@
      style-src and script-src are strict because there is no inline
      script and no inline style anywhere in the build. formspree and
      web3forms are pre-authorised so wiring formEndpoint later does
-     not silently break under this policy. -->
+     not silently break under this policy. mailto: is there for the
+     form's no-JS action (form-action governs where a form may submit).
+
+     Since Oct 2026 Cloudflare also sends this policy as a response
+     header (Transform Rule), plus frame-ancestors 'none'. If you change
+     a host here, change it in that rule too — browsers enforce both,
+     so a host missing from either one is blocked. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   base-uri 'none';
@@ -46,7 +53,7 @@
   img-src 'self' data: https://i.ytimg.com https://i.discogs.com https://img.discogs.com;
   connect-src 'self' https://6ummy-api.6ummy-xyz.workers.dev https://cloudflareinsights.com;
   frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://w.soundcloud.com;
-  form-action 'self' https://formspree.io https://api.web3forms.com;
+  form-action 'self' mailto: https://formspree.io https://api.web3forms.com;
 ">
 
 <!-- Structured data. Static rather than generated from content.js:
@@ -113,9 +120,10 @@
 </script>
 
 <link rel="canonical" href="https://6ummy.xyz/">
-<link rel="alternate" hreflang="en" href="https://6ummy.xyz/">
-<link rel="alternate" hreflang="es" href="https://6ummy.xyz/?lang=es">
-<link rel="alternate" hreflang="x-default" href="https://6ummy.xyz/">
+<!-- No hreflang alternates. Both languages live in this one document
+     and ?lang=es served the same bytes canonicalised back to /, so the
+     es alternate was a conflicting signal search engines ignore. One
+     bilingual URL. ?lang=es still works for people (app.js reads it). -->
 
 <!-- The real mark at every size. It's pixel art on a 40×40 grid, so
      16 and 32 are non-integer downscales — these were resampled with
@@ -126,6 +134,7 @@
 <link rel="icon" type="image/png" sizes="48x48" href="assets/img/icon-48.png">
 <link rel="icon" type="image/png" sizes="80x80" href="assets/img/icon-80.png">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/img/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 
 <!-- The origins the page talks to on load. googleapis.com used to
      sit here, left over from when the browser called the YouTube API
@@ -164,6 +173,9 @@
 
 <body>
 
+<!-- First focusable thing on the page. Hidden until it has focus. -->
+<a class="skip" href="#main"><span data-en>Skip to content</span><span data-es>Ir al contenido</span></a>
+
 <!-- ========== STATUS BAR ========== -->
 <header class="status" id="status">
   <span class="status__mark"><span class="sr">6</span><svg class="pix" viewBox="0 0 5 7" preserveAspectRatio="xMinYMid meet" fill="currentColor" shape-rendering="crispEdges" focusable="false" aria-hidden="true"><rect x="2" y="0" width="1" height="1"></rect><rect x="3" y="0" width="1" height="1"></rect><rect x="1" y="1" width="1" height="1"></rect><rect x="0" y="2" width="1" height="1"></rect><rect x="0" y="3" width="1" height="1"></rect><rect x="1" y="3" width="1" height="1"></rect><rect x="2" y="3" width="1" height="1"></rect><rect x="3" y="3" width="1" height="1"></rect><rect x="0" y="4" width="1" height="1"></rect><rect x="4" y="4" width="1" height="1"></rect><rect x="0" y="5" width="1" height="1"></rect><rect x="4" y="5" width="1" height="1"></rect><rect x="1" y="6" width="1" height="1"></rect><rect x="2" y="6" width="1" height="1"></rect><rect x="3" y="6" width="1" height="1"></rect></svg></span>
@@ -177,7 +189,7 @@
   <button class="lang" id="langBtn" type="button" aria-label="Cambiar a español">ES</button>
 </header>
 
-<main>
+<main id="main" tabindex="-1">
 
   <!-- ========== HERO ========== -->
   <section class="hero wrap">
@@ -247,7 +259,11 @@
     <div class="section__head">
       <h2><span data-en>Sets</span><span data-es>Sesiones</span></h2>
     </div>
-    <div id="sets"></div>
+    <!-- Prerendered for crawlers and no-JS, same deal as the hero:
+         app.js rebuilds this from content.js (the source of truth) and
+         turns each link into a click-to-load player. Without JS they
+         stay plain links to SoundCloud. Keep in step with sets[]. -->
+    <div id="sets"><div class="embed embed--audio set"><a class="embed__btn" href="https://soundcloud.com/6ummy/sets/sets">Vinyl DJ Sets<small><span data-en>Recorded vinyl sessions.</span><span data-es>Sesiones grabadas en vinilo.</span></small></a></div><div class="embed embed--audio set"><a class="embed__btn" href="https://soundcloud.com/6ummy/sets/decimo-piso">Décimo Piso<small><span data-en>Series.</span><span data-es>Serie.</span></small></a></div><div class="embed embed--audio set"><a class="embed__btn" href="https://soundcloud.com/6ummy/sets/mnml-snds">mnml snds<small><span data-en>Minimal selections, ongoing series.</span><span data-es>Selecciones minimal, serie en curso.</span></small></a></div></div>
   </section>
 
   <!-- ========== PORTFOLIO ========== -->
@@ -277,7 +293,16 @@
     <div class="section__head">
       <h2><span data-en>Elsewhere</span><span data-es>En otros lados</span></h2>
     </div>
-    <div class="rows" id="elsewhere"></div>
+    <!-- Prerendered from the elsewhere block in content.js, so crawlers
+         and no-JS readers get real links (the server HTML used to carry
+         none). app.js rebuilds it on load from content.js, which stays
+         the source of truth — a stale copy here only affects readers
+         without JS. To refresh: open the live site, run
+         `copy(document.getElementById("elsewhere").innerHTML)` in the
+         console with the page in English, paste it over this. (That
+         copy is single-language; fine — the bilingual one is nicer but
+         not needed.) -->
+    <div class="rows" id="elsewhere"><div class="group"><h3 class="group__name"><span data-en>Projects</span><span data-es>Proyectos</span></h3><a class="row row--link" href="https://nightwatcher.life" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">Nightwatcher</span> <span class="row__tag">batman</span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://nightwatcher.life/nocturne/" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">Nocturne</span> <span class="row__tag"><span data-en>newspaper</span><span data-es>diario</span></span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://www.youtube.com/@domingo_feliz" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">DMF</span> <span class="row__tag">youtube</span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://www.youtube.com/@10mopiso" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">Décimo Piso</span> <span class="row__tag">youtube</span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://discord.gg/CfmfMxDZv5" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">Techno Punks</span> <span class="row__tag">discord</span></span><span class="row__end" aria-hidden="true">↗</span></a></div><div class="group"><h3 class="group__name">Social</h3><a class="row row--link" href="https://www.twitch.tv/6ummy" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">Twitch</span> <span class="row__tag"><span data-en>live</span><span data-es>en vivo</span></span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://soundcloud.com/6ummy" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">SoundCloud</span> <span class="row__tag"><span data-en>sets</span><span data-es>sesiones</span></span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://www.discogs.com/user/6ummy" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">Discogs</span> <span class="row__tag"><span data-en>collection</span><span data-es>colección</span></span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://x.com/6ummy" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">X</span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://x.com/i/communities/1493258083975385088" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">VINILOS</span> <span class="row__tag"><span data-en>community</span><span data-es>comunidad</span></span></span><span class="row__end" aria-hidden="true">↗</span></a></div><div class="group"><h3 class="group__name"><span data-en>Collectibles</span><span data-es>Coleccionables</span></h3><a class="row row--link" href="https://opensea.io/6ummy" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">OpenSea</span></span><span class="row__end" aria-hidden="true">↗</span></a><a class="row row--link" href="https://objkt.com/@6ummy" target="_blank" rel="noopener me"><span class="row__main"><span class="row__link">OBJKT</span></span><span class="row__end" aria-hidden="true">↗</span></a></div></div>
   </section>
 
   <!-- ========== CONTACT ========== -->
@@ -286,7 +311,10 @@
       <h2><span data-en>Bookings &amp; contact</span><span data-es>Contrataciones y contacto</span></h2>
     </div>
 
-    <form class="form" id="contactForm" novalidate>
+    <!-- action/method are the no-JS path: without them the browser
+         submitted a GET to / with all three fields in the query string.
+         With JS, app.js takes the submit and these are never used. -->
+    <form class="form" id="contactForm" action="mailto:sync@6ummy.xyz" method="post" enctype="text/plain" novalidate>
       <div class="field">
         <label for="f-name"><span data-en>Name</span><span data-es>Nombre</span></label>
         <input id="f-name" name="name" type="text" autocomplete="name" required>
@@ -310,6 +338,10 @@
         <span data-en>Send</span><span data-es>Enviar</span>
       </button>
       <p class="form__msg" id="formMsg" role="status"></p>
+      <!-- Filled by app.js with a mailto link built from content.js. The
+           form hands off to the visitor's mail app, so the address has to
+           be on the page for anyone who doesn't have one set up. -->
+      <p class="form__alt" id="formAlt"></p>
     </form>
   </section>
 
@@ -330,6 +362,11 @@
     <span>Montevideo, UY</span>
     <span>© 2004–<span id="year"></span> 6UMMY</span>
   </div>
+
+  <!-- What loads, said plainly. llms.txt and index.md say the same. -->
+  <p class="footer__note">
+    <span data-en>No cookies of ours. Visits are counted by Cloudflare Web Analytics, which sets no cookies. Record sleeves load from Discogs, whose image servers may set their own.</span><span data-es>Ninguna cookie propia. Las visitas las cuenta Cloudflare Web Analytics, que no usa cookies. Las tapas de los discos vienen de Discogs, cuyos servidores de imágenes pueden poner las suyas.</span>
+  </p>
 </footer>
 
 <!-- defer, not bare. Sitting last in the body already meant these ran

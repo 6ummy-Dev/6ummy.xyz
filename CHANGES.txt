@@ -1,133 +1,197 @@
-6ummy.xyz — mobile PSI: 94 → the largest paint         29 Aug 2026
+6ummy.xyz — Super Audit #1 fixes                          9 Oct 2026
 
-THREE FILES  index.html
-             assets/js/app.js
-             assets/js/content.js
+Audit: 79 overall, 0 P0 / 2 P1 / 19 P2. Every finding is either fixed
+below, a Cloudflare dashboard step below, or declined with the reason.
 
-Upload and you're done. Worker untouched — no redeploy. style.css
-unchanged.
+UPLOAD (repo root layout)
 
-WHAT WAS WRONG
+  index.html                     changed
+  assets/js/app.js               changed
+  assets/js/content.js           changed
+  assets/css/style.css           changed
+  llms.txt                       changed
+  index.md                       changed
+  sitemap.xml                    changed
+  CHANGES.txt                    this file
+  manifest.webmanifest           new
+  favicon.ico                    new
+  assets/img/icon-192.png        new
+  assets/img/icon-512.png        new
+  assets/img/icon-maskable-512.png  new
 
-Desktop scored 100, mobile 94 (92 on a second run). Everything on the
-mobile report was green except two numbers: Largest Contentful Paint
-2.7–2.9 s against a First Contentful Paint of 1.5 s, and Speed Index
-4.2 s. The LCP element is the bio paragraph in the hero, and PSI put
-its whole time down as "element render delay" — 2.4 s — with nothing
-to load. The bio is prerendered in index.html; it needs no script, no
-font, no fetch. So where did 2.4 s go?
+Worker untouched. No redeploy.
 
-Not into painting it. The bio paints in the first frame, and it did
-before this change too. What moved was everything around that frame.
 
-app.js is deferred. Deferred scripts run as soon as the parser is done
-and the stylesheet is in — and on a real connection that is routinely
-BEFORE the browser has produced its first frame. Reproduced locally
-with 80 ms of latency on every asset: in about half the loads, app.js
-had run, hit the Worker for /live, /dates, /crate and /youtube, and
-rewritten the section heads, all before the first paint. The paint
-came ~50 ms after the scripts.
+FIXED IN CODE
 
-PageSpeed's mobile score is not a measurement of that load. It is a
-model: Lighthouse takes the unthrottled run and re-simulates it on a
-slow 4G connection (150 ms round trips, 1.6 Mbps) with a 4× slower
-CPU. For the largest paint, the model takes every request that had
-STARTED before that paint and every script that had run before it, and
-treats all of it as if the paint had waited for it. Four Worker
-fetches to a fresh origin (three round trips of handshake before the
-first byte), the Cloudflare beacon to another fresh origin, app.js's
-execution at 4× — simulated on slow 4G, that is the 2.4 s. On desktop
-the simulation uses 40 ms round trips and no CPU slowdown, so the same
-graph adds a few hundred milliseconds and the score stays at 100.
+P1  Booking form. The address is now on the page under the form
+    ("Or write directly: sync@6ummy.xyz", built by app.js from
+    content.js). After Send, a status line says the mail app should
+    open and gives the address if it doesn't. The typed message is
+    left in the form so it can be copied.
 
-That is also why the earlier reveal guard ("never hide what the reader
-can already see") didn't close the gap: it stopped app.js from
-repainting the bio, but the bio's timing was never the problem — the
-requests in front of it were.
+P1  "No tracking and no cookies". Footer now has one bilingual line:
+    no cookies of ours, Cloudflare Web Analytics (cookieless), sleeves
+    from Discogs whose servers may set their own. llms.txt and index.md
+    say the same thing instead of "no tracking and no cookies".
 
-1. BOOT AFTER THE FIRST FRAME  (app.js)
+P2  Title. "6UMMY" → "6UMMY · DJ, collector and curator · Montevideo".
+    og:site_name added. og:title stays "6UMMY".
 
-Everything app.js does now runs from main(), and main() is scheduled
-from afterFirstPaint():
+P2  hreflang. es and x-default alternates removed from index.html and
+    sitemap.xml: one bilingual URL. ?lang=es still works for people.
 
-  requestAnimationFrame → requestAnimationFrame → setTimeout(0)
+P2  0 links in the server HTML. Elsewhere and Sets are now prerendered
+    in index.html (same pattern as the hero). app.js still rebuilds both
+    from content.js on load, so content.js stays the only file you edit;
+    the HTML copy is what crawlers and no-JS readers see. Without JS,
+    Sets are plain SoundCloud links. Refresh recipe is in the comment
+    above #elsewhere.
 
-The first rAF fires just before a frame is produced; a second one from
-inside it cannot be scheduled until that frame has been presented; a
-timeout from there runs after the second frame goes out. So main()
-starts roughly two frames (~30 ms) after the first paint, and every
-fetch, every layout read and every DOM write lands after the largest
-paint, where the model no longer counts it. One rAF was not enough:
-its timeout ran a few ms before the compositor stamped the paint, and
-the /live fetch landed just inside the window.
+P2  llms.txt "the rest is in the HTML". Now true; sentence clarified.
 
-A hidden tab never gets a frame, so there the boot goes straight to a
-timeout, and a 1.5 s fallback covers anything else that could keep rAF
-from firing. Whichever fires first wins; the others are no-ops.
+P2  No-JS form sent a GET to / with name, email and message in the URL.
+    The form now has action="mailto:…" method="post" enctype="text/plain"
+    as the no-JS path; mailto: added to the CSP form-action. Tested with
+    JS off: old build put the fields in the URL, new build hands off to
+    the mail app.
 
-Nothing visible moves. The hero was already on screen; the rail, the
-section numbers and the clock arrive two frames later than they used
-to, which is under the threshold of a blink.
+P2  No Twitch / SoundCloud / Discogs links. Added to Elsewhere → Social
+    (tags: live / sets / collection, es: en vivo / sesiones / colección).
 
-Local Lighthouse, mobile preset, 80 ms latency on every asset, three
-runs each:
+P2  Forced reflow (app.js watch). The reveal no longer measures
+    anything: an IntersectionObserver decides on-screen vs below-fold
+    from the browser's own next layout. The boot-time scroll-spy call
+    (which only ever concluded "nothing current" at the top of the page)
+    is gone too; a scrolled or #hash load fires a scroll event, which
+    runs it. Local trace, 3 loads each: JS-forced layouts 9 → 3,
+    52.8 ms → 6.9 ms. What remains is clampDescs measuring Dates text,
+    which it has to.
 
-                    FCP      LCP      SI
-  before           2.0 s    2.5 s    2.7 s     (when the race lost)
-                   1.7 s    2.0 s    1.7 s     (when it won)
-  after            1.6 s    1.9 s    1.6 s     (every run)
+P2  Skip link. "Skip to content" / "Ir al contenido", first in the tab
+    order, hidden until focused, jumps to <main>.
 
-The remaining FCP→LCP gap is the two preloaded scripts and the font,
-which start with the stylesheet and are therefore in the model no
-matter what. It costs nothing on the score.
+P2  MusicEvent. app.js writes one MusicEvent per upcoming gig into a
+    JSON-LD block when Dates renders (name, start/end in −03:00, place,
+    performer → #act). Past dates are left out.
 
-2. FORCED REFLOW  (app.js, watch())
+P2  PWA, the part worth having: manifest.webmanifest + 192 / 512 /
+    maskable 512 icons, drawn from the 40×40 mark at whole-pixel scales,
+    figure flush with the bottom edge like the 180. Installable now.
 
-PSI flagged 94 ms of forced synchronous layout at app.js:1189 — the
-getBoundingClientRect() in watch(). The loop set an attribute, then
-measured, then added a class, then measured the next node; every
-measurement after the first forced a full layout, and the loop ran
-again after each section rendered. watch() now filters, measures every
-node, then writes: one layout per sweep, however many rows.
+Info  /favicon.ico added (16/32/48 from the existing PNGs).
 
-3. THE CLOUDFLARE BEACON  (index.html, app.js, content.js)
 
-Cloudflare Web Analytics was a <script type="module"> at the end of
-the body. A module script is deferred by default, so it did not block
-anything — but it starts downloading with the document, from a third
-origin, which is a full handshake in the model, and Lighthouse listed
-it in the critical request chain. app.js now appends the same script
-(defer, same data-cf-beacon attribute) at the end of main(), two
-frames after the first paint. The token moved to content.js as
-config.cfBeacon, next to the other public IDs; "" loads nothing. Both
-hosts stay in the CSP exactly as before.
+CLOUDFLARE DASHBOARD — five steps, in this order
 
-NOT CHANGED, AND WHY
+1. Security headers (fixes: anti-framing P2, headers-meta-only P2)
+   Rules → Overview → Create rule → Response Header Transform Rule.
+   Name: security headers
+   If: Custom filter expression → Edit expression:
+     (http.host eq "6ummy.xyz" and not starts_with(http.request.uri.path, "/cdn-cgi/"))
+   Then: "Set static", one row each:
 
-Minify CSS/JS (PSI: ~16 KiB). Would need a build step, and the point of
-this repo is that there isn't one. GitHub Pages gzips everything and
-the comments compress to almost nothing; the modelled cost is under
-100 ms. Left as is.
+   Content-Security-Policy
+     default-src 'self'; base-uri 'none'; object-src 'none'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self'; font-src 'self'; img-src 'self' data: https://i.ytimg.com https://i.discogs.com https://img.discogs.com; connect-src 'self' https://6ummy-api.6ummy-xyz.workers.dev https://cloudflareinsights.com; frame-src https://www.youtube-nocookie.com https://player.twitch.tv https://w.soundcloud.com; form-action 'self' mailto: https://formspree.io https://api.web3forms.com; frame-ancestors 'none'
+   X-Frame-Options          DENY
+   Referrer-Policy          strict-origin-when-cross-origin
+   Permissions-Policy       camera=(), microphone=(), geolocation=(), payment=(), usb=()
+   Cross-Origin-Opener-Policy  same-origin
 
-Improve image delivery (PSI: 308 KiB, Discogs sleeves). Discogs serves
-exactly two sizes on signed URLs — 150 and 600 — and a card is 260 CSS
-px at 1.75× device pixels, i.e. 455 px. 150 is blurry at that density
-and 600 is the only other option; there is nothing in between to ask
-for. The sleeves are loaded as 150 first and upgraded on demand, which
-is as far as it goes without an image proxy.
+   Deliberately NOT set:
+   - Cross-Origin-Resource-Policy: logo.gif / logo-sm.gif / logo-static.png
+     are hotlinked as avatars elsewhere; CORP same-origin would block them.
+   - Cross-Origin-Embedder-Policy: would break the YouTube / Twitch /
+     SoundCloud players and the Discogs sleeves.
+   - Permissions-Policy entries for fullscreen / autoplay: the players
+     need them.
 
-Cache lifetimes (PSI: 127 KiB). YouTube's thumbnails, 2 h TTL. Not
-ours.
+   Upload the build FIRST — the header carries mailto: in form-action,
+   and the 404 page keeps its own tighter meta CSP (browsers apply both;
+   the tighter one wins).
 
-"Unused preconnect" on workers.dev and i.discogs.com. Diagnostic only,
-no score weight, and both origins are used within the first second.
-Left in place.
+   Check from outside (your own curl.exe is fine for headers):
+     curl.exe -sI https://6ummy.xyz/
+     curl.exe -sI https://6ummy.xyz/assets/css/style.css
+   All five headers should be on both. If they're on style.css but NOT
+   on / , the 6ummy-agent-edge Worker's response is skipping the rule:
+   tell me and I'll give you the five-line addition for that Worker
+   (copy its code out of the editor first, as always).
 
-CHECK AFTER UPLOAD
+2. HSTS to one year + preload (fixes: HSTS P2)
+   SSL/TLS → Edge Certificates → HTTP Strict Transport Security → Change:
+   Max-Age 12 months, Apply to subdomains ON, Preload ON, No-Sniff ON.
+   The old reason to hold preload back (registrar transfer pending) closed
+   on 15 Aug. Submitting at hstspreload.org is a separate, hard-to-undo
+   step — only do it if you want the domain in browsers' built-in list.
 
-Run PSI on mobile. LCP should now sit within ~0.3 s of FCP, Speed
-Index near FCP, and the "element render delay" line on the bio should
-be a few hundred ms rather than 2,400. The report's forced-reflow row
-should be gone. If anything on the page behaves differently — the
-language button, ?live=1, the section toggles — say so; all three were
-exercised on the patched build and pass.
+3. CAA (fixes: CAA P2)
+   DNS → Records → Add record, type CAA, name @, three records:
+     Tag "Only allow specific hostnames"  value pki.goog
+     Tag "Only allow specific hostnames"  value letsencrypt.org
+     Tag "Only allow specific hostnames"  value ssl.com
+   Cloudflare adds the CAs its Universal SSL needs on its own once any
+   CAA record exists, so the edge cert keeps renewing. Don't touch MX.
+
+4. Beacon delivery (fixes: Radar CORS P2 — a check, not a change)
+   Analytics & Logs → Web Analytics → 6ummy.xyz. If real visits show up,
+   close it: Radar's failure was its own signature-agent header. If it
+   reads zero while you know people visited, tell me.
+
+5. Purge + ping
+   Caching → Configuration → Purge Everything (this upload changes
+   content.js, and it went stale once before). Then, because title,
+   links and sitemap lastmod changed:
+     curl.exe "https://api.indexnow.org/indexnow?url=https://6ummy.xyz/&key=ea15e9b9b127a04424cf7f4b0424d6fa"
+
+
+DECLINED — with the reason
+
+P2  Crate image delivery (300 KiB). Discogs serves 150 or 600, nothing
+    between, on signed URLs (settled). The suggested DPR ≥ 2 gate would
+    only win the lab number — Lighthouse's phone is 1.75 DPR — and show
+    soft sleeves on every real 1.25–1.75 screen. Resizing through
+    Cloudflare Images means running Discogs's signed URLs through a new
+    product for a number. Merit decline.
+
+P2  Minify JS / CSS (11 + 5 KiB). No build step is the site's premise;
+    content.js is hand-edited. Assets already go out compressed. Same
+    decline as August.
+
+P2  4 h cache on own assets. A long TTL on file names that don't change,
+    edited by hand in the GitHub web UI, is how a stale content.js got
+    served for weeks. ?v= tags would need a hand bump on every edit.
+    Merit decline.
+
+P2  Beacon legacy JS (10 KiB). Cloudflare's code, not ours. The only
+    lever is dropping analytics, which you turned on on purpose (26 Aug).
+
+P2  PWA service worker + offline. The installable half is done above.
+    An offline copy of a page whose point is live status and dates would
+    show stale data as current, and a SW cache on top of a hand-edited
+    content.js is the stale-file problem again. Expect PWA 5/8.
+
+—   Proxying sleeves through the Worker to drop Discogs's __cf_bm cookie.
+    Discogs throttles per Cloudflare egress IP; every sleeve through the
+    Worker would hit that. The disclosure fixes the P1 honestly.
+
+—   formEndpoint (Formspree / Web3Forms). New third-party signup. The P1
+    is fixed by putting the address on the page.
+
+Info  SPF ~all. It's Apple's documented iCloud record; DMARC p=reject
+      already enforces. Not changed.
+Info  MTA-STS / TLS-RPT, OCSP stapling, /index.html 200, render-blocking
+      style.css, PSI Speed Index variance. Informational; nothing to do.
+
+
+VERIFIED HERE (local clone, Worker mocked, headless Chrome)
+
+Lighthouse 13, new build: mobile 99 / 100 / 100 / 100, desktop
+100 / 100 / 100 / 100, CLS 0 both. Same as the old build on the same
+rig. No console errors, no CSP violations, no horizontal scroll at
+412 px. JSON-LD: static @graph + MusicEvent both parse. Skip link is
+the first Tab stop. Hash load (#crate-section) still highlights the
+section index. JS-off: 15 real links, Sets as links, form → mailto.
+
+Not verifiable here: the Cloudflare steps, real Discogs sleeves, and
+the live __cf_bm behaviour. Re-run the super audit after upload.

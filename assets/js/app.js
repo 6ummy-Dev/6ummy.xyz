@@ -367,6 +367,52 @@
     box.innerHTML = html + "</div>";
     clampDescs();
     sweep();
+    eventsLD(datesState.mode === "upcoming" ? items : []);
+  }
+
+  /* Structured data for the upcoming gigs. The static @graph in
+     index.html can't carry them — dates come from the Worker — so
+     each render writes one MusicEvent per upcoming row into its own
+     JSON-LD block (Google reads JSON-LD added by script). A data
+     block isn't executed, so the CSP doesn't apply to it. Past dates
+     are left out: an event that already happened is not a rich
+     result anyone wants. Montevideo is a fixed UTC−3 (no DST since
+     2015), so the offset is written literally. */
+  function mvdISO(ms, allDay) {
+    var iso = new Date(ms - 3 * 3600e3).toISOString();
+    return allDay ? iso.slice(0, 10) : iso.slice(0, 19) + "-03:00";
+  }
+
+  function eventsLD(items) {
+    var old = $("eventsLD");
+    if (old) old.parentNode.removeChild(old);
+    if (!items.length) return;
+    var graph = items.map(function (ev) {
+      var e = {
+        "@type": "MusicEvent",
+        "name": ev.title,
+        "startDate": mvdISO(ev.startMs, ev.allDay),
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "performer": { "@id": "https://6ummy.xyz/#act" },
+        "url": "https://6ummy.xyz/#dates-section"
+      };
+      if (ev.endMs && ev.endMs > ev.startMs) e.endDate = mvdISO(ev.endMs, ev.allDay);
+      if (ev.where) {
+        e.location = {
+          "@type": "Place",
+          "name": String(ev.where).split(",")[0].trim(),
+          "address": ev.where
+        };
+      }
+      if (ev.description) e.description = tidyDesc(ev.description);
+      return e;
+    });
+    var tag = document.createElement("script");
+    tag.type = "application/ld+json";
+    tag.id = "eventsLD";
+    tag.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": graph });
+    document.head.appendChild(tag);
   }
 
   /* ---------------------------------------------------------
@@ -893,6 +939,14 @@
     $("glyphs").textContent = F.glyphs || "";
     $("tagline").textContent = F.tagline || "";
 
+    /* The visible address under the form. Built here rather than
+       typed into index.html so there's one copy (content.js), and so
+       Cloudflare's email obfuscation, if it is ever on, has no static
+       address to rewrite. */
+    $("formAlt").innerHTML = C.email
+      ? es("O escribime directo: ", "Or write directly: ") + mailLink()
+      : "";
+
     $("support").innerHTML = (S.support || []).map(function (s) {
       return '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' +
         es("Apoyame", "Support") + " · " + esc(s.label) + "</a>";
@@ -934,6 +988,10 @@
       '<span class="row__end" aria-hidden="true">\u2197</span></a>';
   }
 
+  function mailLink() {
+    return '<a href="mailto:' + esc(C.email) + '">' + esc(C.email) + "</a>";
+  }
+
   function spec(k, v) {
     return '<div class="spec"><dt>' + esc(k) + "</dt><dd>" + esc(v) + "</dd></div>";
   }
@@ -953,10 +1011,18 @@
       return;
     }
 
+    /* No form endpoint: hand off to the visitor's mail app. On a
+       machine with none set up that does nothing visible, so say what
+       should have happened and where to write instead. The fields are
+       not cleared — what they typed is still there to copy. */
     if (!C.formEndpoint) {
       location.href = "mailto:" + C.email +
         "?subject=" + encodeURIComponent("6ummy.xyz — " + data.get("name")) +
         "&body=" + encodeURIComponent(data.get("message") + "\n\n" + data.get("email"));
+      msg.innerHTML = es(
+        "Se debería abrir tu app de correo con el mensaje listo. Si no se abre, copiá el mensaje y mandalo a ",
+        "Your mail app should open with the message ready. If it doesn't, copy your message and send it to ") +
+        mailLink() + ".";
       return;
     }
 
@@ -1180,7 +1246,12 @@
 
     nav.appendChild(list);
     document.body.appendChild(nav);
-    spy();
+    /* No spy() here any more. At the top of the page no section is
+       current, so the boot-time call only measured to conclude nothing
+       — and as the first read after render() it paid for a forced
+       layout to do it. A page that opens scrolled (restored position,
+       #hash jump) fires a scroll event, and the listener below runs
+       spy() from there. */
   }
 
   /* Which section owns the top of the screen. */
@@ -1239,23 +1310,35 @@
        settles where it stands; the reveal remains for whatever
        scrolls in later.
 
-       All the reads happen before any write. The old loop set an
-       attribute, then measured, then added a class, then measured
-       the next node — every measurement after the first was a forced
-       synchronous layout, and this ran again after each section
-       rendered. PSI put it at 94 ms of forced reflow. One layout per
-       sweep now, whatever the row count. */
-    var h = window.innerHeight;
-    var below = fresh.filter(function (el) {
-      var r = el.getBoundingClientRect();
-      return !(r.top < h && r.bottom > 0);
+       No layout reads at all now. The previous version batched its
+       getBoundingClientRect() calls before its writes, but the very
+       first read still landed right after render() had rewritten the
+       sections, so it forced a synchronous layout every sweep — the
+       local Lighthouse trace put ~150 ms of forced reflow on it
+       (app.js boot → watch). An IntersectionObserver answers the same
+       question, "is this on screen right now?", from the layout the
+       browser does for the next frame anyway. Its first callback for
+       every observed node reports that, then the node is handed on:
+       on screen stays put, below the fold gets the reveal. The swap
+       happens a frame after render, on nodes the reader can't see. */
+    fresh.forEach(function (el) {
+      el.dataset.revealed = "1";
+      firstLook.observe(el);
     });
+  }
 
-    fresh.forEach(function (el) { el.dataset.revealed = "1"; });
-    below.forEach(function (el, i) {
-      el.classList.add("reveal");
-      el.style.setProperty("--i", Math.min(i, 8));
-      observer.observe(el);
+  var firstLook = null;
+
+  function initFirstLook() {
+    firstLook = new IntersectionObserver(function (entries) {
+      var i = 0;
+      entries.forEach(function (en) {
+        firstLook.unobserve(en.target);
+        if (en.isIntersecting) return;          // already visible: leave it
+        en.target.classList.add("reveal");
+        en.target.style.setProperty("--i", Math.min(i++, 8));
+        observer.observe(en.target);
+      });
     });
   }
 
@@ -1269,6 +1352,7 @@
         observer.unobserve(en.target);       // one-way: no re-animating on scroll back
       });
     }, { rootMargin: "0px 0px -12% 0px", threshold: 0.08 });
+    initFirstLook();
 
     sweep();
   }

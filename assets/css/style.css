@@ -261,6 +261,24 @@ body.is-live .wordmark__cursor { animation: none; }
   height: auto;
 }
 
+/* Skip link — off screen until it has keyboard focus, then sits
+   over the fixed status bar (z-index 50) in the focus colour. */
+.skip {
+  position: fixed;
+  top: .5rem;
+  left: .5rem;
+  z-index: 60;
+  padding: .55rem 1rem;
+  background: var(--live);
+  color: #232323;
+  font-size: .75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  transform: translateY(-200%);
+}
+.skip:focus { transform: none; }
+main:focus { outline: 0; }
+
 /* Screen-reader text — the drawn wordmark is decorative, so the
    real name has to live somewhere readable. */
 .sr {
@@ -672,6 +690,17 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
   min-height: 1.2em;
 }
 
+/* The address in plain sight. The form only hands off to a mail app,
+   so anyone without one set up needs something to copy. */
+.form__alt {
+  font-size: .8125rem;
+  color: var(--ink-64);
+}
+.form__alt a,
+.form__msg a { color: var(--ink); border-bottom: 1px solid var(--rule-hi); }
+.form__alt a:hover,
+.form__msg a:hover { border-bottom-color: currentColor; }
+
 /* ============================================================
    CRATE — the same strip as Portfolio, square. Sleeves are
    1:1 and cropping them to 16:9 cuts the corners off the one
@@ -954,6 +983,19 @@ body.is-live .embed--video { border-color: var(--live); border-width: 2px; }
 }
 
 .footer a { border-bottom: 1px solid var(--rule-hi); }
+
+/* Privacy line: full width under the three fields, sentence case. */
+.footer__note {
+  grid-column: 1 / -1;
+  justify-self: center;
+  max-width: 46rem;
+  margin: 0;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: .02em;
+  line-height: 1.6;
+  color: var(--ink-40);
+}
 .footer a:hover { border-bottom-color: currentColor; }
 
 .footer__side {

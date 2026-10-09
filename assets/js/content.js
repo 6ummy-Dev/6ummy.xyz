@@ -134,6 +134,11 @@ window.SITE = {
 
      A flat array still works if you'd rather not group — the
      renderer accepts both shapes.
+
+     index.html carries a prerendered copy of this block for
+     crawlers and no-JS readers (app.js replaces it on load). This
+     file stays the source of truth; refresh the copy when you can —
+     see the comment above #elsewhere in index.html.
      --------------------------------------------------------- */
   elsewhere: [
     {
@@ -154,6 +159,12 @@ window.SITE = {
     {
       group: { en: "Social", es: "Social" },
       links: [
+        { label: "Twitch",     url: "https://www.twitch.tv/6ummy",
+          note: { en: "live", es: "en vivo" } },
+        { label: "SoundCloud", url: "https://soundcloud.com/6ummy",
+          note: { en: "sets", es: "sesiones" } },
+        { label: "Discogs",    url: "https://www.discogs.com/user/6ummy",
+          note: { en: "collection", es: "colección" } },
         { label: "X",       url: "https://x.com/6ummy" },
         { label: "VINILOS", url: "https://x.com/i/communities/1493258083975385088",
           note: { en: "community", es: "comunidad" } }

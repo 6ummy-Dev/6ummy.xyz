@@ -4,7 +4,10 @@
 > and Rares. Livestreams, gigs and vinyl since 2004.
 
 This is the machine-readable representation of <https://6ummy.xyz/>. The page is
-a single bilingual (English / Spanish) document with no tracking and no cookies.
+a single bilingual (English / Spanish) document with no first-party cookies.
+Visits are counted by Cloudflare Web Analytics (cookieless, aggregate only);
+record sleeves load from Discogs's image servers, which may set their own
+cookie.
 Live sections are filled in at page load by a small read-only API
 (<https://6ummy-api.6ummy-xyz.workers.dev>, described in
 <https://6ummy.xyz/openapi.json>); everything degrades to readable text if that

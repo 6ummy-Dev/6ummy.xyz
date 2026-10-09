@@ -2,9 +2,11 @@
 
 > DJ, collector and curator based in Montevideo, Uruguay. Techno, House, and
 > Rares. Livestreams, gigs, and vinyl since 2004. Personal site: one page,
-> bilingual (English / Spanish), no tracking and no cookies. Live data comes
-> from a Cloudflare Worker and everything degrades to readable text if that
-> Worker is unreachable.
+> bilingual (English / Spanish), no first-party cookies. Visits are counted by
+> Cloudflare Web Analytics (cookieless, aggregate only); record sleeves load
+> from Discogs's image servers, which may set their own cookie. Live data
+> comes from a Cloudflare Worker and everything degrades to readable text if
+> that Worker is unreachable.
 
 Identity: 6UMMY, also written 6ummy. Based in Montevideo, Uruguay (UTC-3),
 active since 2004. Formats: vinyl and digital. Styles: techno, house, rares.
@@ -15,7 +17,8 @@ and player), Dates (upcoming gigs, falling back to recent past dates), Sets
 (recorded SoundCloud sessions), Portfolio (a curated YouTube playlist), Crate
 (the record collection, newest first, from Discogs), Elsewhere (profiles and
 projects), and Bookings & contact. Stream, Dates, Portfolio and Crate are filled
-in by the Worker at page load; the rest is in the HTML.
+in by the Worker at page load; the rest is in the HTML (Sets and Elsewhere
+as plain links, upgraded to players and rows by script).
 
 No authentication is required for the site or the Worker API — no login, no
 sign-up, no credentials; an agent has the same open read-only access as a
