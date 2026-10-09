@@ -398,12 +398,16 @@
         "url": "https://6ummy.xyz/#dates-section"
       };
       if (ev.endMs && ev.endMs > ev.startMs) e.endDate = mvdISO(ev.endMs, ev.allDay);
+      /* The calendar's location is free text. When it reads
+         "Venue, street…" the part before the first comma is the venue
+         name; when there is no comma ("Café Bertin Avenida …") there is
+         no safe way to tell venue from street, so the whole string goes
+         in address and name is left out rather than guessed. */
       if (ev.where) {
-        e.location = {
-          "@type": "Place",
-          "name": String(ev.where).split(",")[0].trim(),
-          "address": ev.where
-        };
+        var where = String(ev.where).trim();
+        var comma = where.indexOf(",");
+        e.location = { "@type": "Place", "address": where };
+        if (comma > 0) e.location.name = where.slice(0, comma).trim();
       }
       if (ev.description) e.description = tidyDesc(ev.description);
       return e;

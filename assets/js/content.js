@@ -26,9 +26,10 @@ window.SITE = {
     // Not a secret — safe to keep here.
     formEndpoint: "",
     // mailto: fallback if the above is empty. Split in two so the
-    // address never appears whole in any file the site serves —
+    // address never appears whole on the homepage or in its scripts —
     // scrapers look for user@host. app.js joins it only when someone
-    // presses Send.
+    // presses Send. (The agent files — llms.txt, auth.md, openapi.json,
+    // security.txt — still list it whole, by choice.)
     email: ["sync", "6ummy.xyz"],
 
     twitchChannel: "6ummy",
